@@ -7,6 +7,7 @@ import VenuePage from './pages/Venue';
 import QRCodePage from './pages/QRCode';
 import CameraPage from './pages/Camera';
 import GalleryPage from './pages/Gallery';
+import PhotoReview from './components/PhotoReview';
 
 // Import components for main layout
 import Scene from './components/Scene';
@@ -63,8 +64,15 @@ function App() {
         {/* Photo gallery */}
         <Route path="/gallery" element={<GalleryPage />} />
 
+        <Route path="/review" element={<PhotoReview />} />
+
+
+
         {/* Catch all route - Add this new route */}
         <Route path="*" element={<Navigate to="/" replace />} />
+        
+
+        
       </Routes>
     </Router>
   );
