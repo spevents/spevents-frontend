@@ -1,50 +1,81 @@
-# React + TypeScript + Vite
+# Spevents: Making Every Event Unforgettable
+A modern, real-time photo sharing platform for events that keeps guests engaged and preserves memories seamlessly.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 🌟 Features
+- **No App Download Required**: Access via QR code scanning
+- **Real-Time Photo Gallery**: Instantly share photos during events
+- **Interactive 3D Venue View**: See photos in context of the venue
+- **Swipe-to-Share**: Intuitive iOS-style photo sharing interface
+- **Collaborative Photo Collection**: Everyone contributes to the event's memories
 
-Currently, two official plugins are available:
+## 🚀 Getting Started
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Prerequisites
+- Node.js (v16 or higher)
+- npm or yarn
+- Modern web browser
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+### Installation
+1. Clone the repository
+```bash
+git clone https://github.com/yourusername/spevents.git
+cd spevents
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
-
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+2. Install dependencies
+```bash
+npm install
 ```
+
+3. Start the development server
+```bash
+npm run dev
+```
+
+The app will be running at `http://localhost:5173`
+
+## 📱 How to Use
+
+### For Event Organizers
+1. Navigate to the main venue page
+2. Share the QR code with event guests
+3. Watch as photos populate the 3D venue view
+
+### For Guests
+1. Scan the event's QR code with your phone
+2. Take photos through the web interface
+3. Swipe up on photos to add them to the event gallery
+4. View all contributions in the gallery view
+
+## 💻 Tech Stack
+- React with TypeScript
+- Vite for blazing fast development
+- Tailwind CSS for styling
+- Framer Motion for animations
+- Three.js for 3D venue visualization
+- React Router for navigation
+
+## 📝 Development Notes
+- The project uses modern ES6+ features
+- Runs on HTTPS for camera access
+- Optimized for mobile devices
+- Uses local storage for photo management
+
+## 🔒 Privacy
+- Photos are stored locally
+- No server-side storage implemented yet
+- All processing happens on the client side
+
+## 🤝 Contributing
+Pull requests are welcome! For major changes, please open an issue first to discuss what you'd like to change.
+
+## 📄 License
+[MIT](https://choosealicense.com/licenses/mit/)
+
+## 🌐 Browser Support
+- Chrome (recommended)
+- Safari
+- Firefox
+- Edge
+
+For the best experience, use the latest version of Chrome on mobile devices.
