@@ -15,10 +15,12 @@ const ACTIVATION_THRESHOLD_PERCENTAGE = 0.3;
 const PhotoReview = () => {
   const navigate = useNavigate();
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [processingPhotos, setProcessingPhotos] = useState<Set<number>>(new Set());
   const [dragPosition, setDragPosition] = useState<number>(0);
   const [screenHeight, setScreenHeight] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [exitDirection, setExitDirection] = useState<"up" | "down" | null>(null);
 
   useEffect(() => {
     const updateScreenHeight = () => {
@@ -33,7 +35,9 @@ const PhotoReview = () => {
     );
     setPhotos(sessionPhotos);
 
-    return () => window.removeEventListener("resize", updateScreenHeight);
+    return () => {
+      window.removeEventListener("resize", updateScreenHeight);
+    };
   }, []);
 
   const handleDragStart = () => {
@@ -51,24 +55,30 @@ const PhotoReview = () => {
 
     const swipeThreshold = screenHeight * SWIPE_THRESHOLD_PERCENTAGE;
 
-    if (Math.abs(info.velocity.y) > 500) {
-      // Fast swipe - trigger action regardless of distance
-      handlePhotoAction(photo, info.offset.y < 0);
-    } else if (Math.abs(info.offset.y) > swipeThreshold) {
-      // Regular swipe - check threshold
-      handlePhotoAction(photo, info.offset.y < 0);
+    if (Math.abs(info.velocity.y) > 500 || Math.abs(info.offset.y) > swipeThreshold) {
+      const isUpward = info.offset.y < 0;
+      setExitDirection(isUpward ? 'up' : 'down');
+
+      // If it's already being processed, ignore the swipe
+      if (isUpward && processingPhotos.has(photo.id)) {
+        return;
+      }
+
+      handlePhotoAction(photo, isUpward);
     } else {
-      // Not swiped far enough - spring back
       setDragPosition(0);
     }
   };
 
   const handlePhotoAction = async (photo: Photo, isUpward: boolean) => {
     if (isUpward) {
+      // Mark photo as being processed
+      setProcessingPhotos(prev => new Set(prev).add(photo.id));
       setIsUploading(true);
+
       try {
-        // First remove the photo from local state to prevent multiple uploads
-        setPhotos((prev) => prev.filter((p) => p.id !== photo.id));
+        // Remove from visible photos immediately
+        setPhotos(prev => prev.filter(p => p.id !== photo.id));
         setDragPosition(0);
 
         // Convert base64 to blob
@@ -77,17 +87,13 @@ const PhotoReview = () => {
 
         // Upload to Supabase Storage
         const fileName = `photo-${Date.now()}.jpg`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from("gallery-photos")
           .upload(fileName, blob, {
             contentType: "image/jpeg",
           });
 
-        if (uploadError) {
-          // If upload fails, add the photo back to the state
-          setPhotos((prev) => [...prev, photo]);
-          throw uploadError;
-        }
+        if (uploadError) throw uploadError;
 
         // Get the public URL
         const {
@@ -102,20 +108,35 @@ const PhotoReview = () => {
           },
         ]);
 
-        if (dbError) {
-          // If database insert fails, add the photo back to the state
-          setPhotos((prev) => [...prev, photo]);
-          throw dbError;
-        }
+        if (dbError) throw dbError;
+
+        // Successfully uploaded and saved
+        console.log("Photo successfully processed:", photo.id);
+
       } catch (error) {
-        console.error("Failed to upload photo:", error);
-        // You might want to add an error toast here
+        console.error("Failed to process photo:", error);
+
+        // Only restore if it hasn't been successfully processed
+        if (processingPhotos.has(photo.id)) {
+          setPhotos(prev => {
+            // Ensure we don't add duplicates
+            if (prev.some(p => p.id === photo.id)) return prev;
+            return [...prev, photo];
+          });
+        }
       } finally {
+        // Remove from processing set
+        setProcessingPhotos(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(photo.id);
+          return newSet;
+        });
         setIsUploading(false);
+        setExitDirection(null);
       }
     } else {
-      // For delete, immediately remove from state
-      setPhotos((prev) => prev.filter((p) => p.id !== photo.id));
+      // For delete, just remove from state
+      setPhotos(prev => prev.filter(p => p.id !== photo.id));
       setDragPosition(0);
     }
   };
@@ -201,11 +222,10 @@ const PhotoReview = () => {
                     <motion.div
                       className={`absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-green-500/50 to-transparent 
                                flex items-start justify-center pt-8 transition-colors duration-200
-                               ${
-                                 isOverThreshold && dragPosition < 0
-                                   ? "from-green-400"
-                                   : ""
-                               }`}
+                               ${isOverThreshold && dragPosition < 0
+                          ? "from-green-400"
+                          : ""
+                        }`}
                       initial={{ opacity: 0 }}
                       animate={{
                         opacity: dragPosition < 0 && isDragging ? 1 : 0,
@@ -215,11 +235,10 @@ const PhotoReview = () => {
                       <div className="flex flex-col items-center">
                         <ArrowUp
                           className={`w-8 h-8 text-white mb-2 transition-transform duration-200
-                          ${
-                            isNearThreshold && dragPosition < 0
+                          ${isNearThreshold && dragPosition < 0
                               ? "scale-125"
                               : ""
-                          }`}
+                            }`}
                         />
                         <p className="text-white text-sm font-medium">
                           {isOverThreshold && dragPosition < 0
@@ -232,11 +251,10 @@ const PhotoReview = () => {
                     <motion.div
                       className={`absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-red-500/50 to-transparent 
                                flex items-end justify-center pb-8 transition-colors duration-200
-                               ${
-                                 isOverThreshold && dragPosition > 0
-                                   ? "from-red-400"
-                                   : ""
-                               }`}
+                               ${isOverThreshold && dragPosition > 0
+                          ? "from-red-400"
+                          : ""
+                        }`}
                       initial={{ opacity: 0 }}
                       animate={{
                         opacity: dragPosition > 0 && isDragging ? 1 : 0,
@@ -246,11 +264,10 @@ const PhotoReview = () => {
                       <div className="flex flex-col items-center">
                         <ArrowDown
                           className={`w-8 h-8 text-white mb-2 transition-transform duration-200
-                          ${
-                            isNearThreshold && dragPosition > 0
+                          ${isNearThreshold && dragPosition > 0
                               ? "scale-125"
                               : ""
-                          }`}
+                            }`}
                         />
                         <p className="text-white text-sm font-medium">
                           {isOverThreshold && dragPosition > 0
