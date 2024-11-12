@@ -1,6 +1,5 @@
-import React from 'react';
-import QRCodeDisplay from '../components/QRCodeDisplay';
+import { ShowQRCode } from '../components';
 
 export default function QRCodePage() {
-  return <QRCodeDisplay />;
+  return <ShowQRCode />;
 }

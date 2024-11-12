@@ -26,6 +26,11 @@ const PhotoGallery = () => {
     localStorage.setItem('REMOVED', JSON.stringify(updatedPhotos));
   };
 
+
+  const handleStartCaputuring = () => {
+    navigate('/qr', {state: {from: 'gallery'}});
+  }
+
   return (
     <div className="min-h-screen bg-gray-900">
       {/* Header */}
@@ -67,7 +72,7 @@ const PhotoGallery = () => {
           <div className="flex flex-col items-center justify-center h-[60vh] text-gray-400">
             <p className="text-center mb-4">No photos yet</p>
             <button
-              onClick={() => navigate('/camera')}
+              onClick={handleStartCaputuring}
               className="px-4 py-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors"
             >
               Start capturing moments

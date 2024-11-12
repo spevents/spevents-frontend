@@ -1,5 +1,3 @@
-// src/pages/Venue.tsx
-import React from 'react';
 import Scene from '../components/Scene';
 
 export default function VenuePage() {
