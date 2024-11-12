@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, X, Image as ImageIcon } from 'lucide-react';
+import { Camera, X, Image as ImageIcon, Repeat } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface CameraInterfaceProps {
   initialMode: 'qr' | 'camera';
@@ -10,17 +11,18 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
   const navigate = useNavigate();
   const [hasPermission, setHasPermission] = useState(false);
   const [photos, setPhotos] = useState<Array<{ id: number; url: string }>>([]);
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  const constraints = {
+  const getConstraints = (facing: 'environment' | 'user') => ({
     video: { 
-      facingMode: 'environment',
+      facingMode: facing,
       width: { ideal: 1920 },
       height: { ideal: 1080 }
     },
     audio: false
-  };
+  });
 
   useEffect(() => {
     if (initialMode === 'camera') {
@@ -35,18 +37,27 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
     }
   };
 
-  const startCamera = async () => {
+  const startCamera = async (facing?: 'environment' | 'user') => {
+    cleanup();
+    const currentFacing = facing || facingMode;
+    
     try {
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      const stream = await navigator.mediaDevices.getUserMedia(getConstraints(currentFacing));
       if (videoRef.current) {
         streamRef.current = stream;
         videoRef.current.srcObject = stream;
         setHasPermission(true);
+        setFacingMode(currentFacing);
       }
     } catch (err) {
       console.error('Error accessing camera:', err);
       setHasPermission(false);
     }
+  };
+
+  const flipCamera = () => {
+    const newFacingMode = facingMode === 'environment' ? 'user' : 'environment';
+    startCamera(newFacingMode);
   };
 
   const capturePhoto = () => {
@@ -59,6 +70,12 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
     
     const context = canvas.getContext('2d');
     if (!context) return;
+    
+    // Flip the image horizontally if using front camera
+    if (facingMode === 'user') {
+      context.translate(canvas.width, 0);
+      context.scale(-1, 1);
+    }
     
     context.drawImage(video, 0, 0);
     const photoUrl = canvas.toDataURL('image/jpeg', 0.8);
@@ -84,9 +101,19 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
         </button>
       </div>
 
+      {/* Flip Camera Button */}
+      <div className="absolute top-4 right-16 z-10">
+        <button
+          onClick={flipCamera}
+          className="bg-black/20 backdrop-blur-lg p-3 rounded-full text-white"
+        >
+          <Repeat className="w-6 h-6" />
+        </button>
+      </div>
+
       {/* Photo Counter */}
       <div className="absolute top-4 right-4 px-3 py-1.5 bg-black/50 backdrop-blur-md rounded-full">
-        <span className="text-white text-sm font-medium">
+        <span className={`text-sm font-medium ${photos.length >= 5 ? 'text-red-500' : 'text-white'}`}>
           {photos.length}/5
         </span>
       </div>
@@ -96,8 +123,22 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
         ref={videoRef}
         autoPlay
         playsInline
-        className="h-full w-full object-cover"
+        className={`h-full w-full object-cover ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`}
       />
+
+      {/* Max Photos Warning */}
+      <AnimatePresence>
+        {photos.length >= 5 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="absolute top-16 left-1/2 transform -translate-x-1/2 bg-red-500/90 text-white px-4 py-2 rounded-full text-sm"
+          >
+            Maximum photos reached
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Controls */}
       <div className="absolute bottom-24 inset-x-0 p-8">
@@ -118,8 +159,9 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
 
           <button
             onClick={capturePhoto}
-            className="bg-white w-20 h-20 rounded-full transform transition hover:scale-105 relative"
             disabled={photos.length >= 5}
+            className={`bg-white w-20 h-20 rounded-full transform transition hover:scale-105 relative 
+              ${photos.length >= 5 ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <span className="absolute inset-2 rounded-full border-2 border-gray-200" />
           </button>

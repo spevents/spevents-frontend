@@ -1,6 +1,4 @@
-// File: src/App.tsx
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Camera, Image as ImageIcon, QrCode } from 'lucide-react';
 import { MainLayout } from './layouts/MainLayout';
 import { CameraPage, GalleryPage, QRCodePage, PhotoReviewPage } from './pages';
 
