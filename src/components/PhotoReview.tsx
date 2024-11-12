@@ -30,19 +30,25 @@ const bounceTransition = {
 const PhotoReview = () => {
   const navigate = useNavigate();
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [processingPhotos, setProcessingPhotos] = useState<Set<number>>(new Set());
+  const [processingPhotos, setProcessingPhotos] = useState<Set<number>>(
+    new Set()
+  );
   const [dragPosition, setDragPosition] = useState<number>(0);
   const [screenHeight, setScreenHeight] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [exitDirection, setExitDirection] = useState<"up" | "down" | null>(null);
+  const [exitDirection, setExitDirection] = useState<"up" | "down" | null>(
+    null
+  );
 
   useEffect(() => {
     const updateScreenHeight = () => setScreenHeight(window.innerHeight);
     updateScreenHeight();
     window.addEventListener("resize", updateScreenHeight);
 
-    const sessionPhotos = JSON.parse(sessionStorage.getItem("temp-photos") || "[]");
+    const sessionPhotos = JSON.parse(
+      sessionStorage.getItem("temp-photos") || "[]"
+    );
     setPhotos(sessionPhotos);
 
     return () => window.removeEventListener("resize", updateScreenHeight);
@@ -63,9 +69,12 @@ const PhotoReview = () => {
 
     const swipeThreshold = screenHeight * SWIPE_THRESHOLD_PERCENTAGE;
 
-    if (Math.abs(info.velocity.y) > 400 || Math.abs(info.offset.y) > swipeThreshold) {
+    if (
+      Math.abs(info.velocity.y) > 400 ||
+      Math.abs(info.offset.y) > swipeThreshold
+    ) {
       const isUpward = info.offset.y < 0;
-      setExitDirection(isUpward ? 'up' : 'down');
+      setExitDirection(isUpward ? "up" : "down");
 
       if (isUpward && processingPhotos.has(photo.id)) return;
       handlePhotoAction(photo, isUpward);
@@ -77,39 +86,41 @@ const PhotoReview = () => {
 
   const handlePhotoAction = async (photo: Photo, isUpward: boolean) => {
     if (isUpward) {
-      setProcessingPhotos(prev => new Set(prev).add(photo.id));
+      // Mark photo as being processed
+      setProcessingPhotos((prev) => new Set(prev).add(photo.id));
       setIsUploading(true);
 
       try {
-        setPhotos(prev => prev.filter(p => p.id !== photo.id));
+        // Remove from visible photos immediately
+        setPhotos((prev) => prev.filter((p) => p.id !== photo.id));
         setDragPosition(0);
 
+        // Convert base64 to blob
         const response = await fetch(photo.url);
         const blob = await response.blob();
+
+        // Upload to Supabase Storage only
         const fileName = `photo-${Date.now()}.jpg`;
-        
-        await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from("gallery-photos")
           .upload(fileName, blob, {
             contentType: "image/jpeg",
           });
 
-        const { data: { publicUrl } } = supabase.storage
-          .from("gallery-photos")
-          .getPublicUrl(fileName);
-
-        await supabase.from("photos").insert([{
-          url: publicUrl,
-          created_at: new Date().toISOString(),
-        }]);
-
+        if (uploadError) throw uploadError;
       } catch (error) {
         console.error("Failed to process photo:", error);
+
+        // Only restore if it hasn't been successfully processed
         if (processingPhotos.has(photo.id)) {
-          setPhotos(prev => prev.some(p => p.id === photo.id) ? prev : [...prev, photo]);
+          setPhotos((prev) => {
+            if (prev.some((p) => p.id === photo.id)) return prev;
+            return [...prev, photo];
+          });
         }
       } finally {
-        setProcessingPhotos(prev => {
+        // Remove from processing set
+        setProcessingPhotos((prev) => {
           const newSet = new Set(prev);
           newSet.delete(photo.id);
           return newSet;
@@ -118,20 +129,21 @@ const PhotoReview = () => {
         setExitDirection(null);
       }
     } else {
-      setPhotos(prev => prev.filter(p => p.id !== photo.id));
+      // For delete, just remove from state
+      setPhotos((prev) => prev.filter((p) => p.id !== photo.id));
       setDragPosition(0);
     }
   };
 
   if (photos.length === 0) {
     return (
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={bounceTransition}
         className="fixed inset-0 bg-black flex flex-col items-center justify-center"
       >
-        <motion.h2 
+        <motion.h2
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={bounceTransition}
@@ -160,7 +172,7 @@ const PhotoReview = () => {
   return (
     <div className="fixed inset-0 bg-black">
       {isUploading && (
-        <motion.div 
+        <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full z-50"
@@ -174,8 +186,10 @@ const PhotoReview = () => {
           <AnimatePresence mode="popLayout">
             {photos.map((photo, index) => {
               const dragPercentage = Math.abs(dragPosition / screenHeight);
-              const isNearThreshold = dragPercentage >= ACTIVATION_THRESHOLD_PERCENTAGE;
-              const isOverThreshold = dragPercentage >= SWIPE_THRESHOLD_PERCENTAGE;
+              const isNearThreshold =
+                dragPercentage >= ACTIVATION_THRESHOLD_PERCENTAGE;
+              const isOverThreshold =
+                dragPercentage >= SWIPE_THRESHOLD_PERCENTAGE;
 
               return (
                 <motion.div
@@ -183,14 +197,14 @@ const PhotoReview = () => {
                   className="absolute w-full cursor-grab active:cursor-grabbing"
                   style={{ zIndex: photos.length - index }}
                   initial={{ scale: 0.8, opacity: 0, y: index * -8 }}
-                  animate={{ 
+                  animate={{
                     scale: 1,
                     opacity: 1,
                     y: index * -8,
                     transition: {
                       ...springConfig,
-                      delay: index * 0.05
-                    }
+                      delay: index * 0.05,
+                    },
                   }}
                   exit={{
                     scale: dragPosition < 0 ? 1.1 : 0.8,
@@ -198,8 +212,8 @@ const PhotoReview = () => {
                     y: dragPosition < 0 ? -screenHeight : screenHeight,
                     transition: {
                       ...bounceTransition,
-                      duration: 0.4
-                    }
+                      duration: 0.4,
+                    },
                   }}
                   drag="y"
                   dragConstraints={{ top: 0, bottom: 0 }}
@@ -208,11 +222,11 @@ const PhotoReview = () => {
                   onDrag={handleDragUpdate}
                   onDragEnd={(_, info) => handleDragEnd(photo.id, info)}
                 >
-                  <motion.div 
+                  <motion.div
                     className="relative rounded-2xl overflow-hidden bg-gray-900 shadow-2xl"
                     animate={{
-                      rotate: isDragging ? (dragPosition * 0.02) : 0,
-                      scale: isDragging ? 1.02 : 1
+                      rotate: isDragging ? dragPosition * 0.02 : 0,
+                      scale: isDragging ? 1.02 : 1,
                     }}
                     transition={springConfig}
                   >
@@ -229,9 +243,10 @@ const PhotoReview = () => {
                       initial={{ opacity: 0 }}
                       animate={{
                         opacity: dragPosition < 0 && isDragging ? 1 : 0,
-                        background: isOverThreshold && dragPosition < 0 ? 
-                          "linear-gradient(to bottom, rgba(34, 197, 94, 0.7), transparent)" : 
-                          "linear-gradient(to bottom, rgba(34, 197, 94, 0.5), transparent)"
+                        background:
+                          isOverThreshold && dragPosition < 0
+                            ? "linear-gradient(to bottom, rgba(34, 197, 94, 0.7), transparent)"
+                            : "linear-gradient(to bottom, rgba(34, 197, 94, 0.5), transparent)",
                       }}
                       transition={{ duration: 0.2 }}
                     >
@@ -239,21 +254,25 @@ const PhotoReview = () => {
                         <motion.div
                           animate={{
                             y: isNearThreshold && dragPosition < 0 ? -8 : 0,
-                            scale: isNearThreshold && dragPosition < 0 ? 1.2 : 1
+                            scale:
+                              isNearThreshold && dragPosition < 0 ? 1.2 : 1,
                           }}
                           transition={springConfig}
                         >
                           <ArrowUp className="w-8 h-8 text-white mb-2" />
                         </motion.div>
-                        <motion.p 
+                        <motion.p
                           className="text-white text-sm font-medium"
-                          animate={{ 
-                            scale: isOverThreshold && dragPosition < 0 ? 1.1 : 1,
-                            opacity: isDragging ? 1 : 0.8
+                          animate={{
+                            scale:
+                              isOverThreshold && dragPosition < 0 ? 1.1 : 1,
+                            opacity: isDragging ? 1 : 0.8,
                           }}
                           transition={springConfig}
                         >
-                          {isOverThreshold && dragPosition < 0 ? "Release to add" : "Keep sliding up"}
+                          {isOverThreshold && dragPosition < 0
+                            ? "Release to add"
+                            : "Keep sliding up"}
                         </motion.p>
                       </div>
                     </motion.div>
@@ -264,9 +283,10 @@ const PhotoReview = () => {
                       initial={{ opacity: 0 }}
                       animate={{
                         opacity: dragPosition > 0 && isDragging ? 1 : 0,
-                        background: isOverThreshold && dragPosition > 0 ?
-                          "linear-gradient(to top, rgba(239, 68, 68, 0.7), transparent)" :
-                          "linear-gradient(to top, rgba(239, 68, 68, 0.5), transparent)"
+                        background:
+                          isOverThreshold && dragPosition > 0
+                            ? "linear-gradient(to top, rgba(239, 68, 68, 0.7), transparent)"
+                            : "linear-gradient(to top, rgba(239, 68, 68, 0.5), transparent)",
                       }}
                       transition={{ duration: 0.2 }}
                     >
@@ -274,21 +294,25 @@ const PhotoReview = () => {
                         <motion.div
                           animate={{
                             y: isNearThreshold && dragPosition > 0 ? 8 : 0,
-                            scale: isNearThreshold && dragPosition > 0 ? 1.2 : 1
+                            scale:
+                              isNearThreshold && dragPosition > 0 ? 1.2 : 1,
                           }}
                           transition={springConfig}
                         >
                           <ArrowDown className="w-8 h-8 text-white mb-2" />
                         </motion.div>
-                        <motion.p 
+                        <motion.p
                           className="text-white text-sm font-medium"
-                          animate={{ 
-                            scale: isOverThreshold && dragPosition > 0 ? 1.1 : 1,
-                            opacity: isDragging ? 1 : 0.8
+                          animate={{
+                            scale:
+                              isOverThreshold && dragPosition > 0 ? 1.1 : 1,
+                            opacity: isDragging ? 1 : 0.8,
                           }}
                           transition={springConfig}
                         >
-                          {isOverThreshold && dragPosition > 0 ? "Release to delete" : "Keep sliding down"}
+                          {isOverThreshold && dragPosition > 0
+                            ? "Release to delete"
+                            : "Keep sliding down"}
                         </motion.p>
                       </div>
                     </motion.div>

@@ -1,97 +1,86 @@
 import React, { useState, useEffect } from "react";
-import { ArrowLeft, Trash2, RefreshCw } from "lucide-react";
+import { ArrowLeft, Trash2, RefreshCw, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from '../lib/supabase';
 
-interface Photo {
-  id: number;
+interface StoragePhoto {
   url: string;
+  name: string;
   created_at: string;
 }
 
 const PhotoGallery = () => {
   const navigate = useNavigate();
-  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [photos, setPhotos] = useState<StoragePhoto[]>([]);
   const [isClearing, setIsClearing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedPhoto, setSelectedPhoto] = useState<StoragePhoto | null>(null);
 
   useEffect(() => {
-    // Clear previous session data
     sessionStorage.removeItem("temp-photos");
-
-    // Initial load of photos
-    const loadPhotos = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('photos')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        setPhotos(data || []);
-      } catch (error) {
-        console.error('Error loading photos:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadPhotos();
-
-    // Subscribe to real-time updates
-    const channel = supabase.channel('gallery_updates')
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // Listen to all changes (insert, update, delete)
-          schema: 'public',
-          table: 'photos'
-        },
-        async (payload) => {
-          // Reload all photos to ensure consistency
-          const { data } = await supabase
-            .from('photos')
-            .select('*')
-            .order('created_at', { ascending: false });
-          
-          setPhotos(data || []);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    loadPhotosFromStorage();
+    const pollInterval = setInterval(loadPhotosFromStorage, 5000);
+    return () => clearInterval(pollInterval);
   }, []);
+
+  const loadPhotosFromStorage = async () => {
+    try {
+      const { data: files, error } = await supabase
+        .storage
+        .from('gallery-photos')
+        .list();
+
+      if (error) throw error;
+
+      if (files) {
+        const photoUrls = await Promise.all(
+          files.map(async (file) => {
+            const { data: { publicUrl } } = supabase
+              .storage
+              .from('gallery-photos')
+              .getPublicUrl(file.name);
+
+            return {
+              url: publicUrl,
+              name: file.name,
+              created_at: file.created_at
+            };
+          })
+        );
+
+        const sortedPhotos = photoUrls.sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+
+        setPhotos(sortedPhotos);
+      }
+    } catch (error) {
+      console.error('Error loading photos:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const clearAllData = async () => {
     setIsClearing(true);
     try {
-      // Get all photos
-      const { data: photosToDelete } = await supabase
-        .from('photos')
-        .select('url');
+      const { data: files, error: listError } = await supabase
+        .storage
+        .from('gallery-photos')
+        .list();
 
-      if (photosToDelete) {
-        // Delete from storage
-        for (const photo of photosToDelete) {
-          const fileName = photo.url.split('/').pop();
-          if (fileName) {
-            await supabase.storage
-              .from('gallery-photos')
-              .remove([fileName]);
-          }
-        }
+      if (listError) throw listError;
+
+      if (files && files.length > 0) {
+        const { error: deleteError } = await supabase
+          .storage
+          .from('gallery-photos')
+          .remove(files.map(file => file.name));
+
+        if (deleteError) throw deleteError;
       }
 
-      // Delete all records from the database
-      const { error } = await supabase
-        .from('photos')
-        .delete()
-        .not('id', 'is', null); // Delete all records
-
-      if (error) throw error;
-      
       setPhotos([]);
     } catch (error) {
       console.error('Error clearing gallery:', error);
@@ -105,69 +94,111 @@ const PhotoGallery = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 overflow-auto">
-      {/* Header */}
-      <div className="sticky top-0 inset-x-0 bg-gray-900/80 backdrop-blur-md z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <button
-            onClick={() => navigate(-1)}
-            className="text-white flex items-center space-x-2"
-          >
-            <ArrowLeft className="w-6 h-6" />
-            <span>Back</span>
-          </button>
-          <h1 className="text-white text-lg font-semibold">Gallery</h1>
-          {photos.length > 0 && (
+    <>
+      <div className="min-h-screen bg-gray-900">
+        {/* Header */}
+        <div className="sticky top-0 inset-x-0 bg-gray-900/80 backdrop-blur-md z-10">
+          <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
             <button
-              onClick={clearAllData}
-              disabled={isClearing}
-              className={`p-2 rounded-full transition-all duration-300 
-                ${isClearing ? 'bg-red-500' : 'bg-white/10 hover:bg-white/20'}`}
+              onClick={() => navigate(-1)}
+              className="text-white flex items-center space-x-2"
             >
-              {isClearing ? (
-                <RefreshCw className="w-5 h-5 text-white animate-spin" />
-              ) : (
-                <Trash2 className="w-5 h-5 text-white" />
-              )}
+              <ArrowLeft className="w-6 h-6" />
+              <span>Back</span>
             </button>
+            <h1 className="text-white text-lg font-semibold">Gallery</h1>
+            {photos.length > 0 && (
+              <button
+                onClick={clearAllData}
+                disabled={isClearing}
+                className={`p-2 rounded-full transition-all duration-300 
+                  ${isClearing ? 'bg-red-500' : 'bg-white/10 hover:bg-white/20'}`}
+              >
+                {isClearing ? (
+                  <RefreshCw className="w-5 h-5 text-white animate-spin" />
+                ) : (
+                  <Trash2 className="w-5 h-5 text-white" />
+                )}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Gallery Grid */}
+        <div className="px-4 pb-20 overflow-auto">
+          {isLoading ? (
+            <div className="flex items-center justify-center h-[60vh]">
+              <RefreshCw className="w-8 h-8 text-white animate-spin" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-1">
+              {photos.map((photo) => (
+                <button
+                  key={photo.name}
+                  onClick={() => setSelectedPhoto(photo)}
+                  className="relative aspect-square group focus:outline-none"
+                >
+                  <img
+                    src={photo.url}
+                    alt="Event photo"
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {!isLoading && photos.length === 0 && (
+            <div className="flex flex-col items-center justify-center h-[60vh] text-gray-400">
+              <p className="text-center mb-4">No photos yet</p>
+              <button
+                onClick={handleStartCapturing}
+                className="px-4 py-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors"
+              >
+                Start capturing moments
+              </button>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Gallery Grid */}
-      <div className="px-4 pb-20">
-        {isLoading ? (
-          <div className="flex items-center justify-center h-[60vh]">
-            <RefreshCw className="w-8 h-8 text-white animate-spin" />
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-4">
-            {photos.map((photo) => (
-              <div key={photo.id} className="relative aspect-square group">
-                <img
-                  src={photo.url}
-                  alt="Event photo"
-                  className="w-full h-full object-cover rounded-lg"
-                  loading="lazy"
-                />
-              </div>
-            ))}
-          </div>
-        )}
-
-        {!isLoading && photos.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-[60vh] text-gray-400">
-            <p className="text-center mb-4">No photos yet</p>
-            <button
-              onClick={handleStartCapturing}
-              className="px-4 py-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors"
+      {/* Photo Modal */}
+      <AnimatePresence>
+        {selectedPhoto && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center"
+            onClick={() => setSelectedPhoto(null)}
+          >
+            <div className="absolute top-4 right-4 z-10">
+              <button
+                onClick={() => setSelectedPhoto(null)}
+                className="p-2 rounded-full bg-black/20 backdrop-blur-sm text-white hover:bg-black/30 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative w-full h-full p-4 flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
             >
-              Start capturing moments
-            </button>
-          </div>
+              <img
+                src={selectedPhoto.url}
+                alt="Selected photo"
+                className="max-h-full max-w-full object-contain rounded-lg"
+              />
+            </motion.div>
+          </motion.div>
         )}
-      </div>
-    </div>
+      </AnimatePresence>
+    </>
   );
 };
 
