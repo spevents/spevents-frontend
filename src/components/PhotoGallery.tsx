@@ -1,84 +1,107 @@
 import React, { useState, useEffect } from "react";
 import { ArrowLeft, Trash2, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from '../lib/supabase';
 
 interface Photo {
   id: number;
   url: string;
+  created_at: string;
 }
 
 const PhotoGallery = () => {
   const navigate = useNavigate();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [isClearing, setIsClearing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Clear previous session data
     sessionStorage.removeItem("temp-photos");
 
-    // Load gallery photos
-    const savedPhotos = JSON.parse(
-      localStorage.getItem("REMOVED") || "[]"
-    ) as Photo[];
-    setPhotos(savedPhotos);
+    // Initial load of photos
+    const loadPhotos = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('photos')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-    // Listen for updates from other tabs/windows
-    const handleStorageChange = () => {
-      const updatedPhotos = JSON.parse(
-        localStorage.getItem("REMOVED") || "[]"
-      );
-      setPhotos(updatedPhotos);
+        if (error) throw error;
+        setPhotos(data || []);
+      } catch (error) {
+        console.error('Error loading photos:', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    // Listen for custom event from PhotoReview
-    const handleCustomEvent = (event: CustomEvent) => {
-      setPhotos(event.detail.photos);
-    };
+    loadPhotos();
 
-    window.addEventListener("storage", handleStorageChange);
-    window.addEventListener(
-      "spevents-gallery-update",
-      handleCustomEvent as EventListener
-    );
+    // Subscribe to real-time updates
+    const channel = supabase.channel('gallery_updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to all changes (insert, update, delete)
+          schema: 'public',
+          table: 'photos'
+        },
+        async (payload) => {
+          // Reload all photos to ensure consistency
+          const { data } = await supabase
+            .from('photos')
+            .select('*')
+            .order('created_at', { ascending: false });
+          
+          setPhotos(data || []);
+        }
+      )
+      .subscribe();
 
     return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener(
-        "spevents-gallery-update",
-        handleCustomEvent as EventListener
-      );
+      supabase.removeChannel(channel);
     };
   }, []);
 
-  const deletePhoto = (id: number) => {
-    const updatedPhotos = photos.filter((photo) => photo.id !== id);
-    setPhotos(updatedPhotos);
-    localStorage.setItem("REMOVED", JSON.stringify(updatedPhotos));
+  const clearAllData = async () => {
+    setIsClearing(true);
+    try {
+      // Get all photos
+      const { data: photosToDelete } = await supabase
+        .from('photos')
+        .select('url');
 
-    // Broadcast the update
-    const updateEvent = new CustomEvent("spevents-gallery-update", {
-      detail: { photos: updatedPhotos },
-    });
-    window.dispatchEvent(updateEvent);
+      if (photosToDelete) {
+        // Delete from storage
+        for (const photo of photosToDelete) {
+          const fileName = photo.url.split('/').pop();
+          if (fileName) {
+            await supabase.storage
+              .from('gallery-photos')
+              .remove([fileName]);
+          }
+        }
+      }
+
+      // Delete all records from the database
+      const { error } = await supabase
+        .from('photos')
+        .delete()
+        .not('id', 'is', null); // Delete all records
+
+      if (error) throw error;
+      
+      setPhotos([]);
+    } catch (error) {
+      console.error('Error clearing gallery:', error);
+    } finally {
+      setIsClearing(false);
+    }
   };
 
   const handleStartCapturing = () => {
-    navigate("/qr", { state: { from: "gallery" } });
-  };
-
-  const clearAllData = () => {
-    setIsClearing(true);
-
-    localStorage.removeItem("REMOVED");
-    sessionStorage.removeItem("temp-photos");
-
-    setPhotos([]);
-
-    const updateEvent = new CustomEvent("spevents-gallery-update", {
-      detail: { photos: [] },
-    });
-    window.dispatchEvent(updateEvent);
-    setTimeout(() => setIsClearing(false), 1000);
+    navigate('/qr', { state: { from: 'gallery' } });
   };
 
   return (
@@ -94,40 +117,45 @@ const PhotoGallery = () => {
             <span>Back</span>
           </button>
           <h1 className="text-white text-lg font-semibold">Gallery</h1>
-          <div className="w-12" />
+          {photos.length > 0 && (
+            <button
+              onClick={clearAllData}
+              disabled={isClearing}
+              className={`p-2 rounded-full transition-all duration-300 
+                ${isClearing ? 'bg-red-500' : 'bg-white/10 hover:bg-white/20'}`}
+            >
+              {isClearing ? (
+                <RefreshCw className="w-5 h-5 text-white animate-spin" />
+              ) : (
+                <Trash2 className="w-5 h-5 text-white" />
+              )}
+            </button>
+          )}
         </div>
       </div>
 
       {/* Gallery Grid */}
       <div className="px-4 pb-20">
-        <div className="grid grid-cols-2 gap-4">
-          {photos.map((photo) => (
-            <div key={photo.id} className="relative aspect-square group">
-              <img
-                src={photo.url}
-                alt="Event photo"
-                className="w-full h-full object-cover rounded-lg"
-              />
-              <button
-                onClick={clearAllData}
-                disabled={isClearing || photos.length === 0}
-                className={`p-2 rounded-full transition-all duration-300 ${
-                  isClearing ? "bg-red-500" : "bg-white/10 hover:bg-white/20"
-                } ${
-                  photos.length === 0 ? "opacity-50 cursor-not-allowed" : ""
-                }`}
-              >
-                <RefreshCw
-                  className={`w-5 h-5 text-white ${
-                    isClearing ? "animate-spin" : ""
-                  }`}
+        {isLoading ? (
+          <div className="flex items-center justify-center h-[60vh]">
+            <RefreshCw className="w-8 h-8 text-white animate-spin" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-4">
+            {photos.map((photo) => (
+              <div key={photo.id} className="relative aspect-square group">
+                <img
+                  src={photo.url}
+                  alt="Event photo"
+                  className="w-full h-full object-cover rounded-lg"
+                  loading="lazy"
                 />
-              </button>
-            </div>
-          ))}
-        </div>
+              </div>
+            ))}
+          </div>
+        )}
 
-        {photos.length === 0 && (
+        {!isLoading && photos.length === 0 && (
           <div className="flex flex-col items-center justify-center h-[60vh] text-gray-400">
             <p className="text-center mb-4">No photos yet</p>
             <button
