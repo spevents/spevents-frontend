@@ -1,5 +1,4 @@
-import React from 'react';
-import PhotoGallery from '../components/PhotoGallery';
+import { PhotoGallery } from '../components';
 
 export default function GalleryPage() {
   return (

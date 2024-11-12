@@ -10,16 +10,14 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
-    https: {},
-    watch: {
-      usePolling: true
+    https: {
+      // This enables HTTPS with a self-signed certificate
+      cert: undefined,
+      key: undefined,
     },
-    proxy: {}, // Add proxy if needed
-    strictPort: true,
-    middlewareMode: false
-  },
-  preview: {
-    port: 5173,
-    strictPort: true,
+    proxy: {
+      // Add any proxy configuration if needed
+    },
+    cors: true
   }
 });
