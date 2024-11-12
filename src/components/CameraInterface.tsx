@@ -89,6 +89,7 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
     sessionStorage.setItem('temp-photos', JSON.stringify(sessionPhotos));
   };
 
+
   return (
     <div className="relative h-screen bg-black">
       {/* X Button */}
@@ -98,16 +99,6 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
           className="bg-black/20 backdrop-blur-lg p-3 rounded-full text-white"
         >
           <X className="w-6 h-6" />
-        </button>
-      </div>
-
-      {/* Flip Camera Button */}
-      <div className="absolute top-4 right-16 z-10">
-        <button
-          onClick={flipCamera}
-          className="bg-black/20 backdrop-blur-lg p-3 rounded-full text-white"
-        >
-          <Repeat className="w-6 h-6" />
         </button>
       </div>
 
@@ -157,6 +148,7 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
             <div className="w-14" />
           )}
 
+          {/* Capture Button */}
           <button
             onClick={capturePhoto}
             disabled={photos.length >= 5}
@@ -166,7 +158,13 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
             <span className="absolute inset-2 rounded-full border-2 border-gray-200" />
           </button>
 
-          <div className="w-14" />
+          {/* Flip Camera Button */}
+          <button
+            onClick={flipCamera}
+            className="bg-white/20 backdrop-blur-lg p-4 rounded-full text-white"
+          >
+            <Repeat className="w-6 h-6" />
+          </button>
         </div>
       </div>
     </div>
