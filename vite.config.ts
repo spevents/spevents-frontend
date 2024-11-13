@@ -1,23 +1,16 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import basicSsl from '@vitejs/plugin-basic-ssl';
+import mkcert from 'vite-plugin-mkcert';
 
 export default defineConfig({
   plugins: [
     react(),
-    basicSsl()
+    mkcert()
   ],
   server: {
     host: '0.0.0.0',
     port: 5173,
-    https: {
-      // This enables HTTPS with a self-signed certificate
-      cert: undefined,
-      key: undefined,
-    },
-    proxy: {
-      // Add any proxy configuration if needed
-    },
+    https: {},
     cors: true
   }
 });
