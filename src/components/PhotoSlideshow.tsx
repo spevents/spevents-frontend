@@ -17,7 +17,6 @@ interface Photo {
 const DISPLAY_COUNT = 5;
 const TRANSITION_INTERVAL = 1200;
 const INITIAL_LOAD_DELAY = 800;
-const WINDOW_PADDING = 100;
 
 // Responsive size classes
 const sizeClasses = {
@@ -25,19 +24,18 @@ const sizeClasses = {
   medium: 'w-64 h-56 md:w-72 md:h-64',
   large: 'w-80 h-64 md:w-96 md:h-80',
   vertical: 'w-48 h-80 md:w-56 md:h-96',
-  horizontal: 'w-80 h-48 md:w-96 md:h-56'
+  horizontal: 'w-80 h-48 md:w-96 md:h-56',
 };
 
-// Centered position zones for desktop
+// Centered position zones
 const desktopPositionZones = [
-  { top: '40%', left: '30%' },    // Upper left
-  { top: '40%', left: '70%' },    // Upper right
-  { top: '60%', left: '30%' },    // Lower left
-  { top: '60%', left: '70%' },    // Lower right
-  { top: '50%', left: '50%' },    // Center
+  { top: '35%', left: '35%' }, // Top left
+  { top: '35%', left: '65%' }, // Top right
+  { top: '65%', left: '35%' }, // Bottom left
+  { top: '65%', left: '65%' }, // Bottom right
+  { top: '50%', left: '50%' }, // Center
 ];
 
-// Mobile-friendly single column layout
 const mobilePositionZones = [
   { top: '20%', left: '50%' },
   { top: '40%', left: '50%' },
@@ -57,34 +55,17 @@ export default function PhotoSlideshow() {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
     };
-
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const getRandomPosition = (index: number) => {
-    const positionZones = isMobile ? mobilePositionZones : desktopPositionZones;
-    const zone = positionZones[index % positionZones.length];
-    const maxOffset = isMobile ? 2 : 5; // Reduced offset for mobile
-    
-    const safeTop = Math.min(Math.max(
-      parseFloat(zone.top) + (Math.random() * maxOffset - maxOffset/2),
-      isMobile ? 10 : 20
-    ), isMobile ? 90 : 80);
-    
-    const safeLeft = Math.min(Math.max(
-      parseFloat(zone.left) + (Math.random() * maxOffset - maxOffset/2),
-      isMobile ? 30 : 20
-    ), isMobile ? 70 : 80);
-
-    return {
-      top: `${safeTop}%`,
-      left: `${safeLeft}%`
-    };
+    const zones = isMobile ? mobilePositionZones : desktopPositionZones;
+    return zones[index % zones.length];
   };
 
   const getRandomSize = () => {
-    const sizes: Array<'small' | 'medium' | 'large' | 'vertical' | 'horizontal'> = 
+    const sizes: Array<'small' | 'medium' | 'large' | 'vertical' | 'horizontal'> =
       isMobile ? ['medium', 'vertical'] : ['small', 'medium', 'large', 'vertical', 'horizontal'];
     return sizes[Math.floor(Math.random() * sizes.length)];
   };
@@ -92,43 +73,29 @@ export default function PhotoSlideshow() {
   useEffect(() => {
     async function loadPhotos() {
       try {
-        const { data: files, error } = await supabase
-          .storage
-          .from('gallery-photos')
-          .list();
-
+        const { data: files, error } = await supabase.storage.from('gallery-photos').list();
         if (error) throw error;
 
         if (files) {
           const urls = await Promise.all(
             files.map(async (file) => {
-              const { data: { publicUrl } } = supabase
-                .storage
-                .from('gallery-photos')
-                .getPublicUrl(file.name);
-
+              const { data } = supabase.storage.from('gallery-photos').getPublicUrl(file.name);
               return {
-                url: publicUrl,
+                url: data.publicUrl,
                 id: file.name,
                 size: getRandomSize(),
-                position: getRandomPosition(0)
+                position: getRandomPosition(0),
               };
             })
           );
+
           setAllPhotos(urls);
-          
-          const initialPhotos = [];
-          for (let i = 0; i < DISPLAY_COUNT; i++) {
-            const photo = {
-              ...urls[i],
+          setDisplayedPhotos(
+            urls.slice(0, DISPLAY_COUNT).map((photo, i) => ({
+              ...photo,
               position: getRandomPosition(i),
-              size: getRandomSize()
-            };
-            initialPhotos.push(photo);
-            setDisplayedPhotos([...initialPhotos]);
-            await new Promise(resolve => setTimeout(resolve, INITIAL_LOAD_DELAY));
-          }
-          
+            }))
+          );
           setIsLoading(false);
         }
       } catch (error) {
@@ -141,45 +108,23 @@ export default function PhotoSlideshow() {
   }, []);
 
   useEffect(() => {
-    if (allPhotos.length === 0 || displayedPhotos.length < DISPLAY_COUNT) return;
-
-    const getNewPhoto = (index: number) => {
-      const availablePhotos = allPhotos.filter(
-        photo => !displayedPhotos.find(p => p.id === photo.id)
-      );
-      const basePhoto = availablePhotos.length > 0
-        ? availablePhotos[Math.floor(Math.random() * availablePhotos.length)]
-        : allPhotos[Math.floor(Math.random() * allPhotos.length)];
-
-      return {
-        ...basePhoto,
-        position: getRandomPosition(index),
-        size: getRandomSize()
-      };
-    };
-
     const interval = setInterval(() => {
-      setDisplayedPhotos(current => {
-        const replaceIndex = Math.floor(Math.random() * DISPLAY_COUNT);
-        const newPhotos = [...current];
-        newPhotos[replaceIndex] = getNewPhoto(replaceIndex);
-        return newPhotos;
+      if (allPhotos.length === 0 || displayedPhotos.length < DISPLAY_COUNT) return;
+      const index = Math.floor(Math.random() * DISPLAY_COUNT);
+      const nextPhoto = allPhotos[Math.floor(Math.random() * allPhotos.length)];
+      setDisplayedPhotos((current) => {
+        const updated = [...current];
+        updated[index] = {
+          ...nextPhoto,
+          position: getRandomPosition(index),
+          size: getRandomSize(),
+        };
+        return updated;
       });
     }, TRANSITION_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [allPhotos, displayedPhotos.length]);
-
-  // Update positions when switching between mobile and desktop
-  useEffect(() => {
-    setDisplayedPhotos(current =>
-      current.map((photo, index) => ({
-        ...photo,
-        position: getRandomPosition(index),
-        size: getRandomSize()
-      }))
-    );
-  }, [isMobile]);
+  }, [allPhotos, displayedPhotos]);
 
   if (isLoading) {
     return (
@@ -199,7 +144,7 @@ export default function PhotoSlideshow() {
         <span>Back to Gallery</span>
       </button>
 
-      <div className={`relative w-full h-full ${isMobile ? 'py-20' : 'p-[100px]'}`}>
+      <div className="relative w-full h-full flex items-center justify-center">
         <AnimatePresence mode="sync">
           {displayedPhotos.map((photo, index) => (
             <motion.div
@@ -207,27 +152,23 @@ export default function PhotoSlideshow() {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
-              transition={{
-                duration: 1.5,
-                ease: 'easeInOut'
-              }}
+              transition={{ duration: 1.5, ease: 'easeInOut' }}
               style={{
                 position: 'absolute',
                 top: photo.position.top,
                 left: photo.position.left,
                 transform: 'translate(-50%, -50%)',
-                zIndex: index
+                zIndex: index,
               }}
-              className={`${sizeClasses[photo.size]} shadow-2xl transition-all duration-1000`}
+              className={`${sizeClasses[photo.size]} shadow-2xl`}
             >
               <div className="w-full h-full rounded-lg overflow-hidden">
                 <img
                   src={photo.url}
-                  alt="Event photo"
+                  alt="Photo"
                   className="w-full h-full object-cover"
                   loading="eager"
                 />
-                <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-black/0 to-black/50" />
               </div>
             </motion.div>
           ))}
