@@ -79,3 +79,12 @@ Pull requests are welcome! For major changes, please open an issue first to disc
 - Edge
 
 For the best experience, use the latest version of Chrome on mobile devices.
+
+
+
+Good info for now:
+-[ ] https://www.youtube.com/watch?v=96YcViCGlRo
+-[ ] https://www.youtube.com/results?search_query=typescript+react+wesocket+
+-[] https://socket.io/
+
+

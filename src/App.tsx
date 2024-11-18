@@ -1,6 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { MainLayout } from './layouts/MainLayout';
-import { CameraPage, GalleryPage, QRCodePage, PhotoReviewPage } from './pages';
+import { 
+  CameraPage, 
+  GalleryPage, 
+  QRCodePage, 
+  PhotoReviewPage,
+  SlideshowPage 
+} from './pages';
 
 export default function App() {
   return (
@@ -10,6 +16,7 @@ export default function App() {
         <Route path="/qr" element={<QRCodePage />} />
         <Route path="/camera" element={<CameraPage />} />
         <Route path="/gallery" element={<GalleryPage />} />
+        <Route path="/slideshow" element={<SlideshowPage />} />
         <Route path="/review" element={<PhotoReviewPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

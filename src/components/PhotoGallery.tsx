@@ -107,20 +107,30 @@ const PhotoGallery = () => {
               <span>Back</span>
             </button>
             <h1 className="text-white text-lg font-semibold">Gallery</h1>
-            {photos.length > 0 && (
-              <button
-                onClick={clearAllData}
-                disabled={isClearing}
-                className={`p-2 rounded-full transition-all duration-300 
-                  ${isClearing ? 'bg-red-500' : 'bg-white/10 hover:bg-white/20'}`}
-              >
-                {isClearing ? (
-                  <RefreshCw className="w-5 h-5 text-white animate-spin" />
-                ) : (
-                  <Trash2 className="w-5 h-5 text-white" />
-                )}
-              </button>
-            )}
+            <div className="flex items-center space-x-3">
+              {photos.length > 0 && (
+                <>
+                  <button
+                    onClick={() => navigate('/slideshow')}
+                    className="px-4 py-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors"
+                  >
+                    View Slideshow
+                  </button>
+                  <button
+                    onClick={clearAllData}
+                    disabled={isClearing}
+                    className={`p-2 rounded-full transition-all duration-300 
+                      ${isClearing ? 'bg-red-500' : 'bg-white/10 hover:bg-white/20'}`}
+                  >
+                    {isClearing ? (
+                      <RefreshCw className="w-5 h-5 text-white animate-spin" />
+                    ) : (
+                      <Trash2 className="w-5 h-5 text-white" />
+                    )}
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
