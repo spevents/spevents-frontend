@@ -16,9 +16,9 @@ const HORIZONTAL_ACTIVATION_THRESHOLD_PERCENTAGE = 0.15;
 
 const springConfig = {
   type: "spring",
-  stiffness: 400,
-  damping: 40,
-  mass: 0.8,
+  stiffness: 300,
+  damping: 30,
+  mass: 0.6,
 };
 
 const bounceTransition = {
@@ -97,7 +97,7 @@ export default function PhotoReview() {
     if (isHorizontalDragging) {
       setHorizontalDrag(info.offset.x);
     } else {
-      setDragPosition(info.offset.y);
+      setDragPosition(info.offset.y * 1.2);
     }
   };
 
@@ -275,8 +275,9 @@ export default function PhotoReview() {
                 }}
                 drag={isCurrentPhoto}
                 dragDirectionLock={false}
-                dragConstraints={{ top: 0, bottom: 0, left: 0, right: 0 }}
-                dragElastic={0.15}
+                dragConstraints={{ top: -screenHeight * 0.5, bottom: screenHeight * 0.5, left: -200, right: 200 }}
+                dragElastic={0.4}
+                dragTransition={{bounceStiffness: 300, bounceDamping: 30}}
                 onDragStart={handleDragStart}
                 onDrag={handleDragUpdate}
                 onDragEnd={(_, info) => handleDragEnd(photo.id, info)}
