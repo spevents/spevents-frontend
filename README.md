@@ -88,3 +88,14 @@ Good info for now:
 -[] https://socket.io/
 
 
+Steps for local hoster:
+1. npm run dev
+2. open localhost
+3. open another terminal, run command 
+`ngrok http https://localhost:5173`
+4. go to qr code, update url with free ngrok app url
+5. qr scanning should work anywhere for anyone
+
+
+Announcements to display
+* 
