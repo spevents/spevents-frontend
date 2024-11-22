@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
-import { X, ArrowUp, ArrowDown } from "lucide-react";
+import { X, ArrowUp, ArrowDown, CheckCircle2, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
@@ -9,15 +9,14 @@ interface Photo {
   url: string;
 }
 
-// Reduced thresholds for easier activation
-const SWIPE_THRESHOLD_PERCENTAGE = 0.25; // Reduced from 0.4
-const ACTIVATION_THRESHOLD_PERCENTAGE = 0.15; // Reduced from 0.3
+const SWIPE_THRESHOLD_PERCENTAGE = 0.25;
+const ACTIVATION_THRESHOLD_PERCENTAGE = 0.15;
 
-// Spring animations config for bouncy feel
+// Spring animations for natural feel
 const springConfig = {
   type: "spring",
-  stiffness: 300,
-  damping: 30,
+  stiffness: 400,
+  damping: 40,
   mass: 0.8,
 };
 
@@ -27,28 +26,23 @@ const bounceTransition = {
   duration: 0.6,
 };
 
-const PhotoReview = () => {
+export default function PhotoReview() {
   const navigate = useNavigate();
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [processingPhotos, setProcessingPhotos] = useState<Set<number>>(
-    new Set()
-  );
+  const [processingPhotos, setProcessingPhotos] = useState<Set<number>>(new Set());
   const [dragPosition, setDragPosition] = useState<number>(0);
   const [screenHeight, setScreenHeight] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [exitDirection, setExitDirection] = useState<"up" | "down" | null>(
-    null
-  );
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [exitDirection, setExitDirection] = useState<"up" | "down" | null>(null);
 
   useEffect(() => {
     const updateScreenHeight = () => setScreenHeight(window.innerHeight);
     updateScreenHeight();
     window.addEventListener("resize", updateScreenHeight);
 
-    const sessionPhotos = JSON.parse(
-      sessionStorage.getItem("temp-photos") || "[]"
-    );
+    const sessionPhotos = JSON.parse(sessionStorage.getItem("temp-photos") || "[]");
     setPhotos(sessionPhotos);
 
     return () => window.removeEventListener("resize", updateScreenHeight);
@@ -57,8 +51,7 @@ const PhotoReview = () => {
   const handleDragStart = () => setIsDragging(true);
 
   const handleDragUpdate = (_: any, info: PanInfo) => {
-    // Add some elasticity to the drag
-    const elasticDrag = info.offset.y * 0.85;
+    const elasticDrag = info.offset.y * 0.8; // Increased elasticity
     setDragPosition(elasticDrag);
   };
 
@@ -69,57 +62,43 @@ const PhotoReview = () => {
 
     const swipeThreshold = screenHeight * SWIPE_THRESHOLD_PERCENTAGE;
 
-    if (
-      Math.abs(info.velocity.y) > 400 ||
-      Math.abs(info.offset.y) > swipeThreshold
-    ) {
+    if (Math.abs(info.velocity.y) > 400 || Math.abs(info.offset.y) > swipeThreshold) {
       const isUpward = info.offset.y < 0;
       setExitDirection(isUpward ? "up" : "down");
-
-      if (isUpward && processingPhotos.has(photo.id)) return;
       handlePhotoAction(photo, isUpward);
     } else {
-      // Smooth return to center
       setDragPosition(0);
     }
   };
 
   const handlePhotoAction = async (photo: Photo, isUpward: boolean) => {
     if (isUpward) {
-      // Mark photo as being processed
       setProcessingPhotos((prev) => new Set(prev).add(photo.id));
       setIsUploading(true);
 
       try {
-        // Remove from visible photos immediately
         setPhotos((prev) => prev.filter((p) => p.id !== photo.id));
         setDragPosition(0);
 
-        // Convert base64 to blob
         const response = await fetch(photo.url);
         const blob = await response.blob();
-
-        // Upload to Supabase Storage only
         const fileName = `photo-${Date.now()}.jpg`;
+        
         const { error: uploadError } = await supabase.storage
           .from("gallery-photos")
           .upload(fileName, blob, {
             contentType: "image/jpeg",
+            cacheControl: "3600",
+            upsert: false,
           });
 
         if (uploadError) throw uploadError;
       } catch (error) {
-        console.error("Failed to process photo:", error);
-
-        // Only restore if it hasn't been successfully processed
+        console.error("Upload failed:", error);
         if (processingPhotos.has(photo.id)) {
-          setPhotos((prev) => {
-            if (prev.some((p) => p.id === photo.id)) return prev;
-            return [...prev, photo];
-          });
+          setPhotos((prev) => [...prev, photo]);
         }
       } finally {
-        // Remove from processing set
         setProcessingPhotos((prev) => {
           const newSet = new Set(prev);
           newSet.delete(photo.id);
@@ -129,10 +108,17 @@ const PhotoReview = () => {
         setExitDirection(null);
       }
     } else {
-      // For delete, just remove from state
       setPhotos((prev) => prev.filter((p) => p.id !== photo.id));
       setDragPosition(0);
     }
+  };
+
+  // iOS-style stack navigation
+  const handleStackNavigation = (direction: 1 | -1) => {
+    setCurrentPhotoIndex((prev) => {
+      const newIndex = prev + direction;
+      return Math.max(0, Math.min(newIndex, photos.length - 1));
+    });
   };
 
   if (photos.length === 0) {
@@ -140,191 +126,169 @@ const PhotoReview = () => {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={bounceTransition}
-        className="fixed inset-0 bg-black flex flex-col items-center justify-center"
+        className="fixed inset-0 bg-black/95 backdrop-blur-lg flex flex-col items-center justify-center"
       >
-        <motion.h2
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={bounceTransition}
-          className="text-white text-xl mb-8"
-        >
-          All photos reviewed!
-        </motion.h2>
-        <motion.button
-          initial={{ scale: 0.8, opacity: 0 }}
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-          transition={springConfig}
-          onClick={() => {
-            sessionStorage.removeItem("temp-photos");
-            navigate("/gallery");
-          }}
-          className="bg-white/20 backdrop-blur-lg p-3 rounded-full"
+          transition={bounceTransition}
+          className="bg-white/10 backdrop-blur-md p-8 rounded-2xl text-center"
         >
-          <X className="w-6 h-6 text-white" />
-        </motion.button>
+          <h2 className="text-white text-xl font-medium mb-6">All photos reviewed!</h2>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            transition={springConfig}
+            onClick={() => navigate("/gallery")}
+            className="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-full text-white transition-colors"
+          >
+            View Gallery
+          </motion.button>
+        </motion.div>
       </motion.div>
     );
   }
 
+  const dragPercentage = Math.abs(dragPosition / screenHeight);
+  const isNearThreshold = dragPercentage >= ACTIVATION_THRESHOLD_PERCENTAGE;
+  const isOverThreshold = dragPercentage >= SWIPE_THRESHOLD_PERCENTAGE;
+
   return (
-    <div className="fixed inset-0 bg-black">
+    <div className="fixed inset-0 bg-black/95 backdrop-blur-lg">
       {isUploading && (
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full z-50"
         >
-          <span className="text-white text-sm">Uploading photo...</span>
+          <span className="text-white text-sm font-medium">Uploading photo...</span>
         </motion.div>
       )}
 
-      <div className="h-full flex items-center justify-center p-6 pb-40 -mt-20">
-        <div className="relative w-full max-w-md">
-          <AnimatePresence mode="popLayout">
-            {photos.map((photo, index) => {
-              const dragPercentage = Math.abs(dragPosition / screenHeight);
-              const isNearThreshold =
-                dragPercentage >= ACTIVATION_THRESHOLD_PERCENTAGE;
-              const isOverThreshold =
-                dragPercentage >= SWIPE_THRESHOLD_PERCENTAGE;
+      <div className="relative h-full flex items-center justify-center p-6">
+        <AnimatePresence mode="popLayout">
+          {photos.map((photo, index) => (
+            <motion.div
+              key={photo.id}
+              className="absolute w-full max-w-md cursor-grab active:cursor-grabbing"
+              style={{ 
+                zIndex: index === currentPhotoIndex ? 10 : photos.length - index,
+                filter: index !== currentPhotoIndex ? 'brightness(0.7)' : 'none',
+              }}
+              initial={{ scale: 0.8, opacity: 0, y: index * -8 }}
+              animate={{
+                scale: index === currentPhotoIndex ? 1 : 0.9,
+                opacity: index === currentPhotoIndex ? 1 : 0.7,
+                y: index === currentPhotoIndex ? 0 : index * -8,
+                rotateX: index === currentPhotoIndex ? 0 : -10,
+                transition: springConfig,
+              }}
+              exit={{
+                scale: exitDirection === "up" ? 1.1 : 0.8,
+                opacity: 0,
+                y: exitDirection === "up" ? -screenHeight : screenHeight,
+                transition: bounceTransition,
+              }}
+              drag={index === currentPhotoIndex ? "y" : false}
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={0.15}
+              onDragStart={handleDragStart}
+              onDrag={handleDragUpdate}
+              onDragEnd={(_, info) => handleDragEnd(photo.id, info)}
+            >
+              <motion.div
+                className="relative rounded-2xl overflow-hidden shadow-2xl"
+                animate={{
+                  rotate: isDragging ? dragPosition * 0.02 : 0,
+                  scale: isDragging ? 1.02 : 1,
+                }}
+                transition={springConfig}
+              >
+                <img
+                  src={photo.url}
+                  alt="Review"
+                  className="w-full aspect-[3/4] object-cover"
+                  draggable="false"
+                />
 
-              return (
+                {/* Upload Indicator */}
                 <motion.div
-                  key={photo.id}
-                  className="absolute w-full cursor-grab active:cursor-grabbing"
-                  style={{ zIndex: photos.length - index }}
-                  initial={{ scale: 0.8, opacity: 0, y: index * -8 }}
+                  className="absolute inset-0 flex items-center justify-center"
+                  initial={{ opacity: 0 }}
                   animate={{
-                    scale: 1,
-                    opacity: 1,
-                    y: index * -8,
-                    transition: {
-                      ...springConfig,
-                      delay: index * 0.05,
-                    },
+                    opacity: dragPosition < 0 && isDragging ? 1 : 0,
+                    background: `linear-gradient(to bottom, ${
+                      isOverThreshold && dragPosition < 0
+                        ? "rgba(34, 197, 94, 0.9)"
+                        : "rgba(34, 197, 94, 0.7)"
+                    }, transparent)`,
                   }}
-                  exit={{
-                    scale: dragPosition < 0 ? 1.1 : 0.8,
-                    opacity: 0,
-                    y: dragPosition < 0 ? -screenHeight : screenHeight,
-                    transition: {
-                      ...bounceTransition,
-                      duration: 0.4,
-                    },
-                  }}
-                  drag="y"
-                  dragConstraints={{ top: 0, bottom: 0 }}
-                  dragElastic={0.15} // More elastic feel
-                  onDragStart={handleDragStart}
-                  onDrag={handleDragUpdate}
-                  onDragEnd={(_, info) => handleDragEnd(photo.id, info)}
+                  transition={{ duration: 0.2 }}
                 >
                   <motion.div
-                    className="relative rounded-2xl overflow-hidden bg-gray-900 shadow-2xl"
+                    className="flex flex-col items-center"
                     animate={{
-                      rotate: isDragging ? dragPosition * 0.02 : 0,
-                      scale: isDragging ? 1.02 : 1,
+                      scale: isNearThreshold && dragPosition < 0 ? 1.2 : 1,
+                      y: isNearThreshold && dragPosition < 0 ? -20 : 0,
                     }}
                     transition={springConfig}
                   >
-                    <img
-                      src={photo.url}
-                      alt="Review"
-                      className="w-full aspect-[3/4] object-cover"
-                      draggable="false"
-                    />
-
-                    <motion.div
-                      className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-green-500/50 to-transparent 
-                               flex items-start justify-center pt-8"
-                      initial={{ opacity: 0 }}
-                      animate={{
-                        opacity: dragPosition < 0 && isDragging ? 1 : 0,
-                        background:
-                          isOverThreshold && dragPosition < 0
-                            ? "linear-gradient(to bottom, rgba(34, 197, 94, 0.7), transparent)"
-                            : "linear-gradient(to bottom, rgba(34, 197, 94, 0.5), transparent)",
-                      }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <div className="flex flex-col items-center">
-                        <motion.div
-                          animate={{
-                            y: isNearThreshold && dragPosition < 0 ? -8 : 0,
-                            scale:
-                              isNearThreshold && dragPosition < 0 ? 1.2 : 1,
-                          }}
-                          transition={springConfig}
-                        >
-                          <ArrowUp className="w-8 h-8 text-white mb-2" />
-                        </motion.div>
-                        <motion.p
-                          className="text-white text-sm font-medium"
-                          animate={{
-                            scale:
-                              isOverThreshold && dragPosition < 0 ? 1.1 : 1,
-                            opacity: isDragging ? 1 : 0.8,
-                          }}
-                          transition={springConfig}
-                        >
-                          {isOverThreshold && dragPosition < 0
-                            ? "Release to add"
-                            : "Keep sliding up"}
-                        </motion.p>
-                      </div>
-                    </motion.div>
-
-                    <motion.div
-                      className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-red-500/50 to-transparent 
-                               flex items-end justify-center pb-8"
-                      initial={{ opacity: 0 }}
-                      animate={{
-                        opacity: dragPosition > 0 && isDragging ? 1 : 0,
-                        background:
-                          isOverThreshold && dragPosition > 0
-                            ? "linear-gradient(to top, rgba(239, 68, 68, 0.7), transparent)"
-                            : "linear-gradient(to top, rgba(239, 68, 68, 0.5), transparent)",
-                      }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <div className="flex flex-col items-center">
-                        <motion.div
-                          animate={{
-                            y: isNearThreshold && dragPosition > 0 ? 8 : 0,
-                            scale:
-                              isNearThreshold && dragPosition > 0 ? 1.2 : 1,
-                          }}
-                          transition={springConfig}
-                        >
-                          <ArrowDown className="w-8 h-8 text-white mb-2" />
-                        </motion.div>
-                        <motion.p
-                          className="text-white text-sm font-medium"
-                          animate={{
-                            scale:
-                              isOverThreshold && dragPosition > 0 ? 1.1 : 1,
-                            opacity: isDragging ? 1 : 0.8,
-                          }}
-                          transition={springConfig}
-                        >
-                          {isOverThreshold && dragPosition > 0
-                            ? "Release to delete"
-                            : "Keep sliding down"}
-                        </motion.p>
-                      </div>
-                    </motion.div>
+                    <CheckCircle2 className="w-12 h-12 text-white mb-4" />
+                    <p className="text-white text-lg font-medium">
+                      {isOverThreshold ? "Release to Upload" : "Keep sliding up"}
+                    </p>
                   </motion.div>
                 </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        </div>
+
+                {/* Delete Indicator */}
+                <motion.div
+                  className="absolute inset-0 flex items-center justify-center"
+                  initial={{ opacity: 0 }}
+                  animate={{
+                    opacity: dragPosition > 0 && isDragging ? 1 : 0,
+                    background: `linear-gradient(to bottom, transparent, ${
+                      isOverThreshold && dragPosition > 0
+                        ? "rgba(239, 68, 68, 0.9)"
+                        : "rgba(239, 68, 68, 0.7)"
+                    })`,
+                  }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <motion.div
+                    className="flex flex-col items-center"
+                    animate={{
+                      scale: isNearThreshold && dragPosition > 0 ? 1.2 : 1,
+                      y: isNearThreshold && dragPosition > 0 ? 20 : 0,
+                    }}
+                    transition={springConfig}
+                  >
+                    <Trash2 className="w-12 h-12 text-white mb-4" />
+                    <p className="text-white text-lg font-medium">
+                      {isOverThreshold ? "Release to Delete" : "Keep sliding down"}
+                    </p>
+                  </motion.div>
+                </motion.div>
+              </motion.div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+
+        {/* Stack Navigation */}
+        {photos.length > 1 && (
+          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex items-center space-x-2">
+            {photos.map((_, index) => (
+              <motion.button
+                key={index}
+                className={`w-2 h-2 rounded-full transition-colors ${
+                  index === currentPhotoIndex ? "bg-white" : "bg-white/30"
+                }`}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setCurrentPhotoIndex(index)}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
-};
-
-export default PhotoReview;
+}
