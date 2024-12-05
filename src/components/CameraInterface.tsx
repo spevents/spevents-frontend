@@ -118,7 +118,7 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
       {/* Flash overlay */}
       <div
         ref={flashRef}
-        className="absolute inset-0 bg-white pointer-events-none transition-opacity duration-150 z-20"
+        className="absolute inset-0 bg-black pointer-events-none transition-opacity duration-150 z-20"
         style={{ opacity: 0 }}
       />
 
