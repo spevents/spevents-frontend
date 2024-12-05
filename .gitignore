@@ -43,3 +43,5 @@ pnpm-lock.yaml
 *.pfx
 certificates/
 .certificates/
+aws/
+.aws
