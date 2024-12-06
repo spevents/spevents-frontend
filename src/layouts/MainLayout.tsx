@@ -11,28 +11,28 @@ export function MainLayout() {
   };
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-hunter-green to-brunswick-green">
+    <div className="relative min-h-screen bg-[#8B0000]">
       {/* Demo Badge */}
-      <div className="absolute top-4 right-4 z-50 px-4 py-2 bg-sage/90 text-brunswick-green font-semibold rounded-full backdrop-blur-sm">
+      <div className="fixed top-4 right-4 z-50 px-4 py-2 bg-[#FFD700] text-[#8B0000] font-semibold rounded-full">
         DEMO MODE
       </div>
 
       {/* Back to Landing */}
       <Link 
         to="/"
-        className="absolute top-4 left-4 z-50 flex items-center gap-2 px-4 py-2 bg-white/90 text-brunswick-green 
-          hover:bg-white transition-colors rounded-full backdrop-blur-sm"
+        className="fixed top-4 left-4 z-50 flex items-center gap-2 px-4 py-2 bg-white/90 hover:bg-white text-[#8B0000] rounded-full backdrop-blur-sm transition-colors"
       >
-        <span>← Back to Home</span>
+        ← Back to Home
       </Link>
 
-      <header className="absolute top-16 w-full z-10 bg-black/20 backdrop-blur-sm">
+      {/* Original Header */}
+      <header className="fixed top-16 w-full z-10 bg-black/20 backdrop-blur-sm">
         <nav className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <Link to="/demo" className="flex items-center space-x-2">
-              <Camera className="w-8 h-8 text-timberwolf" />
-              <span className="text-2xl font-bold text-timberwolf">
-                Spevents Demo
+              <Camera className="w-8 h-8 text-[#FFD700]" />
+              <span className="text-2xl font-bold text-[#FFD700]">
+                Spevents
               </span>
             </Link>
             <div className="flex items-center space-x-4">
@@ -44,7 +44,7 @@ export function MainLayout() {
                   <button
                     key={key}
                     onClick={action}
-                    className="text-timberwolf hover:text-sage transition-colors"
+                    className="text-white hover:text-gray-200"
                   >
                     <Icon className="w-6 h-6" />
                   </button>
@@ -52,7 +52,7 @@ export function MainLayout() {
                   <Link
                     key={key}
                     to={to!}
-                    className="text-timberwolf hover:text-sage transition-colors"
+                    className="text-white hover:text-gray-200"
                   >
                     <Icon className="w-6 h-6" />
                   </Link>
@@ -67,7 +67,7 @@ export function MainLayout() {
         <Scene />
       </main>
 
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-sage text-sm bg-brunswick-green/30 px-4 py-2 rounded-full backdrop-blur-sm">
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 text-white/70 text-sm bg-black/30 px-4 py-2 rounded-full backdrop-blur-sm">
         Hover over photos to see details • Drag to rotate • Scroll to zoom
       </div>
     </div>
