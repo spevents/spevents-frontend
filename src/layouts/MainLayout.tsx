@@ -12,21 +12,7 @@ export function MainLayout() {
 
   return (
     <div className="relative min-h-screen bg-[#8B0000]">
-      {/* Demo Badge */}
-      <div className="fixed top-4 right-4 z-50 px-4 py-2 bg-[#FFD700] text-[#8B0000] font-semibold rounded-full">
-        DEMO MODE
-      </div>
-
-      {/* Back to Landing */}
-      <Link 
-        to="/"
-        className="fixed top-4 left-4 z-50 flex items-center gap-2 px-4 py-2 bg-white/90 hover:bg-white text-[#8B0000] rounded-full backdrop-blur-sm transition-colors"
-      >
-        ← Back to Home
-      </Link>
-
-      {/* Original Header */}
-      <header className="fixed top-16 w-full z-10 bg-black/20 backdrop-blur-sm">
+      <header className="fixed top-0 w-full z-10 bg-black/20 backdrop-blur-sm">
         <nav className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <Link to="/demo" className="flex items-center space-x-2">

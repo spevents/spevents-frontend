@@ -1,8 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { CameraPage, GalleryPage, QRCodePage, PhotoReviewPage, VenuePage } from './pages';
+import { CameraPage, GalleryPage, QRCodePage, PhotoReviewPage } from './pages';
 import { NgrokProvider } from './contexts/NgrokContext';
 import { LandingPage, ProductPage, ExamplesPage } from './pages/landing';
 import { DemoLayout } from './layouts/DemoLayout';
+import { MainLayout } from './layouts/MainLayout';
 
 export default function App() {
   return (
@@ -14,15 +15,15 @@ export default function App() {
           <Route path="/product" element={<ProductPage />} />
           <Route path="/examples" element={<ExamplesPage />} />
           
-          {/* Demo Section - All wrapped in DemoLayout */}
-          <Route path="/demo" element={<DemoLayout><VenuePage /></DemoLayout>} />
-          <Route path="/demo/venue" element={<DemoLayout><VenuePage /></DemoLayout>} />
-          <Route path="/demo/qr" element={<DemoLayout><QRCodePage /></DemoLayout>} />
-          <Route path="/demo/camera" element={<DemoLayout><CameraPage /></DemoLayout>} />
-          <Route path="/demo/gallery" element={<DemoLayout><GalleryPage /></DemoLayout>} />
-          <Route path="/demo/review" element={<DemoLayout><PhotoReviewPage /></DemoLayout>} />
+          {/* Demo Section - Nested Routes */}
+          <Route path="/demo" element={<DemoLayout />}>
+            <Route index element={<MainLayout />} />
+            <Route path="qr" element={<QRCodePage />} />
+            <Route path="camera" element={<CameraPage />} />
+            <Route path="gallery" element={<GalleryPage />} />
+            <Route path="review" element={<PhotoReviewPage />} />
+          </Route>
           
-          {/* Redirect all unknown paths to home */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
