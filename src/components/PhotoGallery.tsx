@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ArrowLeft, Trash2, RefreshCw, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from '../lib/supabase';
 
@@ -12,10 +12,15 @@ interface StoragePhoto {
 
 const PhotoGallery = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [photos, setPhotos] = useState<StoragePhoto[]>([]);
   const [isClearing, setIsClearing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<StoragePhoto | null>(null);
+
+  // Check if we're in demo mode by looking at the URL path
+  const isDemoMode = location.pathname.startsWith('/demo');
+  const basePrefix = isDemoMode ? '/demo' : '';
 
   useEffect(() => {
     sessionStorage.removeItem("temp-photos");
@@ -90,7 +95,7 @@ const PhotoGallery = () => {
   };
 
   const handleStartCapturing = () => {
-    navigate('/qr', { state: { from: 'gallery' } });
+    navigate(`${basePrefix}/qr`, { state: { from: 'gallery' } });
   };
 
   return (
@@ -100,7 +105,7 @@ const PhotoGallery = () => {
         <div className="sticky top-0 inset-x-0 bg-gray-900/80 backdrop-blur-md z-10">
           <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => navigate(`${basePrefix}`)}
               className="text-white flex items-center space-x-2"
             >
               <ArrowLeft className="w-6 h-6" />
@@ -111,7 +116,7 @@ const PhotoGallery = () => {
               {photos.length > 0 && (
                 <>
                   <button
-                    onClick={() => navigate('/slideshow')}
+                    onClick={() => navigate(`${basePrefix}/slideshow`)}
                     className="px-4 py-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors"
                   >
                     View Slideshow

@@ -1,4 +1,3 @@
-// src/components/ShowQRCode.tsx
 import { useNavigate, useLocation } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
@@ -11,6 +10,9 @@ export default function ShowQRCode() {
   const { baseUrl, setBaseUrl } = useNgrok();
   const [isUpdating, setIsUpdating] = useState(false);
   
+  const isDemoMode = location.pathname.startsWith('/demo');
+  const basePrefix = isDemoMode ? '/demo' : '';
+  
   const handleUpdateNgrokUrl = () => {
     const newUrl = prompt('Enter your ngrok URL (e.g., https://xxxx-xxx-xx-xxx-xx.ngrok.io)');
     if (newUrl) {
@@ -22,19 +24,37 @@ export default function ShowQRCode() {
 
   const handleBack = () => {
     const source = location.state?.from;
-    switch (source) {
-      case 'venue':
-        navigate('/');
-        break;
-      case 'gallery':
-        navigate('/gallery');
-        break;
-      default:
-        navigate('/');
+    if (isDemoMode) {
+      switch (source) {
+        case 'venue':
+          navigate('/demo');
+          break;
+        case 'gallery':
+          navigate('/demo/gallery');
+          break;
+        default:
+          navigate('/demo');
+      }
+    } else {
+      switch (source) {
+        case 'venue':
+          navigate('/');
+          break;
+        case 'gallery':
+          navigate('/gallery');
+          break;
+        default:
+          navigate('/');
+      }
     }
   };
 
-  const getCameraUrl = () => baseUrl ? `${baseUrl}/camera` : '';
+  const getCameraUrl = () => {
+    if (baseUrl) {
+      return isDemoMode ? `${baseUrl}/demo/camera` : `${baseUrl}/camera`;
+    }
+    return '';
+  };
 
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">

@@ -1,130 +1,112 @@
+// src/components/PhotoSlideshow.tsx
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 interface Photo {
-  url: string;
+  src: string;
   id: string;
-  size: 'small' | 'medium' | 'large' | 'vertical' | 'horizontal';
-  position: {
-    top: string;
-    left: string;
-  };
+  createdAt: string;
 }
 
-const DISPLAY_COUNT = 5;
-const TRANSITION_INTERVAL = 1200;
-const INITIAL_LOAD_DELAY = 800;
-
-// Responsive size classes
-const sizeClasses = {
-  small: 'w-48 h-48 md:w-56 md:h-56',
-  medium: 'w-64 h-56 md:w-72 md:h-64',
-  large: 'w-80 h-64 md:w-96 md:h-80',
-  vertical: 'w-48 h-80 md:w-56 md:h-96',
-  horizontal: 'w-80 h-48 md:w-96 md:h-56',
-};
-
-// Centered position zones
-const desktopPositionZones = [
-  { top: '35%', left: '35%' }, // Top left
-  { top: '35%', left: '65%' }, // Top right
-  { top: '65%', left: '35%' }, // Bottom left
-  { top: '65%', left: '65%' }, // Bottom right
-  { top: '50%', left: '50%' }, // Center
-];
-
-const mobilePositionZones = [
-  { top: '20%', left: '50%' },
-  { top: '40%', left: '50%' },
-  { top: '60%', left: '50%' },
-  { top: '80%', left: '50%' },
-  { top: '100%', left: '50%' },
-];
+const MAX_PHOTOS = 6;
+const PHOTO_REFRESH_INTERVAL = 750;
+const RECENT_THRESHOLD =   60 * 1000; // 5 minutes in milliseconds
 
 export default function PhotoSlideshow() {
   const navigate = useNavigate();
-  const [allPhotos, setAllPhotos] = useState<Photo[]>([]);
   const [displayedPhotos, setDisplayedPhotos] = useState<Photo[]>([]);
+  const [allPhotos, setAllPhotos] = useState<Photo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const loadPhotosFromStorage = async () => {
+    try {
+      const { data: files, error } = await supabase
+        .storage
+        .from('gallery-photos')
+        .list();
 
-  const getRandomPosition = (index: number) => {
-    const zones = isMobile ? mobilePositionZones : desktopPositionZones;
-    return zones[index % zones.length];
-  };
+      if (error) throw error;
 
-  const getRandomSize = () => {
-    const sizes: Array<'small' | 'medium' | 'large' | 'vertical' | 'horizontal'> =
-      isMobile ? ['medium', 'vertical'] : ['small', 'medium', 'large', 'vertical', 'horizontal'];
-    return sizes[Math.floor(Math.random() * sizes.length)];
-  };
+      if (files) {
+        const photoUrls = await Promise.all(
+          files.map(async (file) => {
+            const { data: { publicUrl } } = supabase
+              .storage
+              .from('gallery-photos')
+              .getPublicUrl(file.name);
 
-  useEffect(() => {
-    async function loadPhotos() {
-      try {
-        const { data: files, error } = await supabase.storage.from('gallery-photos').list();
-        if (error) throw error;
+            return {
+              src: publicUrl,
+              id: file.name,
+              createdAt: file.created_at,
+            };
+          })
+        );
 
-        if (files) {
-          const urls = await Promise.all(
-            files.map(async (file) => {
-              const { data } = supabase.storage.from('gallery-photos').getPublicUrl(file.name);
-              return {
-                url: data.publicUrl,
-                id: file.name,
-                size: getRandomSize(),
-                position: getRandomPosition(0),
-              };
-            })
-          );
+        const sortedPhotos = photoUrls.sort((a, b) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
 
-          setAllPhotos(urls);
-          setDisplayedPhotos(
-            urls.slice(0, DISPLAY_COUNT).map((photo, i) => ({
-              ...photo,
-              position: getRandomPosition(i),
-            }))
-          );
-          setIsLoading(false);
+        setAllPhotos(sortedPhotos);
+        
+        // Initialize displayed photos if empty
+        if (displayedPhotos.length === 0) {
+          setDisplayedPhotos(sortedPhotos.slice(0, MAX_PHOTOS));
         }
-      } catch (error) {
-        console.error('Failed to load photos:', error);
+        
         setIsLoading(false);
       }
+    } catch (error) {
+      console.error('Error loading photos:', error);
+      setIsLoading(false);
     }
+  };
 
-    loadPhotos();
+  // Regular polling for new photos
+  useEffect(() => {
+    loadPhotosFromStorage();
+    const pollInterval = setInterval(loadPhotosFromStorage, PHOTO_REFRESH_INTERVAL);
+    return () => clearInterval(pollInterval);
   }, []);
 
+  // Photo rotation logic
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (allPhotos.length === 0 || displayedPhotos.length < DISPLAY_COUNT) return;
-      const index = Math.floor(Math.random() * DISPLAY_COUNT);
-      const nextPhoto = allPhotos[Math.floor(Math.random() * allPhotos.length)];
-      setDisplayedPhotos((current) => {
-        const updated = [...current];
-        updated[index] = {
-          ...nextPhoto,
-          position: getRandomPosition(index),
-          size: getRandomSize(),
-        };
-        return updated;
-      });
-    }, TRANSITION_INTERVAL);
+    if (allPhotos.length === 0) return;
 
-    return () => clearInterval(interval);
-  }, [allPhotos, displayedPhotos]);
+    const rotateInterval = setInterval(() => {
+      setDisplayedPhotos(current => {
+        const now = new Date().getTime();
+        
+        // Filter recent photos
+        const recentPhotos = allPhotos.filter(photo => 
+          now - new Date(photo.createdAt).getTime() < RECENT_THRESHOLD
+        );
+
+        // Decide which photos to use as source
+        const sourcePhotos = recentPhotos.length > 0 ? recentPhotos : allPhotos;
+        
+        // Get photos that aren't currently displayed
+        const availablePhotos = sourcePhotos.filter(
+          photo => !current.find(p => p.id === photo.id)
+        );
+
+        if (availablePhotos.length === 0) return current;
+
+        // Create new array with one random photo replaced
+        const newPhotos = [...current];
+        const replaceIndex = Math.floor(Math.random() * Math.min(MAX_PHOTOS, current.length));
+        const randomNewPhoto = availablePhotos[Math.floor(Math.random() * availablePhotos.length)];
+        
+        newPhotos[replaceIndex] = randomNewPhoto;
+        return newPhotos;
+      });
+    }, PHOTO_REFRESH_INTERVAL);
+
+    return () => clearInterval(rotateInterval);
+  }, [allPhotos]);
 
   if (isLoading) {
     return (
@@ -136,43 +118,49 @@ export default function PhotoSlideshow() {
 
   return (
     <div className="fixed inset-0 bg-black overflow-hidden">
-      <button
-        onClick={() => navigate('/gallery')}
-        className="fixed top-4 left-4 z-50 flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-white hover:bg-white/20 transition-colors"
-      >
-        <ArrowLeft className="w-5 h-5" />
-        <span>Back to Gallery</span>
-      </button>
+      <div className="absolute top-4 left-4 z-50">
+        <button
+          onClick={() => navigate('/demo/gallery')}
+          className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-white hover:bg-white/20 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span>Back to Gallery</span>
+        </button>
+      </div>
 
-      <div className="relative w-full h-full flex items-center justify-center">
-        <AnimatePresence mode="sync">
-          {displayedPhotos.map((photo, index) => (
-            <motion.div
-              key={photo.id}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ duration: 1.5, ease: 'easeInOut' }}
-              style={{
-                position: 'absolute',
-                top: photo.position.top,
-                left: photo.position.left,
-                transform: 'translate(-50%, -50%)',
-                zIndex: index,
-              }}
-              className={`${sizeClasses[photo.size]} shadow-2xl`}
-            >
-              <div className="w-full h-full rounded-lg overflow-hidden">
-                <img
-                  src={photo.url}
-                  alt="Photo"
-                  className="w-full h-full object-cover"
-                  loading="eager"
-                />
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="w-full max-w-7xl px-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 auto-rows-fr">
+            <AnimatePresence mode="popLayout">
+              {displayedPhotos.map((photo) => (
+                <motion.div
+                  key={photo.id}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 30,
+                    duration: 0.5
+                  }}
+                  className="relative aspect-[4/3]"
+                >
+                  <div className="absolute inset-0 p-1">
+                    <div className="w-full h-full bg-white/90 rounded-lg overflow-hidden">
+                      <img
+                        src={photo.src}
+                        alt="Event photo"
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        </div>
       </div>
     </div>
   );

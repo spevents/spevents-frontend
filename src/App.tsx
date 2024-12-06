@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { CameraPage, GalleryPage, QRCodePage, PhotoReviewPage } from './pages';
+import { CameraPage, GalleryPage, QRCodePage, PhotoReviewPage, SlideshowPage } from './pages';
 import { NgrokProvider } from './contexts/NgrokContext';
 import { LandingPage, ProductPage, ExamplesPage } from './pages/landing';
 import { DemoLayout } from './layouts/DemoLayout';
@@ -21,6 +21,7 @@ export default function App() {
             <Route path="qr" element={<QRCodePage />} />
             <Route path="camera" element={<CameraPage />} />
             <Route path="gallery" element={<GalleryPage />} />
+            <Route path="slideshow" element={<SlideshowPage />} />
             <Route path="review" element={<PhotoReviewPage />} />
           </Route>
           

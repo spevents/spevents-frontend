@@ -13,20 +13,21 @@ export function LandingPage() {
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <h1 className="text-5xl md:text-6xl font-bold mb-6 text-brunswick-green">
-              Making Every Event Unforgettable
+              Easy Guest Photo Curation
             </h1>
             <p className="text-xl text-hunter-green mb-8 max-w-2xl mx-auto">
-              Capture and share every moment in real-time with our innovative 3D photo gallery system.
-              No apps required, just pure engagement.
+              Real-time guest photo collection. Just scan a QR code and swipe up to submit photos.
+              No apps required.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link 
-                to="/venue" 
+                to="/demo" 
                 className="px-8 py-3 bg-fern-green text-white rounded-full 
                   hover:bg-hunter-green transition-colors"
               >
                 Try Demo
               </Link>
+
               <Link 
                 to="/product" 
                 className="px-8 py-3 border border-sage rounded-full 
