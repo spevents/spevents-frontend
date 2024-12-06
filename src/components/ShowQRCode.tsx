@@ -11,7 +11,7 @@ export default function ShowQRCode() {
   const [isUpdating, setIsUpdating] = useState(false);
   
   const isDemoMode = location.pathname.startsWith('/demo');
-  const basePrefix = isDemoMode ? '/demo' : '';
+
   
   const handleUpdateNgrokUrl = () => {
     const newUrl = prompt('Enter your ngrok URL (e.g., https://xxxx-xxx-xx-xxx-xx.ngrok.io)');
