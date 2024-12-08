@@ -7,7 +7,7 @@ export function DemoLayout() {
       {/* Demo Badge and Back Button */}
       <div className="fixed bottom-8 w-full z-50 px-6">
         <div className="container mx-auto flex justify-between items-center">
-          <Link 
+          {/* <Link 
             to="/"
             className="flex items-center gap-2 px-4 py-2 bg-white/90 hover:bg-white text-[#8B0000] rounded-full backdrop-blur-sm transition-colors"
           >
@@ -17,7 +17,7 @@ export function DemoLayout() {
 
           <div className="px-4 py-2 bg-[#FFD700] text-[#8B0000] font-semibold rounded-full">
             DEMO MODE
-          </div>
+          </div> */}
         </div>
       </div>
 

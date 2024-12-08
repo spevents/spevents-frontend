@@ -1,9 +1,10 @@
+// src/components/PhotoReview.tsx
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { CheckCircle2, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSwipeable } from "react-swipeable";
-import { supabase } from "../lib/supabase";
+import { getPresignedUrl } from "../lib/aws";
 
 interface Photo {
   id: number;
@@ -12,10 +13,9 @@ interface Photo {
 
 const SWIPE_THRESHOLD_PERCENTAGE = 0.25;
 const ACTIVATION_THRESHOLD_PERCENTAGE = 0.15;
-const HORIZONTAL_ACTIVATION_THRESHOLD_PERCENTAGE = 0.15;
 
 const springConfig = {
-  type: "spring",
+  type: "spring" as const,
   stiffness: 250,
   damping: 25,
   mass: 0.8,
@@ -23,14 +23,14 @@ const springConfig = {
 };
 
 const bounceTransition = {
-  type: "spring",
+  type: "spring" as const,
   bounce: 0.2,
   duration: 0.6,
   restDelta: 0.001,
 };
 
 const dragTransitionConfig = {
-  type: "spring",
+  type: "spring" as const,
   stiffness: 400,
   damping: 40,
   mass: 1,
@@ -139,14 +139,13 @@ export default function PhotoReview() {
     ) {
       const isUpward = info.offset.y < 0;
       setExitDirection(isUpward ? "up" : "down");
-      handlePhotoAction(photo, isUpward);
+      await handlePhotoAction(photo, isUpward);
     }
 
     setDragPosition(0);
   };
 
   const handlePhotoAction = async (photo: Photo, isUpward: boolean) => {
-    // Get the current index before modifying the array
     const currentIndex = currentPhotoIndex;
     const totalPhotos = photos.length;
 
@@ -158,24 +157,40 @@ export default function PhotoReview() {
         setPhotos((prev) => prev.filter((p) => p.id !== photo.id));
         setDragPosition(0);
 
-        // Adjust currentPhotoIndex if we're removing the last photo
         if (currentIndex === totalPhotos - 1 && currentIndex > 0) {
           setCurrentPhotoIndex(currentIndex - 1);
         }
 
+        // Get the photo data from the temporary URL
         const response = await fetch(photo.url);
         const blob = await response.blob();
+
+        // Generate a unique filename
         const fileName = `photo-${Date.now()}.jpg`;
 
-        const { error: uploadError } = await supabase.storage
-          .from("gallery-photos")
-          .upload(fileName, blob, {
-            contentType: "image/jpeg",
-            cacheControl: "3600",
-            upsert: false,
-          });
+        // Get a presigned URL for upload
+        const presignedUrl = await getPresignedUrl({
+          fileName,
+          contentType: "image/jpeg",
+        });
 
-        if (uploadError) throw uploadError;
+        // Upload directly to S3
+        const uploadResponse = await fetch(presignedUrl, {
+          method: "PUT",
+          body: blob,
+          headers: {
+            "Content-Type": "image/jpeg",
+          },
+        });
+
+        if (!uploadResponse.ok) throw new Error("Upload failed");
+
+        // Add filename to localStorage for tracking
+        const storedPhotos = JSON.parse(
+          localStorage.getItem("uploaded-photos") || "[]"
+        );
+        storedPhotos.push(fileName);
+        localStorage.setItem("uploaded-photos", JSON.stringify(storedPhotos));
       } catch (error) {
         console.error("Upload failed:", error);
         if (processingPhotos.has(photo.id)) {
@@ -192,12 +207,9 @@ export default function PhotoReview() {
       }
     } else {
       setPhotos((prev) => prev.filter((p) => p.id !== photo.id));
-
-      // Adjust currentPhotoIndex if we're removing the last photo
       if (currentIndex === totalPhotos - 1 && currentIndex > 0) {
         setCurrentPhotoIndex(currentIndex - 1);
       }
-
       setDragPosition(0);
     }
   };
@@ -222,7 +234,7 @@ export default function PhotoReview() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             transition={springConfig}
-            onClick={() => navigate("/gallery")}
+            onClick={() => navigate("/demo/gallery")}
             className="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-full text-white transition-colors"
           >
             View Gallery
@@ -235,7 +247,6 @@ export default function PhotoReview() {
   const dragPercentage = Math.abs(dragPosition / screenHeight);
   const isNearThreshold = dragPercentage >= ACTIVATION_THRESHOLD_PERCENTAGE;
   const isOverThreshold = dragPercentage >= SWIPE_THRESHOLD_PERCENTAGE;
-
   return (
     <div className="fixed inset-0 bg-black/95 backdrop-blur-lg">
       {isUploading && (

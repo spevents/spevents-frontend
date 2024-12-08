@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Navigation } from './Navigation';
 import { ChevronRight, Info } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Footer } from '../../components/Footer';
 
 // AWS S3 pricing constants (US East Ohio)
 const S3_PRICING = {
@@ -237,6 +238,8 @@ export function ProductPage() {
           </p>
         </div>
       </section>
+      <Footer />
+    
     </div>
   );
 }

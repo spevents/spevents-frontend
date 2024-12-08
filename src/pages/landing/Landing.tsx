@@ -1,15 +1,16 @@
+// src/pages/landing/Landing.tsx
 import { Link } from 'react-router-dom';
 import { Camera, Users, LineChart } from 'lucide-react';
 import { Navigation } from './Navigation';
-
+import { Footer } from '../../components/Footer';
 
 export function LandingPage() {
   return (
-    <div className="min-h-screen bg-timberwolf">
+    <div className="min-h-screen bg-timberwolf flex flex-col">
       <Navigation />
       
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-6">
+      <section className="flex-grow pt-32 pb-20 px-6">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <h1 className="text-5xl md:text-6xl font-bold mb-6 text-brunswick-green">
@@ -20,13 +21,6 @@ export function LandingPage() {
               No apps required.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link 
-                to="/demo" 
-                className="px-8 py-3 bg-fern-green text-white rounded-full 
-                  hover:bg-hunter-green transition-colors"
-              >
-                Try Demo
-              </Link>
 
               <Link 
                 to="/product" 
@@ -72,6 +66,8 @@ export function LandingPage() {
           </div>
         </div>
       </section>
+
+      <Footer />
     </div>
   );
 }

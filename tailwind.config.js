@@ -1,3 +1,4 @@
+// tailwind.config.js
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -12,6 +13,9 @@ module.exports = {
         'fern-green': '#588157',
         'hunter-green': '#3a5a40',
         'brunswick-green': '#344e41'
+      },
+      fontFamily: {
+        sans: ['Quicksand', 'sans-serif'],
       }
     },
   },

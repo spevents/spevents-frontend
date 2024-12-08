@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase } from '../lib/supabase';
+import { getPhotoUrl } from '../lib/aws';
 
 interface Photo {
   src: string;
@@ -13,7 +13,7 @@ interface Photo {
 
 const MAX_PHOTOS = 6;
 const PHOTO_REFRESH_INTERVAL = 750;
-const RECENT_THRESHOLD =   60 * 1000; // 5 minutes in milliseconds
+const RECENT_THRESHOLD = 60 * 1000; // 5 minutes in milliseconds
 
 export default function PhotoSlideshow() {
   const navigate = useNavigate();
@@ -23,42 +23,30 @@ export default function PhotoSlideshow() {
 
   const loadPhotosFromStorage = async () => {
     try {
-      const { data: files, error } = await supabase
-        .storage
-        .from('gallery-photos')
-        .list();
+      // Get the list of uploaded photos from localStorage
+      const storedPhotos = JSON.parse(localStorage.getItem('uploaded-photos') || '[]') as string[];
+      
+      // Convert the filenames to Photo objects with CloudFront URLs
+      const photoUrls: Photo[] = storedPhotos.map((fileName) => {
+        return {
+          src: getPhotoUrl(fileName),
+          id: fileName,
+          createdAt: new Date().toISOString() // In a production environment, you'd want to store and retrieve actual timestamps
+        };
+      });
 
-      if (error) throw error;
+      const sortedPhotos = photoUrls.sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
 
-      if (files) {
-        const photoUrls = await Promise.all(
-          files.map(async (file) => {
-            const { data: { publicUrl } } = supabase
-              .storage
-              .from('gallery-photos')
-              .getPublicUrl(file.name);
-
-            return {
-              src: publicUrl,
-              id: file.name,
-              createdAt: file.created_at,
-            };
-          })
-        );
-
-        const sortedPhotos = photoUrls.sort((a, b) => 
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-
-        setAllPhotos(sortedPhotos);
-        
-        // Initialize displayed photos if empty
-        if (displayedPhotos.length === 0) {
-          setDisplayedPhotos(sortedPhotos.slice(0, MAX_PHOTOS));
-        }
-        
-        setIsLoading(false);
+      setAllPhotos(sortedPhotos);
+      
+      // Initialize displayed photos if empty
+      if (displayedPhotos.length === 0) {
+        setDisplayedPhotos(sortedPhotos.slice(0, MAX_PHOTOS));
       }
+      
+      setIsLoading(false);
     } catch (error) {
       console.error('Error loading photos:', error);
       setIsLoading(false);

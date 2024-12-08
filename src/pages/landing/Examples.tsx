@@ -1,4 +1,5 @@
 import { Navigation } from './Navigation';
+import { Footer } from '../../components/Footer';
 
 export function ExamplesPage() {
   return (
@@ -75,6 +76,9 @@ export function ExamplesPage() {
           </div>
         </div>
       </section>
+      <Footer />
     </div>
-  );
+
+  
+);
 }

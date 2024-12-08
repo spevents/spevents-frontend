@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+// src/components/PhotoGallery.tsx
+import React, { useState, useEffect } from "react";
 import { ArrowLeft, Trash2, RefreshCw, X } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from '../lib/supabase';
+import { deleteFile, getPhotoUrl } from '../lib/aws';
 
 interface StoragePhoto {
   url: string;
@@ -10,7 +11,7 @@ interface StoragePhoto {
   created_at: string;
 }
 
-const PhotoGallery = () => {
+const PhotoGallery: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [photos, setPhotos] = useState<StoragePhoto[]>([]);
@@ -18,48 +19,25 @@ const PhotoGallery = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<StoragePhoto | null>(null);
 
-  // Check if we're in demo mode by looking at the URL path
   const isDemoMode = location.pathname.startsWith('/demo');
   const basePrefix = isDemoMode ? '/demo' : '';
 
-  useEffect(() => {
-    sessionStorage.removeItem("temp-photos");
-    loadPhotosFromStorage();
-    const pollInterval = setInterval(loadPhotosFromStorage, 5000);
-    return () => clearInterval(pollInterval);
-  }, []);
-
   const loadPhotosFromStorage = async () => {
     try {
-      const { data: files, error } = await supabase
-        .storage
-        .from('gallery-photos')
-        .list();
+      // For demo purposes, we'll use localStorage to track uploaded files
+      const storedPhotos = JSON.parse(localStorage.getItem('uploaded-photos') || '[]') as string[];
+      
+      const photoUrls: StoragePhoto[] = storedPhotos.map((fileName: string) => ({
+        url: getPhotoUrl(fileName),
+        name: fileName,
+        created_at: new Date().toISOString() // In production, store this with the file metadata
+      }));
 
-      if (error) throw error;
+      const sortedPhotos = photoUrls.sort((a: StoragePhoto, b: StoragePhoto) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
 
-      if (files) {
-        const photoUrls = await Promise.all(
-          files.map(async (file) => {
-            const { data: { publicUrl } } = supabase
-              .storage
-              .from('gallery-photos')
-              .getPublicUrl(file.name);
-
-            return {
-              url: publicUrl,
-              name: file.name,
-              created_at: file.created_at
-            };
-          })
-        );
-
-        const sortedPhotos = photoUrls.sort((a, b) => 
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-
-        setPhotos(sortedPhotos);
-      }
+      setPhotos(sortedPhotos);
     } catch (error) {
       console.error('Error loading photos:', error);
     } finally {
@@ -70,22 +48,19 @@ const PhotoGallery = () => {
   const clearAllData = async () => {
     setIsClearing(true);
     try {
-      const { data: files, error: listError } = await supabase
-        .storage
-        .from('gallery-photos')
-        .list();
+      const storedPhotos = JSON.parse(localStorage.getItem('uploaded-photos') || '[]') as string[];
+      
+      // Delete each photo from S3
+      await Promise.all(storedPhotos.map(async (fileName: string) => {
+        try {
+          await deleteFile(fileName);
+        } catch (error) {
+          console.error(`Failed to delete ${fileName}:`, error);
+        }
+      }));
 
-      if (listError) throw listError;
-
-      if (files && files.length > 0) {
-        const { error: deleteError } = await supabase
-          .storage
-          .from('gallery-photos')
-          .remove(files.map(file => file.name));
-
-        if (deleteError) throw deleteError;
-      }
-
+      // Clear local storage
+      localStorage.removeItem('uploaded-photos');
       setPhotos([]);
     } catch (error) {
       console.error('Error clearing gallery:', error);
@@ -97,6 +72,13 @@ const PhotoGallery = () => {
   const handleStartCapturing = () => {
     navigate(`${basePrefix}/qr`, { state: { from: 'gallery' } });
   };
+
+  useEffect(() => {
+    sessionStorage.removeItem("temp-photos");
+    loadPhotosFromStorage();
+    const pollInterval = setInterval(loadPhotosFromStorage, 5000);
+    return () => clearInterval(pollInterval);
+  }, []);
 
   return (
     <>
