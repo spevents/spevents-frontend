@@ -1,7 +1,7 @@
 // src/App.tsx
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { MainLayout } from './layouts/MainLayout';
-import { CameraPage, GalleryPage, QRCodePage, PhotoReviewPage } from './pages';
+import { CameraPage, GalleryPage, QRCodePage, PhotoReviewPage, SlideshowPage } from './pages';
 import { NgrokProvider } from './contexts/NgrokContext';
 
 export default function App() {
@@ -14,6 +14,8 @@ export default function App() {
           <Route path="/camera" element={<CameraPage />} />
           <Route path="/gallery" element={<GalleryPage />} />
           <Route path="/review" element={<PhotoReviewPage />} />
+          <Route path="/slideshow" element={<SlideshowPage />} />
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
