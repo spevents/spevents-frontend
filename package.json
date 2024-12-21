@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.705.0",
+    "@aws-sdk/client-s3": "^3.717.0",
     "@aws-sdk/s3-request-presigner": "^3.705.0",
     "@react-three/drei": "^9.115.0",
     "@react-three/fiber": "^8.17.10",
