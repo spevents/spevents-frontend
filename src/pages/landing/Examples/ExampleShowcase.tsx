@@ -1,4 +1,4 @@
-import React, { useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import {
   ChevronLeft,
@@ -8,16 +8,13 @@ import {
   Camera,
   MapPin,
 } from "lucide-react";
-
 const vabsRothPhotos = import.meta.glob("./ExamplePhotos/VABSxRothRoll/*.jpg", {
   eager: true,
   as: "url",
 });
-
 const vabsRothPhotoArray = Object.values(vabsRothPhotos).sort((a, b) =>
   a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" })
 );
-
 interface Event {
   id: number;
   title: string;
@@ -30,7 +27,6 @@ interface Event {
   images: string[];
   organizerLinks: Array<{ name: string; link: string }>;
 }
-
 const events: Event[] = [
   {
     id: 2, // Mock Shaadi comes first as most recent
@@ -70,21 +66,18 @@ const events: Event[] = [
     ],
   },
 ];
-
 export default function EventShowcase() {
   // Track current image for each event separately
   const [currentImages, setCurrentImages] = useState<Record<number, number>>(
     Object.fromEntries(events.map((event) => [event.id, 0]))
   );
-  const [imageSize, setImageSize] = useState({width: 0, height: 0});
-
+  const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
   const handleDragStart = (
     _: MouseEvent | TouchEvent | PointerEvent,
     info: PanInfo
   ) => {
     // Drag start logic if needed
   };
-
   const handleDragEnd = (
     eventId: number,
     _: MouseEvent | TouchEvent | PointerEvent,
@@ -94,7 +87,6 @@ export default function EventShowcase() {
       const currentImage = currentImages[eventId];
       const eventImages =
         events.find((e) => e.id === eventId)?.images.length || 0;
-
       if (info.offset.x > 0 && currentImage > 0) {
         setCurrentImages((prev) => ({ ...prev, [eventId]: currentImage - 1 }));
       } else if (info.offset.x < 0 && currentImage < eventImages - 1) {
@@ -102,7 +94,6 @@ export default function EventShowcase() {
       }
     }
   };
-
   const handleImageNavigation = (
     eventId: number,
     direction: "prev" | "next"
@@ -110,14 +101,12 @@ export default function EventShowcase() {
     const currentImage = currentImages[eventId];
     const eventImages =
       events.find((e) => e.id === eventId)?.images.length || 0;
-
     if (direction === "prev" && currentImage > 0) {
       setCurrentImages((prev) => ({ ...prev, [eventId]: currentImage - 1 }));
     } else if (direction === "next" && currentImage < eventImages - 1) {
       setCurrentImages((prev) => ({ ...prev, [eventId]: currentImage + 1 }));
     }
   };
-
   return (
     <div className="w-full max-w-6xl mx-auto">
       <div className="space-y-12">
@@ -158,7 +147,6 @@ export default function EventShowcase() {
                     />
                   </AnimatePresence>
                 </motion.div>
-
                 {/* Navigation Dots */}
                 <div className="absolute inset-x-0 bottom-4 flex justify-center space-x-2">
                   {event.images.map((_, idx) => (
@@ -178,7 +166,6 @@ export default function EventShowcase() {
                     />
                   ))}
                 </div>
-
                 {/* Navigation Arrows */}
                 <button
                   onClick={() => handleImageNavigation(event.id, "prev")}
@@ -188,7 +175,6 @@ export default function EventShowcase() {
                 >
                   <ChevronLeft className="w-6 h-6" />
                 </button>
-
                 <button
                   onClick={() => handleImageNavigation(event.id, "next")}
                   className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-black/20 rounded-full text-white 
@@ -198,7 +184,6 @@ export default function EventShowcase() {
                   <ChevronRight className="w-6 h-6" />
                 </button>
               </div>
-
               {/* Event Details */}
               <div className="space-y-6">
                 <div>
