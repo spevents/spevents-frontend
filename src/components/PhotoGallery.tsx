@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { ArrowLeft, Trash2, RefreshCw, X } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { deleteFile, getPhotoUrl } from '../lib/aws';
+import { deleteFile, getPhotoUrl, listPhotos } from "../lib/aws";
 
 interface StoragePhoto {
   url: string;
@@ -19,27 +19,28 @@ const PhotoGallery: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<StoragePhoto | null>(null);
 
-  const isDemoMode = location.pathname.startsWith('/demo');
-  const basePrefix = isDemoMode ? '/demo' : '';
+  const isDemoMode = location.pathname.startsWith("/demo");
+  const basePrefix = isDemoMode ? "/demo" : "";
 
   const loadPhotosFromStorage = async () => {
     try {
-      // For demo purposes, we'll use localStorage to track uploaded files
-      const storedPhotos = JSON.parse(localStorage.getItem('uploaded-photos') || '[]') as string[];
-      
-      const photoUrls: StoragePhoto[] = storedPhotos.map((fileName: string) => ({
+      // Get files directly from S3
+      const fileNames = await listPhotos();
+
+      const photoUrls: StoragePhoto[] = fileNames.map((fileName) => ({
         url: getPhotoUrl(fileName),
         name: fileName,
-        created_at: new Date().toISOString() // In production, store this with the file metadata
+        created_at: new Date().toISOString(),
       }));
 
-      const sortedPhotos = photoUrls.sort((a: StoragePhoto, b: StoragePhoto) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      const sortedPhotos = photoUrls.sort(
+        (a: StoragePhoto, b: StoragePhoto) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
       setPhotos(sortedPhotos);
     } catch (error) {
-      console.error('Error loading photos:', error);
+      console.error("Error loading photos:", error);
     } finally {
       setIsLoading(false);
     }
@@ -48,29 +49,21 @@ const PhotoGallery: React.FC = () => {
   const clearAllData = async () => {
     setIsClearing(true);
     try {
-      const storedPhotos = JSON.parse(localStorage.getItem('uploaded-photos') || '[]') as string[];
-      
-      // Delete each photo from S3
-      await Promise.all(storedPhotos.map(async (fileName: string) => {
-        try {
-          await deleteFile(fileName);
-        } catch (error) {
-          console.error(`Failed to delete ${fileName}:`, error);
-        }
-      }));
+      const fileNames = await listPhotos();
 
-      // Clear local storage
-      localStorage.removeItem('uploaded-photos');
+      // Delete each photo from S3
+      await Promise.all(fileNames.map(deleteFile));
+
+      // Clear local photos state
       setPhotos([]);
     } catch (error) {
-      console.error('Error clearing gallery:', error);
+      console.error("Error clearing gallery:", error);
     } finally {
       setIsClearing(false);
     }
   };
-
   const handleStartCapturing = () => {
-    navigate(`${basePrefix}/qr`, { state: { from: 'gallery' } });
+    navigate(`${basePrefix}/qr`, { state: { from: "gallery" } });
   };
 
   useEffect(() => {
@@ -107,7 +100,11 @@ const PhotoGallery: React.FC = () => {
                     onClick={clearAllData}
                     disabled={isClearing}
                     className={`p-2 rounded-full transition-all duration-300 
-                      ${isClearing ? 'bg-red-500' : 'bg-white/10 hover:bg-white/20'}`}
+                      ${
+                        isClearing
+                          ? "bg-red-500"
+                          : "bg-white/10 hover:bg-white/20"
+                      }`}
                   >
                     {isClearing ? (
                       <RefreshCw className="w-5 h-5 text-white animate-spin" />

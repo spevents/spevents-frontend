@@ -79,7 +79,7 @@ export default function ShowQRCode() {
       </div>
 
       <div className="min-h-screen flex flex-col items-center justify-center p-6">
-        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full">
+        <div className="bg-black p-8 rounded-2xl shadow-xl max-w-sm w-full">
           <h2 className="text-2xl font-bold text-center mb-6">
             Scan to Access Camera
           </h2>
@@ -97,11 +97,11 @@ export default function ShowQRCode() {
               </div>
               
               <div className="space-y-4">
-                <p className="text-gray-600 text-center text-sm">
+                <p className="text-white-600 text-center text-sm">
                   Scan this QR code with your mobile device to access the camera interface
                 </p>
 
-                <div className="text-xs text-center px-4 py-2 bg-gray-100 rounded-lg break-all">
+                <div className="text-xs text-center px-4 py-2 bg-black-100 rounded-lg break-all">
                   {getCameraUrl()}
                 </div>
               </div>

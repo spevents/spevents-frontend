@@ -1,6 +1,7 @@
 // src/lib/aws.ts
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+
 
 // AWS Configuration
 const REGION = import.meta.env.VITE_AWS_REGION;
@@ -53,4 +54,21 @@ export async function deleteFile(fileName: string): Promise<void> {
 
 export function getPhotoUrl(fileName: string): string {
   return `${CLOUDFRONT_URL}/${fileName}`;
+}
+
+
+export async function listPhotos(): Promise<string[]> {
+  const command = new ListObjectsV2Command({
+    Bucket: BUCKET_NAME
+  });
+
+  try {
+    const response = await s3Client.send(command);
+    return (response.Contents || [])
+      .map(item => item.Key!)
+      .filter(key => key.endsWith('.jpg') || key.endsWith('.jpeg') || key.endsWith('.png'));
+  } catch (error) {
+    console.error('Error listing photos:', error);
+    throw error;
+  }
 }
