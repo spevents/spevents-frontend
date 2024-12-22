@@ -1,6 +1,6 @@
 // src/components/CameraInterface.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, X, Image as ImageIcon, Repeat } from 'lucide-react';
+import { X, Image as ImageIcon, Repeat } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNgrok } from '../contexts/NgrokContext';
