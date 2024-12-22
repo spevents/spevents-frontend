@@ -8,13 +8,22 @@ import {
   Camera,
   MapPin,
 } from "lucide-react";
+
+
+
+
+
 const vabsRothPhotos = import.meta.glob("./ExamplePhotos/VABSxRothRoll/*.jpg", {
   eager: true,
   as: "url",
 });
+
+
 const vabsRothPhotoArray = Object.values(vabsRothPhotos).sort((a, b) =>
   a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" })
 );
+
+
 interface Event {
   id: number;
   title: string;
@@ -27,6 +36,9 @@ interface Event {
   images: string[];
   organizerLinks: Array<{ name: string; link: string }>;
 }
+
+
+
 const events: Event[] = [
   {
     id: 2, // Mock Shaadi comes first as most recent
@@ -66,6 +78,9 @@ const events: Event[] = [
     ],
   },
 ];
+
+
+
 export default function EventShowcase() {
   // Track current image for each event separately
   const [currentImages, setCurrentImages] = useState<Record<number, number>>(
@@ -117,7 +132,7 @@ export default function EventShowcase() {
           >
             <div className="grid md:grid-cols-2 gap-8 p-8">
               {/* Photo Carousel */}
-              <div className="relative h-[600px] bg-black/5 rounded-xl overflow-hidden">
+              <div className="relative h-[600px] bg-sage  rounded-xl overflow-hidden">
                 <motion.div
                   className="absolute inset-0"
                   drag="x"
@@ -127,24 +142,21 @@ export default function EventShowcase() {
                   dragElastic={0.2}
                 >
                   <AnimatePresence mode="wait">
-                    <motion.img
+                    <motion.div
                       key={`${event.id}-${currentImages[event.id]}`}
-                      src={event.images[currentImages[event.id]]}
-                      alt={`Event photo ${currentImages[event.id] + 1}`}
-                      className="w-full h-full"
-                      style={{
-                        objectFit: event.images[
-                          currentImages[event.id]
-                        ].includes("1920x1080")
-                          ? "contain"
-                          : "cover",
-                      }}
-                      initial={{ opacity: 0, x: 100 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -100 }}
-                      transition={{ duration: 0.3 }}
-                      draggable={false}
-                    />
+                      className="w-full h-full flex justify-center items-center p-8"
+                    >
+                      <motion.img
+                        src={event.images[currentImages[event.id]]}
+                        alt={`Event photo ${currentImages[event.id] + 1}`}
+                        className="max-h-full max-w-full border-8 border-white rounded-xl"
+                        initial={{ opacity: 0, x: 100 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -100 }}
+                        transition={{ duration: 0.3 }}
+                        draggable={false}
+                      />
+                    </motion.div>
                   </AnimatePresence>
                 </motion.div>
                 {/* Navigation Dots */}
@@ -184,6 +196,9 @@ export default function EventShowcase() {
                   <ChevronRight className="w-6 h-6" />
                 </button>
               </div>
+
+
+
               {/* Event Details */}
               <div className="space-y-6">
                 <div>
