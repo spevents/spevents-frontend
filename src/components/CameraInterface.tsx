@@ -5,6 +5,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNgrok } from '../contexts/NgrokContext';
 
+
+const PHOTO_LIMIT = 20;
+
 interface CameraInterfaceProps {
   initialMode: 'qr' | 'camera';
 }
@@ -85,7 +88,7 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
 
   const capturePhoto = () => {
     const video = videoRef.current;
-    if (!video || photos.length >= 5) return;
+    if (!video || photos.length >= PHOTO_LIMIT) return;
 
     triggerCaptureEffect();
 
@@ -150,8 +153,8 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
           animate={{ scale: 1, opacity: 1 }}
           className="absolute top-4 right-4 px-3 py-1.5 bg-black/50 backdrop-blur-md rounded-full z-10"
         >
-          <span className={`text-sm font-medium ${photos.length >= 5 ? 'text-red-500' : 'text-white'}`}>
-            {photos.length}/5
+          <span className={`text-sm font-medium ${photos.length >= PHOTO_LIMIT ? 'text-red-500' : 'text-white'}`}>
+            {photos.length} / {PHOTO_LIMIT}
           </span>
         </motion.div>
       </AnimatePresence>
@@ -164,7 +167,7 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
       />
 
       <AnimatePresence>
-        {photos.length >= 5 && (
+        {photos.length >= PHOTO_LIMIT && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -199,14 +202,14 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
 
           <motion.button
             onClick={capturePhoto}
-            disabled={photos.length >= 5}
+            disabled={photos.length >= PHOTO_LIMIT}
             animate={{
               scale: isCapturing ? 0.9 : 1,
               backgroundColor: isCapturing ? "rgba(255, 255, 255, 0.8)" : "rgba(255, 255, 255, 1)"
             }}
             transition={{ duration: 0.15 }}
             className={`w-20 h-20 rounded-full transform relative
-              ${photos.length >= 5 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              ${photos.length >= PHOTO_LIMIT ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <span className="absolute inset-2 rounded-full border-2 border-gray-200" />
           </motion.button>
