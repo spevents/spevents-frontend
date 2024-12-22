@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Layout, LayoutTemplate, Presentation, X } from 'lucide-react';
-import MiniFunSlideshow from '../../../components/slideshow_modes/MiniFunSlideshow';
-import MiniPresenterSlideshow from '../../../components/slideshow_modes/MiniPresenterSlideshow';
+import MiniFunSlideshow from '../../../../components/slideshow_modes/MiniFunSlideshow';
+import MiniPresenterSlideshow from '../../../../components/slideshow_modes/MiniPresenterSlideshow';
 
 interface Photo {
   id: number;

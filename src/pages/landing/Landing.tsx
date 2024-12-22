@@ -152,15 +152,18 @@ export function LandingPage() {
                   <Link
                     to="https://calendly.com/spevents-party/30min"
                     className="group inline-flex h-12 items-center gap-2 rounded-full bg-sage/20 px-4 
-        transition-all duration-300 ease-in-out hover:bg-brunswick-green hover:text-white"
+        transition-all duration-300 ease-in-out hover:bg-brunswick-green"
                   >
                     <span
-                      className="rounded-full bg-brunswick-green p-2 text-white transition-colors duration-300 
+                      className="rounded-full bg-brunswick-green p-2 text-white transition-colors 
           group-hover:bg-white group-hover:text-brunswick-green"
                     >
                       <CalendarCheck className="h-4 w-4" />
                     </span>
-                    <span className="text-lg font-black text-brunswick-green hover:text-white transition-colors duration-300">
+                    <span
+                      className="text-lg font-black text-brunswick-green transition-colors 
+          group-hover:text-white"
+                    >
                       Book Demo
                     </span>
                   </Link>
@@ -175,15 +178,18 @@ export function LandingPage() {
                   <Link
                     to="/examples"
                     className="group inline-flex h-12 items-center gap-2 rounded-full bg-sage/20 px-4 
-        transition-all duration-300 ease-in-out hover:bg-brunswick-green hover:text-white"
+        transition-all duration-300 ease-in-out hover:bg-brunswick-green"
                   >
                     <span
-                      className="rounded-full bg-brunswick-green p-2 text-white transition-colors duration-300 
+                      className="rounded-full bg-brunswick-green p-2 text-white transition-colors 
           group-hover:bg-white group-hover:text-brunswick-green"
                     >
                       <GalleryVerticalEnd className="h-4 w-4" />
                     </span>
-                    <span className="text-lg font-black text-brunswick-green hover:text-white transition-colors duration-300">
+                    <span
+                      className="text-lg font-black text-brunswick-green transition-colors 
+          group-hover:text-white"
+                    >
                       See Examples
                     </span>
                   </Link>
@@ -214,7 +220,7 @@ export function LandingPage() {
                 icon: Camera,
                 title: "Real-time Gallery",
                 description:
-                  "Photos appear instantly in a 3D venue visualization",
+                  "Photos appear instantly in a slideshow visualization",
               },
               {
                 icon: LineChart,

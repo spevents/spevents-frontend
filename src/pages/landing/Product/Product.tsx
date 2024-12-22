@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Navigation } from './Navigation';
-import { Footer } from '../../components/Footer';
+import { Link } from "react-router-dom";
+import { Navigation } from '../Navigation';
+import { Footer } from '../../../components/Footer';
 import { SAMPLE_PHOTOS } from './minis/PhotoReviewMini';
 import PhotoReviewMini  from './minis/PhotoReviewMini';
 import PhotoSlideshowMini from './minis/PhotoSlideshowMini';
-import { ArrowDown } from 'lucide-react';
+import { ArrowDown, CalendarCheck} from 'lucide-react';
 
 export function ProductPage() {
   const [uploadedPhotos, setUploadedPhotos] = useState<Array<{ id: number; url: string }>>([]);
@@ -126,14 +127,39 @@ export function ProductPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="px-8 py-3 bg-fern-green text-white rounded-full text-lg font-medium
-                  hover:bg-hunter-green transition-colors"
-              >
-                Try Demo Event
-              </motion.button>
+             
+             
+             
+             
+                {/* Book Demo Button */}
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="inline-block"
+                >
+                  <Link
+                    to="https://calendly.com/spevents-party/30min"
+                    className="group inline-flex h-12 items-center gap-2 rounded-full bg-sage/20 px-4 
+        transition-all duration-300 ease-in-out hover:bg-brunswick-green"
+                  >
+                    <span
+                      className="rounded-full bg-brunswick-green p-2 text-white transition-colors 
+          group-hover:bg-white group-hover:text-brunswick-green"
+                    >
+                      <CalendarCheck className="h-4 w-4" />
+                    </span>
+                    <span
+                      className="text-lg font-black text-brunswick-green transition-colors 
+          group-hover:text-white"
+                    >
+                      Book Demo
+                    </span>
+                  </Link>
+                </motion.div>
+
+
+
+
             </motion.div>
           </div>
         </div>
