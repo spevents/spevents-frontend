@@ -9,19 +9,15 @@ import {
   MapPin,
 } from "lucide-react";
 
-
-
-
-
 const vabsRothPhotos = import.meta.glob("./ExamplePhotos/VABSxRothRoll/*.jpg", {
   eager: true,
   as: "url",
 });
 
-
 const vabsRothPhotoArray = Object.values(vabsRothPhotos).sort((a, b) =>
   a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" })
 );
+
 
 
 interface Event {
@@ -36,8 +32,6 @@ interface Event {
   images: string[];
   organizerLinks: Array<{ name: string; link: string }>;
 }
-
-
 
 const events: Event[] = [
   {
@@ -78,8 +72,6 @@ const events: Event[] = [
     ],
   },
 ];
-
-
 
 export default function EventShowcase() {
   // Track current image for each event separately
@@ -196,8 +188,6 @@ export default function EventShowcase() {
                   <ChevronRight className="w-6 h-6" />
                 </button>
               </div>
-
-
 
               {/* Event Details */}
               <div className="space-y-6">

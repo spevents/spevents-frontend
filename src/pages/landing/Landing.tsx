@@ -14,12 +14,8 @@ import { Navigation } from "./Navigation";
 import { Footer } from "../../components/Footer";
 import Lenis from "@studio-freight/lenis";
 import { useEffect } from "react";
+import { fadeIn } from "./Navigation";
 
-const fadeIn = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.6 },
-};
 
 export function LandingPage() {
   useEffect(() => {
@@ -83,19 +79,19 @@ export function LandingPage() {
       title: "Weddings",
       description:
         "Capture precious moments from multiple angles as guests celebrate your special day.",
-      image: "/api/placeholder/600/400",
+      image: "https://images.unsplash.com/flagged/photo-1620830102229-9db5c00d4afc?q=80&w=2970&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     },
     {
       title: "Corporate Events",
       description:
         "Keep everyone engaged while creating a shared photo collection of team activities.",
-      image: "/api/placeholder/600/400",
+      image: "https://images.unsplash.com/photo-1560439514-4e9645039924?q=80&w=2970&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     },
     {
       title: "Celebrations",
       description:
         "From birthdays to anniversaries, preserve memories from every perspective.",
-      image: "/api/placeholder/600/400",
+      image: "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?q=80&w=2969&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     },
   ];
 

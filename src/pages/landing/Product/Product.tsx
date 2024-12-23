@@ -1,46 +1,62 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useState } from "react";
+import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Navigation } from '../Navigation';
-import { Footer } from '../../../components/Footer';
-import { SAMPLE_PHOTOS } from './minis/PhotoReviewMini';
-import PhotoReviewMini  from './minis/PhotoReviewMini';
-import PhotoSlideshowMini from './minis/PhotoSlideshowMini';
-import { ArrowDown, CalendarCheck} from 'lucide-react';
+import { Navigation } from "../Navigation";
+import { Footer } from "../../../components/Footer";
+import { SAMPLE_PHOTOS } from "./minis/PhotoReviewMini";
+import PhotoReviewMini from "./minis/PhotoReviewMini";
+import PhotoSlideshowMini from "./minis/PhotoSlideshowMini";
+import { ArrowDown, CalendarCheck } from "lucide-react";
+import { fadeIn } from "../Navigation";
+
 
 export function ProductPage() {
-  const [uploadedPhotos, setUploadedPhotos] = useState<Array<{ id: number; url: string }>>([]);
+  const [uploadedPhotos, setUploadedPhotos] = useState<
+    Array<{ id: number; url: string }>
+  >([]);
   const [reviewCompleted, setReviewCompleted] = useState(false);
-  const [availablePhotos, setAvailablePhotos] = useState<Array<{ id: number; url: string }>>(SAMPLE_PHOTOS);
+  const [availablePhotos, setAvailablePhotos] =
+    useState<Array<{ id: number; url: string }>>(SAMPLE_PHOTOS);
 
   const handlePhotoUpload = (photo: { id: number; url: string }) => {
-    setUploadedPhotos(prev => [...prev, photo]);
+    setUploadedPhotos((prev) => [...prev, photo]);
   };
 
   const handlePhotoDelete = (photo: { id: number; url: string }) => {
-    setUploadedPhotos(prev => prev.filter(p => p.id !== photo.id));
-    setAvailablePhotos(prev => [...prev, photo]);
+    setUploadedPhotos((prev) => prev.filter((p) => p.id !== photo.id));
+    setAvailablePhotos((prev) => [...prev, photo]);
     setReviewCompleted(false);
   };
+
 
   return (
     <div className="min-h-screen bg-timberwolf">
       <Navigation />
-      
-      <section className="pt-24 px-6">
-        <div className="container mx-auto max-w-4xl">
+      <section className="relative flex-grow pt-32 pb-20 px-6">
+        <div className="container mx-auto max-w-6xl">
           {/* Hero Section */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-12"
+            className="text-center mb-16"
+            initial="initial"
+            animate="animate"
+            variants={fadeIn}
           >
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-brunswick-green">
+            <motion.h1
+              className="text-5xl md:text-6xl font-bold mb-6 text-brunswick-green"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+            >
               Real-time Photo Sharing
-            </h1>
-            <p className="text-xl text-hunter-green max-w-2xl mx-auto">
+            </motion.h1>
+            <motion.p
+              className="text-xl text-hunter-green mb-8 max-w-2xl mx-auto"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+            >
               Experience how Spevents makes sharing moments effortless
-            </p>
+            </motion.p>
           </motion.div>
 
           {/* Interactive Demo */}
@@ -52,8 +68,8 @@ export function ProductPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
               >
-                <PhotoSlideshowMini 
-                  photos={uploadedPhotos} 
+                <PhotoSlideshowMini
+                  photos={uploadedPhotos}
                   expanded={reviewCompleted}
                   onPhotoDelete={handlePhotoDelete}
                 />
@@ -78,7 +94,7 @@ export function ProductPage() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                   >
-                    <PhotoReviewMini 
+                    <PhotoReviewMini
                       onPhotoAction={handlePhotoUpload}
                       onComplete={() => setReviewCompleted(true)}
                     />
@@ -92,16 +108,16 @@ export function ProductPage() {
               {[
                 {
                   title: "No App Downloads",
-                  description: "Just scan and share"
+                  description: "Just scan and share",
                 },
                 {
                   title: "Real-time Updates",
-                  description: "Photos appear instantly"
+                  description: "Photos appear instantly",
                 },
                 {
                   title: "Multiple Views",
-                  description: "Grid, fun, or presentation"
-                }
+                  description: "Grid, fun, or presentation",
+                },
               ].map((feature, index) => (
                 <motion.div
                   key={index}
@@ -115,56 +131,50 @@ export function ProductPage() {
                   <h3 className="text-lg font-semibold mb-1 text-brunswick-green">
                     {feature.title}
                   </h3>
-                  <p className="text-hunter-green text-sm">{feature.description}</p>
+                  <p className="text-hunter-green text-sm">
+                    {feature.description}
+                  </p>
                 </motion.div>
               ))}
             </div>
 
             {/* Call to Action */}
-            <motion.div 
+            <motion.div
               className="text-center py-12"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-             
-             
-             
-             
-                {/* Book Demo Button */}
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="inline-block"
-                >
-                  <Link
-                    to="https://calendly.com/spevents-party/30min"
-                    className="group inline-flex h-12 items-center gap-2 rounded-full bg-sage/20 px-4 
+              {/* Book Demo Button */}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="inline-block"
+              >
+                <Link
+                  to="https://calendly.com/spevents-party/30min"
+                  className="group inline-flex h-12 items-center gap-2 rounded-full bg-sage/20 px-4 
         transition-all duration-300 ease-in-out hover:bg-brunswick-green"
-                  >
-                    <span
-                      className="rounded-full bg-brunswick-green p-2 text-white transition-colors 
+                >
+                  <span
+                    className="rounded-full bg-brunswick-green p-2 text-white transition-colors 
           group-hover:bg-white group-hover:text-brunswick-green"
-                    >
-                      <CalendarCheck className="h-4 w-4" />
-                    </span>
-                    <span
-                      className="text-lg font-black text-brunswick-green transition-colors 
+                  >
+                    <CalendarCheck className="h-4 w-4" />
+                  </span>
+                  <span
+                    className="text-lg font-black text-brunswick-green transition-colors 
           group-hover:text-white"
-                    >
-                      Book Demo
-                    </span>
-                  </Link>
-                </motion.div>
-
-
-
-
+                  >
+                    Book Demo
+                  </span>
+                </Link>
+              </motion.div>
             </motion.div>
           </div>
         </div>
       </section>
-      
+
       <Footer />
     </div>
   );
