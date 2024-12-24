@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Navigation } from "../Navigation";
@@ -8,9 +8,32 @@ import PhotoReviewMini from "./minis/PhotoReviewMini";
 import PhotoSlideshowMini from "./minis/PhotoSlideshowMini";
 import { ArrowDown, CalendarCheck } from "lucide-react";
 import { fadeIn } from "../Navigation";
+import Lenis from "@studio-freight/lenis";
+
 
 
 export function ProductPage() {
+
+
+    useEffect(() => {
+      const lenis = new Lenis({
+        lerp: 0.1,
+        duration: 1.5,
+        smoothWheel: true,
+      });
+  
+      function raf(time: number) {
+        lenis.raf(time);
+        requestAnimationFrame(raf);
+      }
+  
+      requestAnimationFrame(raf);
+  
+      return () => {
+        lenis.destroy();
+      };
+    }, []);
+
   const [uploadedPhotos, setUploadedPhotos] = useState<
     Array<{ id: number; url: string }>
   >([]);
