@@ -1,11 +1,12 @@
 // src/components/PhotoSlideshow.tsx
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, EyeOff, Layout, LayoutTemplate, Presentation } from 'lucide-react';
+import { ArrowLeft, EyeOff, Layout, LayoutTemplate, Presentation, Hotel } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { listPhotos, getPhotoUrl } from '../lib/aws';
 import FunSlideshow from './slideshow_modes/FunSlideshow';
 import PresenterSlideshow from './slideshow_modes/PresenterSlideshow';
+import ModelSlideshow from './slideshow_modes/ModelSlideshow';
 
 interface Photo {
   src: string;
@@ -13,7 +14,7 @@ interface Photo {
   createdAt: string;
 }
 
-type ViewMode = 'simple' | 'fun' | 'presenter';
+type ViewMode = 'simple' | 'fun' | 'presenter' | 'model';
 const MAX_PHOTOS = 6;
 const PHOTO_REFRESH_INTERVAL = 750;
 
@@ -128,6 +129,9 @@ export default function PhotoSlideshow() {
         return <FunSlideshow photos={photos} containerDimensions={containerDimensions} />;
       case 'presenter':
         return <PresenterSlideshow photos={photos} hideUI={hideUI} />;
+      case 'model':
+        return <ModelSlideshow photos={photos} hideUI={hideUI} />;
+
       default:
         return (
           <div className="absolute inset-0 flex items-center justify-center">
@@ -209,6 +213,16 @@ export default function PhotoSlideshow() {
             >
               <Presentation className="w-5 h-5" />
               <span>Present</span>
+            </button>
+
+            <button
+              onClick={() => setViewMode('model')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-full backdrop-blur-sm transition-colors ${
+                viewMode === 'model' ? 'bg-white/20 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white'
+              }`}
+            >
+              <Hotel className="w-5 h-5" />
+              <span>Model</span>
             </button>
 
             <button

@@ -25,8 +25,8 @@ interface Props {
 }
 
 const TRANSITION_INTERVAL = 1200;
-const MAX_PHOTOS = 10;
-const RECENT_THRESHOLD = 5 * 60 * 1000; // 5 minutes
+const MAX_PHOTOS = 20;
+const RECENT_THRESHOLD = 30 * 1000; // 5 minutes
 
 function getResponsivePhotoSizes(windowWidth: number, windowHeight: number) {
   const baseSize = Math.min(windowWidth, windowHeight) * 0.2;

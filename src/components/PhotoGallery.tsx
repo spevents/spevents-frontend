@@ -1,9 +1,10 @@
 // src/components/PhotoGallery.tsx
 import React, { useState, useEffect } from "react";
-import { ArrowLeft, Trash2, RefreshCw, X } from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { QrCode, Trash2, RefreshCw, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { deleteFile, getPhotoUrl, listPhotos } from "../lib/aws";
+import { QRCodeModal } from "./QRCodeModal";
 
 interface StoragePhoto {
   url: string;
@@ -13,20 +14,15 @@ interface StoragePhoto {
 
 const PhotoGallery: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const [photos, setPhotos] = useState<StoragePhoto[]>([]);
   const [isClearing, setIsClearing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<StoragePhoto | null>(null);
-
-  const isDemoMode = location.pathname.startsWith("/demo");
-  const basePrefix = isDemoMode ? "/demo" : "";
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
 
   const loadPhotosFromStorage = async () => {
     try {
-      // Get files directly from S3
       const fileNames = await listPhotos();
-
       const photoUrls: StoragePhoto[] = fileNames.map((fileName) => ({
         url: getPhotoUrl(fileName),
         name: fileName,
@@ -50,20 +46,13 @@ const PhotoGallery: React.FC = () => {
     setIsClearing(true);
     try {
       const fileNames = await listPhotos();
-
-      // Delete each photo from S3
       await Promise.all(fileNames.map(deleteFile));
-
-      // Clear local photos state
       setPhotos([]);
     } catch (error) {
       console.error("Error clearing gallery:", error);
     } finally {
       setIsClearing(false);
     }
-  };
-  const handleStartCapturing = () => {
-    navigate(`${basePrefix}/qr`, { state: { from: "gallery" } });
   };
 
   useEffect(() => {
@@ -79,19 +68,19 @@ const PhotoGallery: React.FC = () => {
         {/* Header */}
         <div className="sticky top-0 inset-x-0 bg-gray-900/80 backdrop-blur-md z-10">
           <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-            <button
-              onClick={() => navigate(`${basePrefix}`)}
-              className="text-white flex items-center space-x-2"
-            >
-              <ArrowLeft className="w-6 h-6" />
-              <span>Back</span>
-            </button>
             <h1 className="text-white text-lg font-semibold">Gallery</h1>
             <div className="flex items-center space-x-3">
+              <button
+                onClick={() => setIsQRModalOpen(true)}
+                className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+              >
+                <QrCode className="w-5 h-5 text-white" />
+              </button>
+
               {photos.length > 0 && (
                 <>
                   <button
-                    onClick={() => navigate(`${basePrefix}/slideshow`)}
+                    onClick={() => navigate("/slideshow")}
                     className="px-4 py-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors"
                   >
                     View Slideshow
@@ -100,11 +89,7 @@ const PhotoGallery: React.FC = () => {
                     onClick={clearAllData}
                     disabled={isClearing}
                     className={`p-2 rounded-full transition-all duration-300 
-                      ${
-                        isClearing
-                          ? "bg-red-500"
-                          : "bg-white/10 hover:bg-white/20"
-                      }`}
+                      ${isClearing ? "bg-red-500" : "bg-white/10 hover:bg-white/20"}`}
                   >
                     {isClearing ? (
                       <RefreshCw className="w-5 h-5 text-white animate-spin" />
@@ -148,7 +133,7 @@ const PhotoGallery: React.FC = () => {
             <div className="flex flex-col items-center justify-center h-[60vh] text-gray-400">
               <p className="text-center mb-4">No photos yet</p>
               <button
-                onClick={handleStartCapturing}
+                onClick={() => setIsQRModalOpen(true)}
                 className="px-4 py-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors"
               >
                 Start capturing moments
@@ -192,6 +177,12 @@ const PhotoGallery: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* QR Code Modal */}
+      <QRCodeModal 
+        isOpen={isQRModalOpen}
+        onClose={() => setIsQRModalOpen(false)}
+      />
     </>
   );
 };
