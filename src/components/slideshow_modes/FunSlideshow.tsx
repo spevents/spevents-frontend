@@ -1,5 +1,5 @@
 // src/components/slideshow_modes/FunSlideshow.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface FunPhoto {
@@ -9,14 +9,16 @@ interface FunPhoto {
   size: {
     width: number;
     height: number;
+    aspect: 'square' | 'portrait' | 'landscape';
   };
   position: {
     x: number;
     y: number;
     rotation: number;
-    scale: number;
-    zIndex: number;
   };
+  displayStartTime: number;
+  displayDuration: number;
+  transitionId: string;
 }
 
 interface Props {
@@ -24,119 +26,195 @@ interface Props {
   containerDimensions: { width: number; height: number };
 }
 
-const TRANSITION_INTERVAL = 1200;
-const MAX_PHOTOS = 20;
-const RECENT_THRESHOLD = 30 * 1000; // 5 minutes
+const MIN_DISPLAY_TIME = 15000; // 15 seconds
+const MAX_DISPLAY_TIME = 30000; // 30 seconds
+const MAX_PHOTOS = 12;
 
-function getResponsivePhotoSizes(windowWidth: number, windowHeight: number) {
-  const baseSize = Math.min(windowWidth, windowHeight) * 0.2;
-  const sizeMultiplier = windowWidth < 768 ? 0.8 : 1;
-
-  return [
-    { width: baseSize * 0.8 * sizeMultiplier, height: baseSize * 0.8 * sizeMultiplier },
-    { width: baseSize * sizeMultiplier, height: baseSize * sizeMultiplier },
-    { width: baseSize * 1.2 * sizeMultiplier, height: baseSize * 1.2 * sizeMultiplier },
-    { width: baseSize * 1.2 * sizeMultiplier, height: baseSize * 0.8 * sizeMultiplier },
-    { width: baseSize * 1.5 * sizeMultiplier, height: baseSize * sizeMultiplier },
-  ];
+// Rest of the helper functions remain the same...
+function getRandomAspectRatio(): 'square' | 'portrait' | 'landscape' {
+  const ratios = ['square', 'portrait', 'landscape'];
+  return ratios[Math.floor(Math.random() * ratios.length)] as 'square' | 'portrait' | 'landscape';
 }
 
-function getRandomPosition(containerWidth: number, containerHeight: number, photoSize: { width: number; height: number }) {
-  const marginX = photoSize.width / 2 + 20;
-  const marginY = photoSize.height / 2 + 20;
-  const availableWidth = containerWidth - (marginX * 2);
-  const availableHeight = containerHeight - (marginY * 2);
+function getPhotoSize(
+  windowWidth: number, 
+  windowHeight: number, 
+  aspect: 'square' | 'portrait' | 'landscape'
+): { width: number; height: number; aspect: 'square' | 'portrait' | 'landscape' } {
+  const baseSize = Math.min(windowWidth, windowHeight) * 0.25;
+  const sizeVariation = baseSize * 0.2;
+  const baseWidth = baseSize + (Math.random() * sizeVariation - sizeVariation / 2);
+  
+  switch (aspect) {
+    case 'portrait':
+      return {
+        width: baseWidth,
+        height: baseWidth * 1.5,
+        aspect: 'portrait' as const
+      };
+    case 'landscape':
+      return {
+        width: baseWidth * 1.5,
+        height: baseWidth,
+        aspect: 'landscape' as const
+      };
+    case 'square':
+    default:
+      return {
+        width: baseWidth,
+        height: baseWidth,
+        aspect: 'square' as const
+      };
+  }
+}
+
+function getRandomPosition(
+  containerWidth: number,
+  containerHeight: number,
+  photoSize: { width: number; height: number },
+  existingPhotos: FunPhoto[]
+) {
+  const margin = 20;
+  const maxAttempts = 50;
+  let attempts = 0;
+  
+  while (attempts < maxAttempts) {
+    const x = margin + Math.random() * (containerWidth - photoSize.width - margin * 2);
+    const y = margin + Math.random() * (containerHeight - photoSize.height - margin * 2);
+    const rotation = Math.random() * 10 - 5;
+    
+    const hasOverlap = existingPhotos.some(existing => {
+      const xOverlap = Math.abs(existing.position.x - x) < (photoSize.width + existing.size.width) / 2;
+      const yOverlap = Math.abs(existing.position.y - y) < (photoSize.height + existing.size.height) / 2;
+      return xOverlap && yOverlap;
+    });
+    
+    if (!hasOverlap || attempts === maxAttempts - 1) {
+      return { x, y, rotation };
+    }
+    
+    attempts++;
+  }
   
   return {
-    x: marginX + (Math.random() * availableWidth),
-    y: marginY + (Math.random() * availableHeight),
-    rotation: Math.random() * 20 - 10,
-    scale: 0.95 + Math.random() * 0.1,
-    zIndex: Math.floor(Math.random() * 10),
+    x: margin + Math.random() * (containerWidth - photoSize.width - margin * 2),
+    y: margin + Math.random() * (containerHeight - photoSize.height - margin * 2),
+    rotation: Math.random() * 10 - 5
   };
 }
 
 function processFunPhoto(
   photo: { src: string; id: string; createdAt: string },
-  containerDimensions: { width: number; height: number }
+  containerDimensions: { width: number; height: number },
+  existingPhotos: FunPhoto[]
 ): FunPhoto {
-  const sizes = getResponsivePhotoSizes(containerDimensions.width, containerDimensions.height);
-  const size = sizes[Math.floor(Math.random() * sizes.length)];
+  const aspect = getRandomAspectRatio();
+  const size = getPhotoSize(containerDimensions.width, containerDimensions.height, aspect);
+  const position = getRandomPosition(containerDimensions.width, containerDimensions.height, size, existingPhotos);
+  const displayDuration = MIN_DISPLAY_TIME + Math.random() * (MAX_DISPLAY_TIME - MIN_DISPLAY_TIME);
   
   return {
     ...photo,
     size,
-    position: getRandomPosition(containerDimensions.width, containerDimensions.height, size),
+    position,
+    displayStartTime: Date.now(),
+    displayDuration,
+    transitionId: `${photo.id}-${Date.now()}`
   };
 }
 
 export default function FunSlideshow({ photos, containerDimensions }: Props) {
   const [displayedPhotos, setDisplayedPhotos] = useState<FunPhoto[]>([]);
+  const timeoutsRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
 
+  const addNewPhoto = useCallback(() => {
+    setDisplayedPhotos(current => {
+      if (current.length >= MAX_PHOTOS) return current;
+      
+      const availablePhotos = photos.filter(
+        photo => !current.find(p => p.id === photo.id)
+      );
+      
+      if (availablePhotos.length === 0) return current;
+      
+      const newPhotoBase = availablePhotos[Math.floor(Math.random() * availablePhotos.length)];
+      const newPhoto = processFunPhoto(newPhotoBase, containerDimensions, current);
+      
+      return [...current, newPhoto];
+    });
+  }, [photos, containerDimensions]);
+
+  const removePhoto = useCallback((transitionId: string) => {
+    setDisplayedPhotos(current => current.filter(p => p.transitionId !== transitionId));
+    // Schedule a new photo to be added
+    setTimeout(addNewPhoto, 1500); // Wait for fade out before adding new photo
+  }, [addNewPhoto]);
+
+  // Clean up function for timeouts
+  const cleanupTimeouts = useCallback(() => {
+    Object.values(timeoutsRef.current).forEach(timeout => clearTimeout(timeout));
+    timeoutsRef.current = {};
+  }, []);
+
+  // Initialize display
   useEffect(() => {
     if (photos.length === 0) return;
+    cleanupTimeouts();
 
-    // Initial setup
+    const initialCount = Math.min(MAX_PHOTOS, photos.length);
     const initialPhotos = photos
-      .slice(0, MAX_PHOTOS)
-      .map(photo => processFunPhoto(photo, containerDimensions));
+      .slice(0, initialCount)
+      .reduce<FunPhoto[]>((acc, photo) => {
+        const processedPhoto = processFunPhoto(photo, containerDimensions, acc);
+        return [...acc, processedPhoto];
+      }, []);
+
     setDisplayedPhotos(initialPhotos);
 
-    const interval = setInterval(() => {
-      setDisplayedPhotos(current => {
-        const now = new Date().getTime();
-        const recentPhotos = photos.filter(photo =>
-          now - new Date(photo.createdAt).getTime() < RECENT_THRESHOLD
-        );
+    return cleanupTimeouts;
+  }, [photos, containerDimensions, cleanupTimeouts]);
 
-        const sourcePhotos = recentPhotos.length > 0 ? recentPhotos : photos;
-        const availablePhotos = sourcePhotos.filter(
-          photo => !current.find(p => p.id === photo.id)
-        );
+  // Manage individual photo timeouts
+  useEffect(() => {
+    cleanupTimeouts();
 
-        if (availablePhotos.length === 0) return current;
+    displayedPhotos.forEach(photo => {
+      const elapsedTime = Date.now() - photo.displayStartTime;
+      const remainingTime = Math.max(0, photo.displayDuration - elapsedTime);
+      
+      if (remainingTime > 0) {
+        timeoutsRef.current[photo.transitionId] = setTimeout(() => {
+          removePhoto(photo.transitionId);
+        }, remainingTime);
+      } else {
+        removePhoto(photo.transitionId);
+      }
+    });
 
-        const newPhotos = [...current];
-        const replaceIndex = Math.floor(Math.random() * Math.min(MAX_PHOTOS, current.length));
-        const randomNewPhoto = availablePhotos[Math.floor(Math.random() * availablePhotos.length)];
-        
-        newPhotos[replaceIndex] = processFunPhoto(randomNewPhoto, containerDimensions);
-        return newPhotos;
-      });
-    }, TRANSITION_INTERVAL);
-
-    return () => clearInterval(interval);
-  }, [photos, containerDimensions]);
+    return cleanupTimeouts;
+  }, [displayedPhotos, removePhoto, cleanupTimeouts]);
 
   return (
     <div className="relative w-full h-screen">
       <AnimatePresence mode="popLayout">
         {displayedPhotos.map((photo) => (
           <motion.div
-            key={photo.id}
+            key={photo.transitionId}
             className="absolute"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{
-              opacity: 1,
-              scale: photo.position.scale,
-              x: photo.position.x,
-              y: photo.position.y,
-              rotate: photo.position.rotation,
-              zIndex: photo.position.zIndex,
-            }}
-            exit={{ opacity: 0, scale: 0.8 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{
-              type: "spring",
-              stiffness: 200,
-              damping: 20,
-              duration: 1,
+              opacity: { duration: 0.5, ease: "easeInOut" }
+
             }}
             style={{
               width: photo.size.width,
               height: photo.size.height,
+              transform: `translate(${photo.position.x}px, ${photo.position.y}px) rotate(${photo.position.rotation}deg)`
             }}
           >
-            <div className="w-full h-full p-2 bg-white shadow-xl rounded-lg overflow-hidden transform transition-transform duration-300 hover:scale-105 hover:z-50">
+            <div className="w-full h-full p-2 bg-white/90 backdrop-blur-sm shadow-xl rounded-lg overflow-hidden">
               <img
                 src={photo.src}
                 alt="Event photo"
