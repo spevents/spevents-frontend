@@ -1,16 +1,21 @@
+/* src/index.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 html, body {
-    overscroll-behavior-y: none;
-    /* position: fixed; */
-    width: 100%;
-    height: 100%;
+  overscroll-behavior-y: none;
+  width: 100%;
+  height: 100%;
+  font-family: 'Quicksand', sans-serif;
 }
 
 #root {
-    height: 100%;
-    width: 100%;
+  height: 100%;
+  width: 100%;
 }
 
+/* Add smooth transitions for text elements */
+h1, h2, h3, h4, h5, h6, p, span, a {
+  @apply transition-colors duration-200;
+}

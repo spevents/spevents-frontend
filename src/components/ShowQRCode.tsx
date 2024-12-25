@@ -1,4 +1,3 @@
-// src/components/ShowQRCode.tsx
 import { useNavigate, useLocation } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
@@ -11,6 +10,9 @@ export default function ShowQRCode() {
   const { baseUrl, setBaseUrl } = useNgrok();
   const [isUpdating, setIsUpdating] = useState(false);
   
+  const isDemoMode = location.pathname.startsWith('/demo');
+
+  
   const handleUpdateNgrokUrl = () => {
     const newUrl = prompt('Enter your ngrok URL (e.g., https://xxxx-xxx-xx-xxx-xx.ngrok.io)');
     if (newUrl) {
@@ -22,19 +24,37 @@ export default function ShowQRCode() {
 
   const handleBack = () => {
     const source = location.state?.from;
-    switch (source) {
-      case 'venue':
-        navigate('/');
-        break;
-      case 'gallery':
-        navigate('/gallery');
-        break;
-      default:
-        navigate('/');
+    if (isDemoMode) {
+      switch (source) {
+        case 'venue':
+          navigate('/demo');
+          break;
+        case 'gallery':
+          navigate('/demo/gallery');
+          break;
+        default:
+          navigate('/demo');
+      }
+    } else {
+      switch (source) {
+        case 'venue':
+          navigate('/');
+          break;
+        case 'gallery':
+          navigate('/gallery');
+          break;
+        default:
+          navigate('/');
+      }
     }
   };
 
-  const getCameraUrl = () => baseUrl ? `${baseUrl}/camera` : '';
+  const getCameraUrl = () => {
+    if (baseUrl) {
+      return isDemoMode ? `${baseUrl}/demo/camera` : `${baseUrl}/camera`;
+    }
+    return '';
+  };
 
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
@@ -59,7 +79,7 @@ export default function ShowQRCode() {
       </div>
 
       <div className="min-h-screen flex flex-col items-center justify-center p-6">
-        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full">
+        <div className="bg-black p-8 rounded-2xl shadow-xl max-w-sm w-full">
           <h2 className="text-2xl font-bold text-center mb-6">
             Scan to Access Camera
           </h2>
@@ -77,11 +97,11 @@ export default function ShowQRCode() {
               </div>
               
               <div className="space-y-4">
-                <p className="text-gray-600 text-center text-sm">
+                <p className="text-white-600 text-center text-sm">
                   Scan this QR code with your mobile device to access the camera interface
                 </p>
 
-                <div className="text-xs text-center px-4 py-2 bg-gray-100 rounded-lg break-all">
+                <div className="text-xs text-center px-4 py-2 bg-black-100 rounded-lg break-all">
                   {getCameraUrl()}
                 </div>
               </div>

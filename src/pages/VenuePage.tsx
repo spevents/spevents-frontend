@@ -1,8 +1,8 @@
-import Scene from '../components/Scene';
+import { Scene } from '../components';
 
-export default function VenuePage() {
+export default function Venue() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
+    <div className="min-h-screen bg-gradient-to-b from-hunter-green to-brunswick-green">
       <main className="h-screen">
         <Scene />
       </main>

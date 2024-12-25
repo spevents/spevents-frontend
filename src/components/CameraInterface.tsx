@@ -1,8 +1,12 @@
 // src/components/CameraInterface.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, X, Image as ImageIcon, Repeat } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { X, Image as ImageIcon, Repeat } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNgrok } from '../contexts/NgrokContext';
+
+
+const PHOTO_LIMIT = 20;
 
 interface CameraInterfaceProps {
   initialMode: 'qr' | 'camera';
@@ -10,6 +14,8 @@ interface CameraInterfaceProps {
 
 const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { baseUrl } = useNgrok();
   const [hasPermission, setHasPermission] = useState(false);
   const [photos, setPhotos] = useState<Array<{ id: number; url: string }>>([]);
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
@@ -17,6 +23,9 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const flashRef = useRef<HTMLDivElement>(null);
+
+  const isDemoMode = location.pathname.startsWith('/demo');
+  const basePrefix = isDemoMode ? '/demo' : '';
 
   const getConstraints = (facing: 'environment' | 'user') => ({
     video: { 
@@ -64,7 +73,6 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
   };
 
   const triggerCaptureEffect = () => {
-    // Flash effect
     if (flashRef.current) {
       flashRef.current.style.opacity = '0.3';
       setTimeout(() => {
@@ -74,14 +82,13 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
       }, 150);
     }
 
-    // Button animation is handled by Framer Motion
     setIsCapturing(true);
     setTimeout(() => setIsCapturing(false), 150);
   };
 
   const capturePhoto = () => {
     const video = videoRef.current;
-    if (!video || photos.length >= 5) return;
+    if (!video || photos.length >= PHOTO_LIMIT) return;
 
     triggerCaptureEffect();
 
@@ -107,32 +114,38 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
     sessionPhotos.push(newPhoto);
     sessionStorage.setItem('temp-photos', JSON.stringify(sessionPhotos));
 
-    // Add haptic feedback if available
     if (navigator.vibrate) {
       navigator.vibrate(50);
     }
   };
 
+  const navigateWithBaseUrl = (path: string) => {
+    // If we're on mobile and using ngrok, use the full ngrok URL
+    if (window.innerWidth <= 768 && baseUrl) {
+      window.location.href = `${baseUrl}${path}`;
+    } else {
+      // On desktop or without ngrok, use regular navigation
+      navigate(path);
+    }
+  };
+
   return (
     <div className="relative h-screen bg-black">
-      {/* Flash overlay */}
       <div
         ref={flashRef}
         className="absolute inset-0 bg-black pointer-events-none transition-opacity duration-150 z-20"
         style={{ opacity: 0 }}
       />
 
-      {/* X Button */}
       <div className="absolute top-4 left-4 z-10">
         <button
-          onClick={() => navigate('/gallery')}
+          onClick={() => navigateWithBaseUrl(`${basePrefix}/gallery`)}
           className="bg-black/20 backdrop-blur-lg p-3 rounded-full text-white"
         >
           <X className="w-6 h-6" />
         </button>
       </div>
 
-      {/* Photo Counter with Animation */}
       <AnimatePresence>
         <motion.div 
           key={photos.length}
@@ -140,13 +153,12 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
           animate={{ scale: 1, opacity: 1 }}
           className="absolute top-4 right-4 px-3 py-1.5 bg-black/50 backdrop-blur-md rounded-full z-10"
         >
-          <span className={`text-sm font-medium ${photos.length >= 5 ? 'text-red-500' : 'text-white'}`}>
-            {photos.length}/5
+          <span className={`text-sm font-medium ${photos.length >= PHOTO_LIMIT ? 'text-red-500' : 'text-white'}`}>
+            {photos.length} / {PHOTO_LIMIT}
           </span>
         </motion.div>
       </AnimatePresence>
 
-      {/* Camera View */}
       <video
         ref={videoRef}
         autoPlay
@@ -154,9 +166,8 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
         className={`h-full w-full object-cover ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`}
       />
 
-      {/* Max Photos Warning */}
       <AnimatePresence>
-        {photos.length >= 5 && (
+        {photos.length >= PHOTO_LIMIT && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -168,12 +179,11 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
         )}
       </AnimatePresence>
 
-      {/* Controls */}
       <div className="absolute bottom-24 inset-x-0 p-8">
         <div className="flex justify-between items-center max-w-lg mx-auto px-6">
           {photos.length > 0 ? (
             <motion.button
-              onClick={() => navigate('/review')}
+              onClick={() => navigateWithBaseUrl(`${basePrefix}/review`)}
               whileTap={{ scale: 0.95 }}
               className="relative bg-white/20 backdrop-blur-lg p-4 rounded-full text-white"
             >
@@ -190,22 +200,20 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
             <div className="w-14" />
           )}
 
-          {/* Capture Button with Animation */}
           <motion.button
             onClick={capturePhoto}
-            disabled={photos.length >= 5}
+            disabled={photos.length >= PHOTO_LIMIT}
             animate={{
               scale: isCapturing ? 0.9 : 1,
               backgroundColor: isCapturing ? "rgba(255, 255, 255, 0.8)" : "rgba(255, 255, 255, 1)"
             }}
             transition={{ duration: 0.15 }}
             className={`w-20 h-20 rounded-full transform relative
-              ${photos.length >= 5 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              ${photos.length >= PHOTO_LIMIT ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <span className="absolute inset-2 rounded-full border-2 border-gray-200" />
           </motion.button>
 
-          {/* Flip Camera Button */}
           <motion.button
             onClick={flipCamera}
             whileTap={{ scale: 0.95 }}
