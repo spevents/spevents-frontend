@@ -44,8 +44,9 @@ const events: Event[] = [
     description:
       "Get ready for the WEDDING OF THE YEAR! Join us for our MOCK SHAADI – the most South Asian wedding celebration at Vanderbilt! 🥳🎶",
     testimonial: "Coming Soon",
-    images: Array(5).fill("/api/placeholder/1080/1920"),
-    organizerLinks: [
+    images: [
+      'https://images.unsplash.com/photo-1583939003579-730e3918a45a?q=80&w=1587&auto=format&fit=crop',
+    ],    organizerLinks: [
       { name: "VABS", link: "https://www.instagram.com/vandy.bengalis/" },
       { name: "PSA", link: "https://www.instagram.com/vandypsa/" },
       { name: "SACE", link: "https://www.instagram.com/vanderbiltsace/" },
