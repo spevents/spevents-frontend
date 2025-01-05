@@ -8,8 +8,8 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        timberwolf: '#dad7cd',
-        sage: '#a3b18a',
+        'timberwolf': '#dad7cd',
+        'sage': '#a3b18a',
         'fern-green': '#588157',
         'hunter-green': '#3a5a40',
         'brunswick-green': '#344e41'
