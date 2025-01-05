@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNgrok } from '../contexts/NgrokContext';
 
 
-const PHOTO_LIMIT = 20;
+const PHOTO_LIMIT = 5;
 
 interface CameraInterfaceProps {
   initialMode: 'qr' | 'camera';
