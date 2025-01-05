@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
-import { useSwipeable } from "react-swipeable";
 import {
   ArrowUpCircle,
   ArrowDownCircle,
@@ -14,11 +13,13 @@ interface Photo {
 }
 
 interface PhotoReviewMiniProps {
+  photos: Photo[];
   onPhotoAction: (photo: Photo) => void;
   onComplete: () => void;
 }
 
 const SWIPE_THRESHOLD = 50;
+
 export const SAMPLE_PHOTOS: Photo[] = [
   {
     id: 1,
@@ -34,34 +35,18 @@ export const SAMPLE_PHOTOS: Photo[] = [
   },
 ];
 
-const springConfig = {
-  type: "spring" as const,
-  stiffness: 250,
-  damping: 25,
-  mass: 0.8,
-  restDelta: 0.001,
-};
 
-export default function PhotoReviewMini({
-  onPhotoAction,
-  onComplete,
-}: PhotoReviewMiniProps) {
+export default function PhotoReviewMini({ photos, onPhotoAction, onComplete }: PhotoReviewMiniProps) {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [dragPosition, setDragPosition] = useState(0);
-  const [photos, setPhotos] = useState<Photo[]>(() => [...SAMPLE_PHOTOS]);
-  const [exitDirection, setExitDirection] = useState<"up" | "down" | null>(
-    null
-  );
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleDragEnd = (_: any, info: PanInfo) => {
     if (isProcessing) return;
 
-    const swipeThreshold = SWIPE_THRESHOLD;
-    if (Math.abs(info.offset.y) > swipeThreshold) {
+    if (Math.abs(info.offset.y) > SWIPE_THRESHOLD) {
       const isUpward = info.offset.y < 0;
-      setExitDirection(isUpward ? "up" : "down");
       handlePhotoAction(photos[currentPhotoIndex], isUpward);
     }
     setDragPosition(0);
@@ -73,64 +58,29 @@ export default function PhotoReviewMini({
     setIsProcessing(true);
 
     if (isUpward) {
-      // Upload the photo first
       onPhotoAction(photo);
-
-
     }
 
-    // Remove the photo and update state
-    setPhotos((prevPhotos) => prevPhotos.filter((p) => p.id !== photo.id));
-
-    // Move to next photo or complete if no more photos
     if (photos.length <= 1) {
       onComplete();
     } else if (currentPhotoIndex >= photos.length - 1) {
       setCurrentPhotoIndex(currentPhotoIndex - 1);
     }
 
-    // Reset states
     setDragPosition(0);
     setTimeout(() => {
       setIsProcessing(false);
-      setExitDirection(null);
     }, 300);
   };
 
-  const handlers = useSwipeable({
-    onSwiping: ({ deltaY }) => {
-      if (!isProcessing) {
-        setDragPosition(deltaY);
-        setIsDragging(true);
-      }
-    },
-    onSwipedUp: () => {
-      if (!isProcessing) {
-        handleDragEnd(null, { offset: { y: -100 } } as PanInfo);
-      }
-    },
-    onSwipedDown: () => {
-      if (!isProcessing) {
-        handleDragEnd(null, { offset: { y: 100 } } as PanInfo);
-      }
-    },
-    trackMouse: true,
-    preventScrollOnSwipe: true,
-  });
-
-  if (photos.length === 0) {
-    return null;
-  }
+  if (photos.length === 0) return null;
 
   const currentPhoto = photos[currentPhotoIndex];
   const dragPercentage = Math.abs(dragPosition / SWIPE_THRESHOLD);
   const isNearThreshold = dragPercentage >= 0.5;
 
   return (
-    <motion.div
-      className="w-full h-[24rem] relative rounded-2xl overflow-hidden bg-black/5"
-      exit={{ opacity: 0, scale: 0.9 }}
-    >
+    <motion.div className="w-full h-96 relative rounded-2xl overflow-hidden bg-black/5">
       <AnimatePresence mode="wait">
         <motion.div
           key={currentPhoto.id}
@@ -138,11 +88,12 @@ export default function PhotoReviewMini({
           drag="y"
           dragConstraints={{ top: 0, bottom: 0 }}
           dragElastic={0.8}
-          {...handlers}
           onDragEnd={handleDragEnd}
+          onDragStart={() => setIsDragging(true)}
+          onDrag={(_, info) => setDragPosition(info.offset.y)}
           style={{ y: dragPosition }}
           animate={{ scale: 1 - Math.abs(dragPosition / 1000) }}
-          transition={springConfig}
+          transition={{ type: "spring", stiffness: 250, damping: 25 }}
         >
           <img
             src={currentPhoto.url}
@@ -156,17 +107,13 @@ export default function PhotoReviewMini({
             className="absolute inset-0 bg-green-500/80 flex items-center justify-center"
             initial={{ opacity: 0 }}
             animate={{
-              opacity:
-                dragPosition < -SWIPE_THRESHOLD / 2 && isDragging ? 0.8 : 0,
+              opacity: dragPosition < -SWIPE_THRESHOLD / 2 && isDragging ? 0.8 : 0,
             }}
-            transition={{ duration: 0.2 }}
           >
             <div className="text-white text-center">
               <CheckCircle2 className="w-12 h-12 mx-auto mb-2" />
               <p className="text-lg font-medium">
-                {isNearThreshold && dragPosition < 0
-                  ? "Release to Upload"
-                  : "Keep sliding up"}
+                {isNearThreshold && dragPosition < 0 ? "Release to Upload" : "Keep sliding up"}
               </p>
             </div>
           </motion.div>
@@ -176,17 +123,13 @@ export default function PhotoReviewMini({
             className="absolute inset-0 bg-red-500/80 flex items-center justify-center"
             initial={{ opacity: 0 }}
             animate={{
-              opacity:
-                dragPosition > SWIPE_THRESHOLD / 2 && isDragging ? 0.8 : 0,
+              opacity: dragPosition > SWIPE_THRESHOLD / 2 && isDragging ? 0.8 : 0,
             }}
-            transition={{ duration: 0.2 }}
           >
             <div className="text-white text-center">
               <Trash2 className="w-12 h-12 mx-auto mb-2" />
               <p className="text-lg font-medium">
-                {isNearThreshold && dragPosition > 0
-                  ? "Release to Delete"
-                  : "Keep sliding down"}
+                {isNearThreshold && dragPosition > 0 ? "Release to Delete" : "Keep sliding down"}
               </p>
             </div>
           </motion.div>

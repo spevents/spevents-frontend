@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import {
   ChevronLeft,
@@ -40,7 +40,7 @@ const events: Event[] = [
     date: "January 10, 2025",
     venue: "Student Life Center (SLC)",
     guests: "300+",
-    photoCount: "Coming Soon",
+    photoCount: "--",
     description:
       "Get ready for the WEDDING OF THE YEAR! Join us for our MOCK SHAADI – the most South Asian wedding celebration at Vanderbilt! 🥳🎶",
     testimonial: "Coming Soon",
@@ -78,10 +78,8 @@ export default function EventShowcase() {
   const [currentImages, setCurrentImages] = useState<Record<number, number>>(
     Object.fromEntries(events.map((event) => [event.id, 0]))
   );
-  const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
   const handleDragStart = (
-    _: MouseEvent | TouchEvent | PointerEvent,
-    info: PanInfo
+    _: MouseEvent | TouchEvent | PointerEvent
   ) => {
     // Drag start logic if needed
   };
@@ -140,7 +138,7 @@ export default function EventShowcase() {
                     >
                       <motion.img
                         src={event.images[currentImages[event.id]]}
-                        alt={`Event photo ${currentImages[event.id] + 1}`}
+                        alt={`Coming Soon!`}
                         className="max-h-full max-w-full border-8 border-white rounded-xl"
                         initial={{ opacity: 0, x: 100 }}
                         animate={{ opacity: 1, x: 0 }}
