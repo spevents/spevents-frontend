@@ -25,7 +25,7 @@ export default function PhotoSlideshowMini({
 }: PhotoSlideshowMiniProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('simple');
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [_IsTransitioning, setIsTransitioning] = useState(false);
   const [deletingPhotoId, setDeletingPhotoId] = useState<number | null>(null);
 
   useEffect(() => {
