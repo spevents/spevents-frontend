@@ -1,9 +1,9 @@
-// src/components/guest/GuestDashboard.tsx (updated)
+// src/components/guest/GuestDashboard.tsx
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Camera, Palette } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Camera, Palette, Download, Award } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {  getPhotoUrl } from '../../lib/aws';
+import { getPhotoUrl } from '../../lib/aws';
 import { CollageCreator } from './CollageCreator';
 
 interface Photo {
@@ -14,21 +14,24 @@ interface Photo {
 
 export function GuestDashboard() {
   const navigate = useNavigate();
+  const { eventId } = useParams<{ eventId: string }>();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCollageCreator, setShowCollageCreator] = useState(false);
+  const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadGuestPhotos();
-  }, []);
+  }, [eventId]);
 
   const loadGuestPhotos = async () => {
     try {
-      const sessionPhotos = JSON.parse(localStorage.getItem('uploaded-photos') || '[]');
+      const sessionKey = `uploaded-photos-${eventId}`;
+      const sessionPhotos = JSON.parse(localStorage.getItem(sessionKey) || '[]');
       
       if (sessionPhotos.length > 0) {
         const photoUrls = sessionPhotos.map((fileName: string) => ({
-          url: getPhotoUrl(fileName),
+          url: getPhotoUrl(fileName, eventId!),
           name: fileName,
           created_at: new Date().toISOString()
         }));
@@ -40,6 +43,39 @@ export function GuestDashboard() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const togglePhotoSelection = (photoName: string) => {
+    setSelectedPhotos(prev => {
+      const newSelection = new Set(prev);
+      if (newSelection.has(photoName)) {
+        newSelection.delete(photoName);
+      } else {
+        newSelection.add(photoName);
+      }
+      return newSelection;
+    });
+  };
+
+  const downloadSelectedPhotos = async () => {
+    const selectedPhotosList = photos.filter(photo => selectedPhotos.has(photo.name));
+    
+    for (const photo of selectedPhotosList) {
+      const response = await fetch(photo.url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = photo.name;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    }
+  };
+
+  const navigateToFeedback = () => {
+    navigate(`/${eventId}/feedback`);
   };
 
   return (
@@ -66,12 +102,17 @@ export function GuestDashboard() {
                 <motion.div
                   key={photo.name}
                   className="relative aspect-square"
+                  onClick={() => togglePhotoSelection(photo.name)}
                 >
                   <img
                     src={photo.url}
                     alt="Your photo"
-                    className="w-full h-full object-cover rounded-lg"
+                    className={`w-full h-full object-cover rounded-lg transition-transform 
+                      ${selectedPhotos.has(photo.name) ? 'ring-2 ring-white scale-95' : ''}`}
                   />
+                  {selectedPhotos.has(photo.name) && (
+                    <div className="absolute top-2 right-2 w-4 h-4 bg-white rounded-full" />
+                  )}
                 </motion.div>
               ))}
             </div>
@@ -80,11 +121,11 @@ export function GuestDashboard() {
 
         {/* Bottom Actions */}
         <div className="fixed bottom-0 inset-x-0 bg-gray-900/80 backdrop-blur-lg p-4">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center justify-between gap-2">
             <button
-              onClick={() => navigate('/camera')}
+              onClick={() => navigate(`/${eventId}/camera`)}
               className="flex-1 flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 
-                text-white rounded-full py-3 px-6 transition-colors"
+                text-white rounded-full py-3 px-4 transition-colors"
             >
               <Camera className="w-5 h-5" />
               <span>Take More</span>
@@ -93,7 +134,7 @@ export function GuestDashboard() {
             <button
               onClick={() => setShowCollageCreator(true)}
               disabled={photos.length === 0}
-              className={`flex-1 flex items-center justify-center gap-2 rounded-full py-3 px-6 
+              className={`flex-1 flex items-center justify-center gap-2 rounded-full py-3 px-4 
                 transition-colors ${
                   photos.length > 0
                     ? 'bg-white text-gray-900 hover:bg-white/90'
@@ -101,7 +142,30 @@ export function GuestDashboard() {
                 }`}
             >
               <Palette className="w-5 h-5" />
-              <span>Creator</span>
+              <span>Create</span>
+            </button>
+
+            <button
+              onClick={downloadSelectedPhotos}
+              disabled={selectedPhotos.size === 0}
+              className={`flex-1 flex items-center justify-center gap-2 rounded-full py-3 px-4 
+                transition-colors ${
+                  selectedPhotos.size > 0
+                    ? 'bg-white/10 text-white hover:bg-white/20'
+                    : 'bg-white/5 text-white/50'
+                }`}
+            >
+              <Download className="w-5 h-5" />
+              <span>Download</span>
+            </button>
+
+            <button
+              onClick={navigateToFeedback}
+              className="flex-1 flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 
+                text-white rounded-full py-3 px-4 transition-colors"
+            >
+              <Award className="w-5 h-5" />
+              <span>Win Prize</span>
             </button>
           </div>
         </div>

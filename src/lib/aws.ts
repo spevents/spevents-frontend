@@ -8,89 +8,79 @@ const REGION = import.meta.env.VITE_AWS_REGION;
 const BUCKET_NAME = import.meta.env.VITE_S3_BUCKET_NAME;
 const CLOUDFRONT_URL = import.meta.env.VITE_CLOUDFRONT_URL;
 
-// Initialize S3 Client
 const s3Client = new S3Client({
-  region: import.meta.env.VITE_AWS_REGION,
+  region: REGION,
   credentials: {
     accessKeyId: import.meta.env.VITE_AWS_ACCESS_KEY_ID,
     secretAccessKey: import.meta.env.VITE_AWS_SECRET_ACCESS_KEY,
   }
 });
 
+// Helper to generate folder path for event
+const getEventFolder = (eventId: string) => `events/${eventId}`;
 
-interface UploadParams {
+export async function getPresignedUrl({ 
+  fileName, 
+  contentType, 
+  eventId 
+}: {
   fileName: string;
   contentType: string;
-}
-
-export async function getPresignedUrl({ fileName, contentType }: {
-  fileName: string;
-  contentType: string;
+  eventId: string;
 }): Promise<string> {
+  const key = `${getEventFolder(eventId)}/${fileName}`;
   const command = new PutObjectCommand({
-    Bucket: import.meta.env.VITE_S3_BUCKET_NAME,
-    Key: fileName,
+    Bucket: BUCKET_NAME,
+    Key: key,
     ContentType: contentType,
   });
 
   return getSignedUrl(s3Client, command, { expiresIn: 3600 });
 }
 
-export async function getSignedPhotoUrl(fileName: string): Promise<string> {
+export async function getSignedPhotoUrl(fileName: string, eventId: string): Promise<string> {
+  const key = `${getEventFolder(eventId)}/${fileName}`;
+  const command = new GetObjectCommand({
+    Bucket: BUCKET_NAME,
+    Key: key,
+    ResponseContentType: 'image/jpeg',
+  });
+  
+  return getSignedUrl(s3Client, command, { expiresIn: 3600 });
+}
+
+export function getPhotoUrl(fileName: string, eventId: string): string {
+  return `${CLOUDFRONT_URL}/${getEventFolder(eventId)}/${fileName}`;
+}
+
+export async function listPhotos(eventId: string): Promise<string[]> {
+  const command = new ListObjectsV2Command({
+    Bucket: BUCKET_NAME,
+    Prefix: getEventFolder(eventId)
+  });
+
   try {
-    console.log('Getting signed URL for:', fileName);
-    console.log('Using bucket:', import.meta.env.VITE_S3_BUCKET_NAME);
-    
-    const command = new GetObjectCommand({
-      Bucket: import.meta.env.VITE_S3_BUCKET_NAME,
-      Key: fileName,
-      ResponseContentType: 'image/jpeg',
-    });
-    
-    const signedUrl = await getSignedUrl(s3Client, command, { 
-      expiresIn: 3600,
-    });
-    
-    console.log('Generated signed URL:', signedUrl.substring(0, 100) + '...');
-    return signedUrl;
+    const response = await s3Client.send(command);
+    return (response.Contents || [])
+      .map(item => item.Key!.replace(`${getEventFolder(eventId)}/`, ''))
+      .filter(key => key.endsWith('.jpg') || key.endsWith('.jpeg') || key.endsWith('.png'));
   } catch (error) {
-    console.error('Error getting signed URL:', error);
+    console.error('Error listing photos:', error);
     throw error;
   }
 }
 
-
-
-export async function deleteFile(fileName: string): Promise<void> {
+export async function deleteFile(fileName: string, eventId: string): Promise<void> {
+  const key = `${getEventFolder(eventId)}/${fileName}`;
   const command = new DeleteObjectCommand({
     Bucket: BUCKET_NAME,
-    Key: fileName,
+    Key: key,
   });
 
   try {
     await s3Client.send(command);
   } catch (error) {
     console.error('Error deleting file:', error);
-    throw error;
-  }
-}
-
-export function getPhotoUrl(fileName: string): string {
-  return `${import.meta.env.VITE_CLOUDFRONT_URL}/${fileName}`;
-}
-
-export async function listPhotos(): Promise<string[]> {
-  const command = new ListObjectsV2Command({
-    Bucket: BUCKET_NAME
-  });
-
-  try {
-    const response = await s3Client.send(command);
-    return (response.Contents || [])
-      .map(item => item.Key!)
-      .filter(key => key.endsWith('.jpg') || key.endsWith('.jpeg') || key.endsWith('.png'));
-  } catch (error) {
-    console.error('Error listing photos:', error);
     throw error;
   }
 }

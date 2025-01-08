@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import {
   ChevronLeft,
@@ -78,10 +78,10 @@ export default function EventShowcase() {
   const [currentImages, setCurrentImages] = useState<Record<number, number>>(
     Object.fromEntries(events.map((event) => [event.id, 0]))
   );
-  const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
+  // const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
   const handleDragStart = (
     _: MouseEvent | TouchEvent | PointerEvent,
-    info: PanInfo
+    // info: PanInfo
   ) => {
     // Drag start logic if needed
   };
