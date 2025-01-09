@@ -1,19 +1,20 @@
-// src/components/PhotoReview.tsx
+// src/components/PhotoReview/PhotoReview.tsx
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { CheckCircle2, Trash2, Camera } from "lucide-react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useSwipeable } from "react-swipeable";
-import { getPresignedUrl, getPhotoUrl } from "../../lib/aws";
+import {
+  getPresignedUrl,
+  storeUploadedPhoto,
+  getTempPhotos,
+  storeTempPhotos,
+} from "../../lib/aws";
 
 interface Photo {
   id: number;
   url: string;
 }
-
-const GUEST_EVENT_ID = 'guest';
-
-
 
 const SWIPE_THRESHOLD_PERCENTAGE = 0.25;
 const ACTIVATION_THRESHOLD_PERCENTAGE = 0.15;
@@ -42,15 +43,18 @@ const dragTransitionConfig = {
 };
 
 // PhotoProgress Component
-const PhotoProgress: React.FC<{ total: number; current: number }> = ({ total, current }) => {
+const PhotoProgress: React.FC<{ total: number; current: number }> = ({
+  total,
+  current,
+}) => {
   return (
     <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col items-center space-y-2">
       <div className="w-48 h-1 bg-white/20 rounded-full overflow-hidden">
-        <motion.div 
+        <motion.div
           className="h-full bg-white rounded-full"
           initial={{ width: 0 }}
-          animate={{ 
-            width: `${((current + 1) / total) * 100}%`
+          animate={{
+            width: `${((current + 1) / total) * 100}%`,
           }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
         />
@@ -78,10 +82,8 @@ const ReviewComplete: React.FC = () => {
         transition={springConfig}
         className="w-full max-w-xs space-y-6 text-center"
       >
-        <h2 className="text-white text-xl font-medium">
-          All photos reviewed!
-        </h2>
-        
+        <h2 className="text-white text-xl font-medium">All photos reviewed!</h2>
+
         <div className="space-y-4">
           <motion.button
             whileHover={{ scale: 1.02 }}
@@ -112,17 +114,21 @@ const ReviewComplete: React.FC = () => {
 
 export default function PhotoReview() {
   const navigate = useNavigate();
-  const { eventId = 'default' } = useParams(); // Provide a default event ID if none is present
-  const location = useLocation();
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [processingPhotos, setProcessingPhotos] = useState<Set<number>>(new Set());
+  const [processingPhotos, setProcessingPhotos] = useState<Set<number>>(
+    new Set()
+  );
   const [dragPosition, setDragPosition] = useState<number>(0);
   const [screenHeight, setScreenHeight] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
-  const [exitDirection, setExitDirection] = useState<"up" | "down" | null>(null);
-  const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null);
+  const [exitDirection, setExitDirection] = useState<"up" | "down" | null>(
+    null
+  );
+  const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(
+    null
+  );
   const [horizontalDrag, setHorizontalDrag] = useState(0);
   const [isHorizontalDragging, setIsHorizontalDragging] = useState(false);
 
@@ -131,8 +137,8 @@ export default function PhotoReview() {
     updateScreenHeight();
     window.addEventListener("resize", updateScreenHeight);
 
-    const sessionPhotos = JSON.parse(sessionStorage.getItem("temp-photos") || "[]");
-    setPhotos(sessionPhotos);
+    const tempPhotos = getTempPhotos();
+    setPhotos(tempPhotos);
 
     return () => window.removeEventListener("resize", updateScreenHeight);
   }, []);
@@ -162,7 +168,8 @@ export default function PhotoReview() {
   });
 
   const handleDragStart = (_: any, info: PanInfo) => {
-    const horizontalMovement = Math.abs(info.offset.x) > Math.abs(info.offset.y);
+    const horizontalMovement =
+      Math.abs(info.offset.x) > Math.abs(info.offset.y);
     setIsHorizontalDragging(horizontalMovement);
     if (!horizontalMovement) {
       setIsDragging(true);
@@ -180,30 +187,29 @@ export default function PhotoReview() {
   const handlePhotoAction = async (photo: Photo, isUpward: boolean) => {
     const currentIndex = currentPhotoIndex;
     const totalPhotos = photos.length;
-  
+
     if (isUpward) {
       setProcessingPhotos((prev) => new Set(prev).add(photo.id));
       setIsUploading(true);
-  
+
       try {
         setPhotos((prev) => prev.filter((p) => p.id !== photo.id));
         setDragPosition(0);
-  
+
         if (currentIndex === totalPhotos - 1 && currentIndex > 0) {
           setCurrentPhotoIndex(currentIndex - 1);
         }
-  
+
         const response = await fetch(photo.url);
         const blob = await response.blob();
         const fileName = `photo-${Date.now()}.jpg`;
-        
-        // Upload to main gallery storage (no guest prefix)
+
+        // Get presigned URL for upload
         const presignedUrl = await getPresignedUrl({
           fileName,
           contentType: "image/jpeg",
-          eventId: 'default' // Use default event ID for main gallery
         });
-  
+
         const uploadResponse = await fetch(presignedUrl, {
           method: "PUT",
           body: blob,
@@ -211,19 +217,17 @@ export default function PhotoReview() {
             "Content-Type": "image/jpeg",
           },
         });
-  
+
         if (!uploadResponse.ok) throw new Error("Upload failed");
-  
-        // Store just the filename in guest's localStorage to track their uploads
-        const guestPhotos = JSON.parse(localStorage.getItem("my-uploaded-photos") || "[]");
-        guestPhotos.push(fileName);
-        localStorage.setItem("my-uploaded-photos", JSON.stringify(guestPhotos));
-  
+
+        // Store the uploaded photo info in localStorage
+        storeUploadedPhoto(fileName);
+
         // Update session storage for temporary photos
-        const sessionPhotos = JSON.parse(sessionStorage.getItem("temp-photos") || "[]");
-        const updatedSessionPhotos = sessionPhotos.filter((p: Photo) => p.id !== photo.id);
-        sessionStorage.setItem("temp-photos", JSON.stringify(updatedSessionPhotos));
-  
+        const tempPhotos = getTempPhotos().filter(
+          (p: Photo) => p.id !== photo.id
+        );
+        storeTempPhotos(tempPhotos);
       } catch (error) {
         console.error("Upload failed:", error);
         if (processingPhotos.has(photo.id)) {
@@ -244,12 +248,13 @@ export default function PhotoReview() {
       if (currentIndex === totalPhotos - 1 && currentIndex > 0) {
         setCurrentPhotoIndex(currentIndex - 1);
       }
-      
-      // Update session storage for deleted photos
-      const sessionPhotos = JSON.parse(sessionStorage.getItem("temp-photos") || "[]");
-      const updatedSessionPhotos = sessionPhotos.filter((p: Photo) => p.id !== photo.id);
-      sessionStorage.setItem("temp-photos", JSON.stringify(updatedSessionPhotos));
-      
+
+      // Update session storage for temporary photos
+      const tempPhotos = getTempPhotos().filter(
+        (p: Photo) => p.id !== photo.id
+      );
+      storeTempPhotos(tempPhotos);
+
       setDragPosition(0);
     }
   };
@@ -276,7 +281,10 @@ export default function PhotoReview() {
 
     const swipeThreshold = screenHeight * SWIPE_THRESHOLD_PERCENTAGE;
 
-    if (Math.abs(info.velocity.y) > 400 || Math.abs(info.offset.y) > swipeThreshold) {
+    if (
+      Math.abs(info.velocity.y) > 400 ||
+      Math.abs(info.offset.y) > swipeThreshold
+    ) {
       const isUpward = info.offset.y < 0;
       setExitDirection(isUpward ? "up" : "down");
       await handlePhotoAction(photo, isUpward);
@@ -333,10 +341,19 @@ export default function PhotoReview() {
                 initial={{
                   scale: 0.8,
                   opacity: 0,
-                  x: swipeDirection === "left" ? -200 : swipeDirection === "right" ? 200 : 0,
+                  x:
+                    swipeDirection === "left"
+                      ? -200
+                      : swipeDirection === "right"
+                      ? 200
+                      : 0,
                 }}
                 animate={{
-                  scale: isCurrentPhoto ? 1 : isPrevPhoto || isNextPhoto ? 0.95 : 0.9,
+                  scale: isCurrentPhoto
+                    ? 1
+                    : isPrevPhoto || isNextPhoto
+                    ? 0.95
+                    : 0.9,
                   opacity: isCurrentPhoto ? 1 : isActive ? 0.7 : 0,
                   x: isCurrentPhoto
                     ? horizontalDrag
@@ -358,8 +375,18 @@ export default function PhotoReview() {
                 exit={{
                   scale: exitDirection === "up" ? 1.1 : 0.8,
                   opacity: 0,
-                  x: swipeDirection === "left" ? 200 : swipeDirection === "right" ? -200 : 0,
-                  y: exitDirection === "up" ? -screenHeight : exitDirection === "down" ? screenHeight : 0,
+                  x:
+                    swipeDirection === "left"
+                      ? 200
+                      : swipeDirection === "right"
+                      ? -200
+                      : 0,
+                  y:
+                    exitDirection === "up"
+                      ? -screenHeight
+                      : exitDirection === "down"
+                      ? screenHeight
+                      : 0,
                   transition: bounceTransition,
                 }}
                 drag={isCurrentPhoto}
@@ -418,14 +445,17 @@ export default function PhotoReview() {
                         <motion.div
                           className="flex flex-col items-center"
                           animate={{
-                            scale: isNearThreshold && dragPosition < 0 ? 1.2 : 1,
+                            scale:
+                              isNearThreshold && dragPosition < 0 ? 1.2 : 1,
                             y: isNearThreshold && dragPosition < 0 ? -20 : 0,
                           }}
                           transition={springConfig}
                         >
                           <CheckCircle2 className="w-12 h-12 text-white mb-4" />
                           <p className="text-white text-lg font-medium">
-                            {isOverThreshold ? "Release to Upload" : "Keep sliding up"}
+                            {isOverThreshold
+                              ? "Release to Upload"
+                              : "Keep sliding up"}
                           </p>
                         </motion.div>
                       </motion.div>
@@ -446,14 +476,17 @@ export default function PhotoReview() {
                         <motion.div
                           className="flex flex-col items-center"
                           animate={{
-                            scale: isNearThreshold && dragPosition > 0 ? 1.2 : 1,
+                            scale:
+                              isNearThreshold && dragPosition > 0 ? 1.2 : 1,
                             y: isNearThreshold && dragPosition > 0 ? 20 : 0,
                           }}
                           transition={springConfig}
                         >
                           <Trash2 className="w-12 h-12 text-white mb-4" />
                           <p className="text-white text-lg font-medium">
-                            {isOverThreshold ? "Release to Delete" : "Keep sliding down"}
+                            {isOverThreshold
+                              ? "Release to Delete"
+                              : "Keep sliding down"}
                           </p>
                         </motion.div>
                       </motion.div>

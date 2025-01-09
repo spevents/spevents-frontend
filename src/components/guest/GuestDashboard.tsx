@@ -1,9 +1,9 @@
 // src/components/guest/GuestDashboard.tsx
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Camera, Palette, Download, Award } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getPhotoUrl } from '../../lib/aws';
+import { getUploadedPhotos } from '../../lib/aws';
 import { CollageCreator } from './CollageCreator';
 
 interface Photo {
@@ -12,13 +12,8 @@ interface Photo {
   created_at: string;
 }
 
-
-const GUEST_EVENT_ID = 'guest';
-
-
 export function GuestDashboard() {
   const navigate = useNavigate();
-  const { eventId } = useParams<{ eventId: string }>();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCollageCreator, setShowCollageCreator] = useState(false);
@@ -30,22 +25,8 @@ export function GuestDashboard() {
 
   const loadGuestPhotos = async () => {
     try {
-      const storedPhotos = JSON.parse(localStorage.getItem('uploaded-photos') || '[]');
-      
-      if (storedPhotos.length > 0) {
-        // If the stored photos are in the new format (objects with url property)
-        if (typeof storedPhotos[0] === 'object' && storedPhotos[0].url) {
-          setPhotos(storedPhotos);
-        } else {
-          // Handle legacy format (array of filenames)
-          const photoUrls = storedPhotos.map((fileName: string) => ({
-            url: getPhotoUrl(fileName, GUEST_EVENT_ID),
-            name: fileName,
-            created_at: new Date().toISOString()
-          }));
-          setPhotos(photoUrls);
-        }
-      }
+      const photos = getUploadedPhotos();
+      setPhotos(photos);
     } catch (error) {
       console.error('Error loading photos:', error);
     } finally {
@@ -83,7 +64,7 @@ export function GuestDashboard() {
   };
 
   const navigateToFeedback = () => {
-    navigate(`/${eventId}/feedback`);
+    navigate('/feedback');
   };
 
   return (
@@ -131,7 +112,7 @@ export function GuestDashboard() {
         <div className="fixed bottom-0 inset-x-0 bg-gray-900/80 backdrop-blur-lg p-4">
           <div className="flex items-center justify-between gap-2">
             <button
-              onClick={() => navigate(`/${eventId}/camera`)}
+              onClick={() => navigate('/camera')}
               className="flex-1 flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 
                 text-white rounded-full py-3 px-4 transition-colors"
             >
