@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNgrok } from '../contexts/NgrokContext';
 
 
-const PHOTO_LIMIT = 5;
+const PHOTO_LIMIT = 7;
 
 interface CameraInterfaceProps {
   initialMode: 'qr' | 'camera';
@@ -16,7 +16,7 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { baseUrl } = useNgrok();
-  const [hasPermission, setHasPermission] = useState(false);
+  const [_hasPermission, setHasPermission] = useState(false);
   const [photos, setPhotos] = useState<Array<{ id: number; url: string }>>([]);
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const [isCapturing, setIsCapturing] = useState(false);
