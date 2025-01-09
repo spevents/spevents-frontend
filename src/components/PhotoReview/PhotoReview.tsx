@@ -2,14 +2,18 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { CheckCircle2, Trash2, Camera } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useSwipeable } from "react-swipeable";
-import { getPresignedUrl } from "../../lib/aws";
+import { getPresignedUrl, getPhotoUrl } from "../../lib/aws";
 
 interface Photo {
   id: number;
   url: string;
 }
+
+const GUEST_EVENT_ID = 'guest';
+
+
 
 const SWIPE_THRESHOLD_PERCENTAGE = 0.25;
 const ACTIVATION_THRESHOLD_PERCENTAGE = 0.15;
@@ -107,8 +111,9 @@ const ReviewComplete: React.FC = () => {
 };
 
 export default function PhotoReview() {
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
   const { eventId = 'default' } = useParams(); // Provide a default event ID if none is present
+  const location = useLocation();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [processingPhotos, setProcessingPhotos] = useState<Set<number>>(new Set());
   const [dragPosition, setDragPosition] = useState<number>(0);
@@ -175,28 +180,30 @@ export default function PhotoReview() {
   const handlePhotoAction = async (photo: Photo, isUpward: boolean) => {
     const currentIndex = currentPhotoIndex;
     const totalPhotos = photos.length;
-
+  
     if (isUpward) {
       setProcessingPhotos((prev) => new Set(prev).add(photo.id));
       setIsUploading(true);
-
+  
       try {
         setPhotos((prev) => prev.filter((p) => p.id !== photo.id));
         setDragPosition(0);
-
+  
         if (currentIndex === totalPhotos - 1 && currentIndex > 0) {
           setCurrentPhotoIndex(currentIndex - 1);
         }
-
+  
         const response = await fetch(photo.url);
         const blob = await response.blob();
         const fileName = `photo-${Date.now()}.jpg`;
+        
+        // Upload to main gallery storage (no guest prefix)
         const presignedUrl = await getPresignedUrl({
           fileName,
           contentType: "image/jpeg",
-          eventId
+          eventId: 'default' // Use default event ID for main gallery
         });
-
+  
         const uploadResponse = await fetch(presignedUrl, {
           method: "PUT",
           body: blob,
@@ -204,13 +211,19 @@ export default function PhotoReview() {
             "Content-Type": "image/jpeg",
           },
         });
-
+  
         if (!uploadResponse.ok) throw new Error("Upload failed");
-
-        // Store photos in localStorage for guest mode
-        const storedPhotos = JSON.parse(localStorage.getItem("uploaded-photos") || "[]");
-        storedPhotos.push(fileName);
-        localStorage.setItem("uploaded-photos", JSON.stringify(storedPhotos));
+  
+        // Store just the filename in guest's localStorage to track their uploads
+        const guestPhotos = JSON.parse(localStorage.getItem("my-uploaded-photos") || "[]");
+        guestPhotos.push(fileName);
+        localStorage.setItem("my-uploaded-photos", JSON.stringify(guestPhotos));
+  
+        // Update session storage for temporary photos
+        const sessionPhotos = JSON.parse(sessionStorage.getItem("temp-photos") || "[]");
+        const updatedSessionPhotos = sessionPhotos.filter((p: Photo) => p.id !== photo.id);
+        sessionStorage.setItem("temp-photos", JSON.stringify(updatedSessionPhotos));
+  
       } catch (error) {
         console.error("Upload failed:", error);
         if (processingPhotos.has(photo.id)) {
@@ -226,10 +239,17 @@ export default function PhotoReview() {
         setExitDirection(null);
       }
     } else {
+      // Handle delete action
       setPhotos((prev) => prev.filter((p) => p.id !== photo.id));
       if (currentIndex === totalPhotos - 1 && currentIndex > 0) {
         setCurrentPhotoIndex(currentIndex - 1);
       }
+      
+      // Update session storage for deleted photos
+      const sessionPhotos = JSON.parse(sessionStorage.getItem("temp-photos") || "[]");
+      const updatedSessionPhotos = sessionPhotos.filter((p: Photo) => p.id !== photo.id);
+      sessionStorage.setItem("temp-photos", JSON.stringify(updatedSessionPhotos));
+      
       setDragPosition(0);
     }
   };

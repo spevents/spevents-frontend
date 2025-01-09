@@ -12,6 +12,10 @@ interface Photo {
   created_at: string;
 }
 
+
+const GUEST_EVENT_ID = 'guest';
+
+
 export function GuestDashboard() {
   const navigate = useNavigate();
   const { eventId } = useParams<{ eventId: string }>();
@@ -22,21 +26,25 @@ export function GuestDashboard() {
 
   useEffect(() => {
     loadGuestPhotos();
-  }, [eventId]);
+  }, []);
 
   const loadGuestPhotos = async () => {
     try {
-      const sessionKey = `uploaded-photos-${eventId}`;
-      const sessionPhotos = JSON.parse(localStorage.getItem(sessionKey) || '[]');
+      const storedPhotos = JSON.parse(localStorage.getItem('uploaded-photos') || '[]');
       
-      if (sessionPhotos.length > 0) {
-        const photoUrls = sessionPhotos.map((fileName: string) => ({
-          url: getPhotoUrl(fileName, eventId!),
-          name: fileName,
-          created_at: new Date().toISOString()
-        }));
-
-        setPhotos(photoUrls);
+      if (storedPhotos.length > 0) {
+        // If the stored photos are in the new format (objects with url property)
+        if (typeof storedPhotos[0] === 'object' && storedPhotos[0].url) {
+          setPhotos(storedPhotos);
+        } else {
+          // Handle legacy format (array of filenames)
+          const photoUrls = storedPhotos.map((fileName: string) => ({
+            url: getPhotoUrl(fileName, GUEST_EVENT_ID),
+            name: fileName,
+            created_at: new Date().toISOString()
+          }));
+          setPhotos(photoUrls);
+        }
       }
     } catch (error) {
       console.error('Error loading photos:', error);
