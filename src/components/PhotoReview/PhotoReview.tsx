@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { CheckCircle2, Trash2, Camera } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useSwipeable } from "react-swipeable";
 import { getPresignedUrl } from "../../lib/aws";
 
@@ -107,7 +107,8 @@ const ReviewComplete: React.FC = () => {
 };
 
 export default function PhotoReview() {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
+  const { eventId = 'default' } = useParams(); // Provide a default event ID if none is present
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [processingPhotos, setProcessingPhotos] = useState<Set<number>>(new Set());
   const [dragPosition, setDragPosition] = useState<number>(0);
@@ -193,6 +194,7 @@ export default function PhotoReview() {
         const presignedUrl = await getPresignedUrl({
           fileName,
           contentType: "image/jpeg",
+          eventId
         });
 
         const uploadResponse = await fetch(presignedUrl, {
