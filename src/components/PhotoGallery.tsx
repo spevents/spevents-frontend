@@ -87,7 +87,7 @@ const PhotoGallery: React.FC = () => {
       // Optionally show an error message to the user
     } finally {
       setIsDeletingPhotos(false);
-    }
+    } 
   };
 
 
