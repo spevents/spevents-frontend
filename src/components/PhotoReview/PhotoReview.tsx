@@ -113,7 +113,7 @@ const ReviewComplete: React.FC = () => {
 };
 
 export default function PhotoReview() {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [processingPhotos, setProcessingPhotos] = useState<Set<number>>(
     new Set()

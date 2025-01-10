@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Share2, ChevronLeft } from 'lucide-react';
 import { createCollage, shareToInstagram } from '../../utils/collage';
-import { getSignedPhotoUrl } from '../../lib/aws';
 
 interface Photo {
   url: string;
@@ -19,6 +18,7 @@ export function CollageCreator({ photos, onClose }: CollageCreatorProps) {
   const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
   const [isCreatingCollage, setIsCreatingCollage] = useState(false);
   const [collagePreview, setCollagePreview] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handlePhotoSelect = (photoName: string) => {
     setSelectedPhotos(prev => {
@@ -30,6 +30,7 @@ export function CollageCreator({ photos, onClose }: CollageCreatorProps) {
       }
       return newSet;
     });
+    setError(null); // Clear any previous errors
   };
 
   const handleCreateCollage = async () => {
@@ -37,24 +38,38 @@ export function CollageCreator({ photos, onClose }: CollageCreatorProps) {
 
     try {
       setIsCreatingCollage(true);
-      console.log('Getting signed URLs for photos...');
+      setError(null);
 
-      // Get signed URLs for selected photos
-      const selectedPhotoUrls = await Promise.all(
-        Array.from(selectedPhotos).map(async name => {
-          console.log('Getting signed URL for:', name);
-          const signedUrl = await getSignedPhotoUrl(name);
-          console.log('Received signed URL:', signedUrl.substring(0, 100) + '...');
-          return signedUrl;
-        })
-      );
+      // Get selected photos and their URLs
+      const selectedPhotoUrls = photos
+        .filter(photo => selectedPhotos.has(photo.name))
+        .map(photo => photo.url);
 
-      console.log('Creating collage with signed URLs...');
-      const collageDataUrl = await createCollage(selectedPhotoUrls);
-      console.log('Collage created successfully');
+      // First, try to fetch all images to ensure they're accessible
+      const fetchPromises = selectedPhotoUrls.map(async url => {
+        try {
+          const response = await fetch(url);
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          const blob = await response.blob();
+          return URL.createObjectURL(blob);
+        } catch (error) {
+          console.error('Error fetching image:', error);
+          throw new Error(`Failed to load image: ${url}`);
+        }
+      });
+
+      const blobUrls = await Promise.all(fetchPromises);
+      
+      // Create the collage using blob URLs
+      const collageDataUrl = await createCollage(blobUrls);
+      
+      // Clean up blob URLs
+      blobUrls.forEach(url => URL.revokeObjectURL(url));
+      
       setCollagePreview(collageDataUrl);
     } catch (error) {
-      console.error('Error in handleCreateCollage:', error);
+      console.error('Error creating collage:', error);
+      setError('Failed to create collage. Please try again or select different photos.');
     } finally {
       setIsCreatingCollage(false);
     }
@@ -66,7 +81,8 @@ export function CollageCreator({ photos, onClose }: CollageCreatorProps) {
     try {
       await shareToInstagram(collagePreview);
     } catch (error) {
-      console.error('Error sharing collage:', error);
+      console.error('Error sharing to Instagram:', error);
+      setError('Failed to share to Instagram. Please try saving the image and sharing manually.');
     }
   };
 
@@ -90,6 +106,13 @@ export function CollageCreator({ photos, onClose }: CollageCreatorProps) {
           <div className="w-10" /> {/* Spacer for alignment */}
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="p-4 bg-red-500/10 border-b border-red-500/20">
+            <p className="text-red-400 text-sm text-center">{error}</p>
+          </div>
+        )}
+
         {/* Main Content */}
         <div className="flex-1 overflow-auto p-4">
           {collagePreview ? (
@@ -100,7 +123,10 @@ export function CollageCreator({ photos, onClose }: CollageCreatorProps) {
                 className="max-w-full max-h-[70vh] rounded-lg shadow-lg"
               />
               <button
-                onClick={() => setCollagePreview(null)}
+                onClick={() => {
+                  setCollagePreview(null);
+                  setError(null);
+                }}
                 className="mt-4 px-6 py-2 bg-white/10 text-white rounded-full hover:bg-white/20 transition-colors"
               >
                 Create New Collage

@@ -1,6 +1,12 @@
 // src/lib/aws.ts
-import { S3Client, GetObjectCommand, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import {
+  S3Client,
+  GetObjectCommand,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  ListObjectsV2Command,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 // AWS Configuration
 const REGION = import.meta.env.VITE_AWS_REGION;
@@ -12,11 +18,11 @@ const s3Client = new S3Client({
   credentials: {
     accessKeyId: import.meta.env.VITE_AWS_ACCESS_KEY_ID,
     secretAccessKey: import.meta.env.VITE_AWS_SECRET_ACCESS_KEY,
-  }
+  },
 });
 
-export async function getPresignedUrl({ 
-  fileName, 
+export async function getPresignedUrl({
+  fileName,
   contentType,
 }: {
   fileName: string;
@@ -35,9 +41,9 @@ export async function getSignedPhotoUrl(fileName: string): Promise<string> {
   const command = new GetObjectCommand({
     Bucket: BUCKET_NAME,
     Key: fileName,
-    ResponseContentType: 'image/jpeg',
+    ResponseContentType: "image/jpeg",
   });
-  
+
   return getSignedUrl(s3Client, command, { expiresIn: 3600 });
 }
 
@@ -47,18 +53,30 @@ export function getPhotoUrl(fileName: string): string {
 
 export async function listPhotos(): Promise<string[]> {
   const command = new ListObjectsV2Command({
-    Bucket: BUCKET_NAME
+    Bucket: BUCKET_NAME,
   });
 
   try {
     const response = await s3Client.send(command);
     return (response.Contents || [])
-      .map(item => item.Key!)
-      .filter(key => key.endsWith('.jpg') || key.endsWith('.jpeg') || key.endsWith('.png'));
+      .map((item) => item.Key!)
+      .filter(
+        (key) =>
+          key.endsWith(".jpg") || key.endsWith(".jpeg") || key.endsWith(".png")
+      );
   } catch (error) {
-    console.error('Error listing photos:', error);
+    console.error("Error listing photos:", error);
     throw error;
   }
+}
+
+export async function getDeletePresignedUrl(fileName: string): Promise<string> {
+  const command = new DeleteObjectCommand({
+    Bucket: BUCKET_NAME,
+    Key: fileName,
+  });
+
+  return getSignedUrl(s3Client, command, { expiresIn: 3600 });
 }
 
 export async function deleteFile(fileName: string): Promise<void> {
@@ -70,35 +88,63 @@ export async function deleteFile(fileName: string): Promise<void> {
   try {
     await s3Client.send(command);
   } catch (error) {
-    console.error('Error deleting file:', error);
+    console.error("Error deleting file:", error);
     throw error;
   }
 }
-
 // Helper functions for local storage
 export const LOCAL_STORAGE_KEYS = {
-  UPLOADED_PHOTOS: 'uploaded-photos',
-  TEMP_PHOTOS: 'temp-photos'
+  UPLOADED_PHOTOS: "uploaded-photos",
+  TEMP_PHOTOS: "temp-photos",
 } as const;
 
 export function storeUploadedPhoto(fileName: string) {
-  const storedPhotos = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.UPLOADED_PHOTOS) || '[]');
+  const storedPhotos = JSON.parse(
+    localStorage.getItem(LOCAL_STORAGE_KEYS.UPLOADED_PHOTOS) || "[]"
+  );
   storedPhotos.push({
     name: fileName,
     url: getPhotoUrl(fileName),
-    created_at: new Date().toISOString()
+    created_at: new Date().toISOString(),
   });
-  localStorage.setItem(LOCAL_STORAGE_KEYS.UPLOADED_PHOTOS, JSON.stringify(storedPhotos));
+  localStorage.setItem(
+    LOCAL_STORAGE_KEYS.UPLOADED_PHOTOS,
+    JSON.stringify(storedPhotos)
+  );
 }
 
 export function getUploadedPhotos() {
-  return JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.UPLOADED_PHOTOS) || '[]');
+  return JSON.parse(
+    localStorage.getItem(LOCAL_STORAGE_KEYS.UPLOADED_PHOTOS) || "[]"
+  );
 }
 
 export function storeTempPhotos(photos: any[]) {
-  sessionStorage.setItem(LOCAL_STORAGE_KEYS.TEMP_PHOTOS, JSON.stringify(photos));
+  sessionStorage.setItem(
+    LOCAL_STORAGE_KEYS.TEMP_PHOTOS,
+    JSON.stringify(photos)
+  );
 }
 
 export function getTempPhotos() {
-  return JSON.parse(sessionStorage.getItem(LOCAL_STORAGE_KEYS.TEMP_PHOTOS) || '[]');
+  return JSON.parse(
+    sessionStorage.getItem(LOCAL_STORAGE_KEYS.TEMP_PHOTOS) || "[]"
+  );
+}
+
+export async function deleteMultipleFiles(fileNames: string[]): Promise<void> {
+  try {
+    await Promise.all(
+      fileNames.map((fileName) => {
+        const command = new DeleteObjectCommand({
+          Bucket: BUCKET_NAME,
+          Key: fileName,
+        });
+        return s3Client.send(command);
+      })
+    );
+  } catch (error) {
+    console.error("Error deleting multiple files:", error);
+    throw error;
+  }
 }

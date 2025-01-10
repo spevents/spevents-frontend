@@ -15,19 +15,30 @@ export async function createCollage(images: string[]): Promise<string> {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   try {
-    // Load all images directly using signed URLs
+    // Function to fetch and create blob URL for an image
+    const createBlobUrl = async (url: string): Promise<string> => {
+      try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        return URL.createObjectURL(blob);
+      } catch (error) {
+        console.error("Error fetching image:", error);
+        throw new Error(`Failed to load image: ${url}`);
+      }
+    };
+
+    // Create blob URLs for all images
+    const blobUrls = await Promise.all(images.map(createBlobUrl));
+
+    // Load all images using blob URLs
     const loadedImages = await Promise.all(
-      images.map(
+      blobUrls.map(
         (url) =>
           new Promise<HTMLImageElement>((resolve, reject) => {
             const img = new Image();
-            // Now we can use crossOrigin since we have signed URLs
-            img.crossOrigin = "anonymous";
             img.onload = () => resolve(img);
-            img.onerror = () =>
-              reject(new Error(`Failed to load image: ${url}`));
+            img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
             img.src = url;
-            console.log("Loading image:", url.substring(0, 100) + "...");
           })
       )
     );
@@ -69,6 +80,9 @@ export async function createCollage(images: string[]): Promise<string> {
         console.error("Error drawing image:", err);
       }
     });
+
+    // Clean up blob URLs
+    blobUrls.forEach(URL.revokeObjectURL);
 
     // Add watermark
     const watermarkSize = Math.max(32, Math.floor(canvas.width * 0.03));

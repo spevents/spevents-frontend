@@ -1,6 +1,7 @@
 // src/App.tsx
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { CameraPage, GalleryPage, PhotoReviewPage, SlideshowPage } from './pages';
+import FeedbackPage from './components/guest/FeedbackPage';
 import { GuestDashboard } from './components/guest/GuestDashboard';
 import { NgrokProvider } from './contexts/NgrokContext';
 import { MainLayout } from './layouts';
@@ -23,6 +24,7 @@ export default function App() {
           <Route path="/camera" element={<CameraPage />} />
           <Route path="/review" element={<PhotoReviewPage />} />
           <Route path="/guest" element={<GuestDashboard />} />
+          <Route path="/feedback" element={<FeedbackPage/> } />
           
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
