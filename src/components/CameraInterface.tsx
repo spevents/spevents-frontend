@@ -1,6 +1,6 @@
 // src/components/CameraInterface.tsx
 import React, { useState, useRef, useEffect } from "react";
-import { Image as ImageIcon, Repeat } from "lucide-react";
+import { Upload as UploadIcon, Repeat } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNgrok } from "../contexts/NgrokContext";
@@ -189,7 +189,7 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
               whileTap={{ scale: 0.95 }}
               className="relative bg-white/20 backdrop-blur-lg p-4 rounded-full text-white"
             >
-              <ImageIcon className="w-6 h-6" />
+              <UploadIcon className="w-6 h-6" />
               <motion.span
                 initial={{ scale: 1.2, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
