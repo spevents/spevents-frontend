@@ -1,116 +1,162 @@
 # Spevents: Making Every Event Unforgettable
 
-## Pitch
-#### What is Spevents?
-Spevents is a QR-based photo sharing platform that lets event guests contribute to a real-time 3D photo gallery without downloading an app.
+A QR-based photo sharing platform that lets event guests contribute to a real-time 3D photo gallery without downloading an app.
 
-#### Problem
+## What is Spevents?
+
+Spevents transforms event photo sharing through a frictionless experience: guests scan a QR code at their table, take photos through our web interface, and swipe up to share. Photos instantly appear in a 3D visualization of the venue that's displayed during the event. No app downloads, no accounts, no friction.
+
+## Why Spevents?
+
+### The Problem
 At weddings and events, guests are constantly switching between enjoying moments and trying to capture them. Traditional solutions like hashtags scatter photos across platforms, while "upload your photos" websites get low engagement. Custom event apps have high friction and low adoption.
 
-#### Solution
-Guests scan a QR code at their table, take photos through our web interface, and swipe up to share. Photos instantly appear in a 3D visualization of the venue that's displayed during the event. No app downloads, no accounts, no friction.
+### Our Solution
+- **Instant Access**: Just scan a QR code - no apps, no accounts
+- **Real-time Sharing**: Photos appear instantly in the venue visualization
+- **Interactive Display**: 3D venue visualization creates an engaging experience
+- **Frictionless Experience**: Designed for maximum guest participation
 
-#### Market
-$70B wedding industry in the US, with 2.2M weddings annually. Initial focus on Vanderbilt University's 350+ reservable venues and Nashville's wedding market.
+## Market & Traction
 
-#### Traction
+- Targeting the $70B wedding industry in the US (2.2M weddings annually)
+- Initial focus on Vanderbilt University's 350+ reservable venues and Nashville's wedding market
 - Launching at Mock Shaadi wedding event with 300 guests in partnership with 3 cultural organizations
-- Pre-launch interest from --
 
-#### Business Model
-- Free tier for small events (up to 100 guests)
-- Premium tier with usage-based pricing ($29 base + storage costs)
-- Enterprise plans for venues and event planners
+## Business Model
+
+- **Free Tier**: Small events (up to 100 guests)
+- **Premium Tier**: $29 base + usage-based storage costs
+- **Enterprise Plans**: Custom solutions for venues and event planners
 - Infrastructure costs tied directly to AWS usage
 - 70% margins after cloud storage and processing costs
 
-#### Team
-Solo founder with CS/Math background + event planning experience. Built venue management systems and organized multiple cultural events.
+## Technical Features
 
-#### Ask
-Looking for $500K to expand venue partnerships and develop premium features. Currently have $50K committed from angel investors.
+- **Real-time Photo Capture**: Take photos directly through the web interface
+- **Interactive Photo Review**: Swipe-based review system for quick photo management
+- **Multiple Display Modes**:
+  - Grid Gallery View
+  - Fun Slideshow with dynamic photo arrangements
+  - Presenter Mode for organized photo displays
+  - 3D Model View with interactive scene
+- **QR Code Integration**: Easy sharing and access via QR codes
+- **Responsive Design**: Works seamlessly on both mobile and desktop devices
+- **AWS Integration**: Secure photo storage using S3
+- **Guest Management**: Dedicated guest interface for photo contributions
 
-## 🌟 Features
-- **No App Download Required**: Access via QR code scanning
-- **Real-Time Photo Gallery**: Instantly share photos during events
-- **Interactive 3D Venue View**: See photos in context of the venue
-- **Swipe-to-Share**: Intuitive iOS-style photo sharing interface
-- **Live Slideshow**: Dynamic photo display during the event
-- **Multi-device Support**: Works on any modern mobile device
-- **Instant Upload**: Photos appear in real-time in the gallery
-- **Collaborative Experience**: Everyone contributes to the event's memories
+## Tech Stack
 
-## 🚀 Getting Started
+- **Frontend**: React with TypeScript
+- **Styling**: Tailwind CSS
+- **Animation**: Framer Motion
+- **3D Rendering**: Three.js with React Three Fiber
+- **Storage**: AWS S3
+- **Build Tool**: Vite
+- **Additional Libraries**:
+  - `@react-three/drei` for 3D scene management
+  - `lucide-react` for icons
+  - `qrcode` for QR code generation
+  - `react-swipeable` for touch interactions
 
-### Prerequisites
+## Prerequisites
+
 - Node.js (v16 or higher)
 - npm or yarn
-- Supabase account for photo storage
-- HTTPS cert for local development (handled by vite-plugin-mkcert)
+- AWS account with S3 bucket configured
+- SSL certificate for local development (using mkcert)
 
-### Environment Variables
-Create a `.env` file with:
-```
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+## Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
+
+```env
+VITE_AWS_REGION=your_aws_region
+VITE_S3_BUCKET_NAME=your_bucket_name
+VITE_AWS_ACCESS_KEY_ID=your_access_key
+VITE_AWS_SECRET_ACCESS_KEY=your_secret_key
+VITE_CLOUDFRONT_URL=your_cloudfront_url
 ```
 
-### Installation
-1. Clone the repository
+## Installation
+
+1. Clone the repository:
 ```bash
 git clone https://github.com/yourusername/spevents.git
 cd spevents
 ```
 
-2. Install dependencies
+2. Install dependencies:
 ```bash
 npm install
 ```
 
-3. Start the development server
+3. Setup SSL certificate for local development:
+```bash
+npm install -g mkcert
+mkcert create-ca
+mkcert create-cert
+```
+
+4. Start the development server:
 ```bash
 npm run dev
 ```
 
-The app will be running at `https://localhost:5173`
+## Build
 
-## 📱 Usage Guide
+To create a production build:
 
-### For Event Organizers
-1. Access the venue view
-2. Share QR codes with event guests
-3. Monitor the live photo gallery and slideshow
-4. Manage uploaded photos in real-time
+```bash
+npm run build
+```
 
-### For Guests
-1. Scan event QR code
-2. Take photos through the web interface
-3. Swipe up to share to gallery
-4. View all contributions in the 3D venue view
+The built files will be in the `dist` directory.
 
-## 💻 Tech Stack
-- React 18 with TypeScript
-- Vite for development
-- Tailwind CSS for styling
-- Framer Motion for animations
-- Three.js for 3D venue visualization
-- React Router for navigation
-- Supabase for photo storage
+## Deployment
 
-## 🔧 Development Notes
-- HTTPS required for camera access
-- Uses Supabase for scalable photo storage
-- Mobile-first responsive design
-- Optimized for modern browsers
+The application is configured for static hosting. Deploy the contents of the `dist` directory to your preferred hosting service.
 
-## 🚀 Deployment
-Local Testing with ngrok:
-1. Run `npm run dev`
-2. In a new terminal: `ngrok http https://localhost:5173`
-3. Update QR code URL with ngrok URL
+### Routing
 
-## 🌐 Browser Support
-- Chrome (recommended for best experience)
-- Safari
-- Firefox
-- Edge
+The application uses client-side routing. Ensure your hosting service is configured to redirect all requests to `index.html`. A `static.json` configuration is included for platforms like Heroku.
+
+## Project Structure
+
+- `/src`
+  - `/components` - Reusable React components
+  - `/contexts` - React context providers
+  - `/lib` - Utility functions and AWS integration
+  - `/pages` - Main route components
+  - `/layouts` - Page layout components
+  - `/utils` - Helper functions
+
+## Development
+
+### Code Style
+
+The project uses ESLint and TypeScript for code quality. Run the linter with:
+
+```bash
+npm run lint
+```
+
+### Testing
+
+To add tests, create files with `.test.tsx` extension alongside your components.
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## Team
+
+Solo founder with CS/Math background + event planning experience. Built venue management systems and organized multiple cultural events.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
