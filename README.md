@@ -22,12 +22,8 @@
 </div>
 <br>
 
-
 ## What is Spevents?
-
-Spevents transforms event photo sharing through a frictionless experience: guests scan a QR code at their table, take photos through our web interface, and swipe up to share. Photos instantly appear in a 3D visualization of the venue that's displayed during the event. No app downloads, no accounts, no friction.
-
-## Why Spevents?
+Spevents (special + events) is a real-time photo sharing platform that turns guests' phones into a live photo gallery without an app - just scan the host’s QR code and swipe up to share.
 
 ### The Problem
 At weddings and events, guests are constantly switching between enjoying moments and trying to capture them. Traditional solutions like hashtags scatter photos across platforms, while "upload your photos" websites get low engagement. Custom event apps have high friction and low adoption.
