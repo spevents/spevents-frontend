@@ -11,6 +11,12 @@
   <a href="https://vitejs.dev/" target="_blank"><img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite"></a>
   <a href="https://threejs.org/" target="_blank"><img src="https://img.shields.io/badge/Three.js-000000?style=for-the-badge&logo=three.js&logoColor=white" alt="Three.js"></a>
 </p>
+
+<p align="center">
+  <img src="./src/assets/Grid.png" alt="Grid View" width="600"/>
+  <img src="./src/assets/View.png" alt="Fun View" width="600"/>
+</p>
+
 <div align="center">
   A QR-based photo sharing platform that lets event guests contribute to a real-time 3D photo gallery without downloading an app.
 </div>
