@@ -1,33 +1,47 @@
 // src/App.tsx
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { CameraPage, GalleryPage, PhotoReviewPage, SlideshowPage } from './pages';
-import FeedbackPage from './components/guest/FeedbackPage';
-import { GuestDashboard } from './components/guest/GuestDashboard';
-import { NgrokProvider } from './contexts/NgrokContext';
-import { MainLayout } from './layouts';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+
+import { AuthGuard } from './components/auth/AuthGuard';
+import { HostRoutes } from './pages/HostRoutes/HostRoutes';
+import { GuestRoutes } from './pages/guest/GuestRoutes';
+import { LandingPage } from './pages/landing/LandingPage';
+import { isHostDomain, isGuestDomain } from './components/config/routes';
 
 export default function App() {
-  return (
-    <NgrokProvider>
+  // Determine which routes to show based on domain
+  if (isHostDomain()) {
+    return (
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<MainLayout />}>
-            <Route index element={<GalleryPage />} />
-            <Route path="slideshow" element={<SlideshowPage />} />
-            {/* <Route path="/camera" element={<CameraPage />} /> */}
-            {/* <Route path="/guest" element={<GuestDashboard />} /> */}
-
-          </Route>
-          
-          {/* Guest Routes */}
-          <Route path="/camera" element={<CameraPage />} />
-          <Route path="/review" element={<PhotoReviewPage />} />
-          <Route path="/guest" element={<GuestDashboard />} />
-          <Route path="/feedback" element={<FeedbackPage/> } />
-          
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route
+            path="/*"
+            element={
+              <AuthGuard>
+                <HostRoutes />
+              </AuthGuard>
+            }
+          />
         </Routes>
       </BrowserRouter>
-    </NgrokProvider>
+    );
+  }
+
+  if (isGuestDomain()) {
+    return (
+      <BrowserRouter>
+        <Routes>
+          <Route path="/:eventId/*" element={<GuestRoutes />} />
+        </Routes>
+      </BrowserRouter>
+    );
+  }
+
+  // Default landing page
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
