@@ -1,7 +1,7 @@
 // src/components/CameraInterface.tsx
 import React, { useState, useRef, useEffect } from "react";
 import { Upload as UploadIcon, Repeat } from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNgrok } from "../contexts/NgrokContext";
 
@@ -14,28 +14,18 @@ interface CameraInterfaceProps {
 const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { eventId } = useParams();
   const { baseUrl } = useNgrok();
   const [_hasPermission, setHasPermission] = useState(false);
   const [photos, setPhotos] = useState<Array<{ id: number; url: string }>>([]);
-  const [facingMode, setFacingMode] = useState<"environment" | "user">(
-    "environment"
-  );
+  const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const [isCapturing, setIsCapturing] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const flashRef = useRef<HTMLDivElement>(null);
 
-  const isDemoMode = location.pathname.startsWith("/demo");
-  const basePrefix = isDemoMode ? "/demo" : "";
-
-  const getConstraints = (facing: "environment" | "user") => ({
-    video: {
-      facingMode: facing,
-      width: { ideal: 1920 },
-      height: { ideal: 1080 },
-    },
-    audio: false,
-  });
+  // Ensure we always have the event ID from the URL
+  const currentEventId = eventId || location.pathname.split('/')[1];
 
   useEffect(() => {
     if (initialMode === "camera") {
@@ -55,9 +45,15 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
     const currentFacing = facing || facingMode;
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia(
-        getConstraints(currentFacing)
-      );
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: currentFacing,
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
+        audio: false,
+      });
+      
       if (videoRef.current) {
         streamRef.current = stream;
         videoRef.current.srcObject = stream;
@@ -125,12 +121,15 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
   };
 
   const navigateWithBaseUrl = (path: string) => {
+    // Construct the full path with event ID
+    const fullPath = `/${currentEventId}/guest${path}`;
+    
     // If we're on mobile and using ngrok, use the full ngrok URL
     if (window.innerWidth <= 768 && baseUrl) {
-      window.location.href = `${baseUrl}${path}`;
+      window.location.href = `${baseUrl}${fullPath}`;
     } else {
       // On desktop or without ngrok, use regular navigation
-      navigate(path);
+      navigate(fullPath);
     }
   };
 
@@ -185,7 +184,7 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
         <div className="flex justify-between items-center max-w-lg mx-auto px-6">
           {photos.length > 0 ? (
             <motion.button
-              onClick={() => navigateWithBaseUrl(`${basePrefix}/review`)}
+              onClick={() => navigateWithBaseUrl("/review")}
               whileTap={{ scale: 0.95 }}
               className="relative bg-white/20 backdrop-blur-lg p-4 rounded-full text-white"
             >
@@ -213,11 +212,7 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
             }}
             transition={{ duration: 0.15 }}
             className={`w-20 h-20 rounded-full transform relative
-              ${
-                photos.length >= PHOTO_LIMIT
-                  ? "opacity-50 cursor-not-allowed"
-                  : ""
-              }`}
+              ${photos.length >= PHOTO_LIMIT ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             <span className="absolute inset-2 rounded-full border-2 border-gray-200" />
           </motion.button>

@@ -20,11 +20,16 @@ export default function App() {
     return (
       <SessionProvider>
         <BrowserRouter>
-          <GuestRoutes />
+          <Routes>
+            <Route path="/:eventId/*" element={<GuestRoutes />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
         </BrowserRouter>
       </SessionProvider>
     );
   }
+
+  
 
   // Host domain handling (app.spevents.live or localhost without /guest/)
   if (isHostDomain()) {
