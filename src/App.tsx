@@ -9,6 +9,18 @@ import { LoginPage } from './components/auth/LoginPage';
 import { isHostDomain, isGuestDomain } from './components/config/routes';
 
 export default function App() {
+  // Guest domain handling (join.spevents.live or /guest/ paths)
+  if (isGuestDomain()) {
+    return (
+      <SessionProvider>
+        <BrowserRouter>
+          <GuestRoutes />
+        </BrowserRouter>
+      </SessionProvider>
+    );
+  }
+
+  // Host domain handling (app.spevents.live or localhost without /guest/)
   if (isHostDomain()) {
     return (
       <SessionProvider>
@@ -32,19 +44,7 @@ export default function App() {
     );
   }
 
-  if (isGuestDomain()) {
-    return (
-      <SessionProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/*" element={<GuestRoutes />} />
-          </Routes>
-        </BrowserRouter>
-      </SessionProvider>
-    );
-  }
-
-  // Default landing page
+  // Default landing page for main domain (spevents.live)
   return (
     <BrowserRouter>
       <Routes>

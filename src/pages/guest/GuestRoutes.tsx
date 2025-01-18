@@ -13,21 +13,23 @@ export const GuestRoutes = () => {
       {/* Landing page when no event ID */}
       <Route path="/" element={<GuestLanding />} />
       
-      {/* Event specific routes */}
+      {/* Event specific routes - Updated to match URL structure */}
       <Route path="/:eventId">
-        {/* Direct camera access */}
-        <Route path="guest/camera" element={<CameraPage />} />
+        {/* Redirect root event path to camera */}
+        <Route index element={<Navigate to="guest/camera" replace />} />
         
-        {/* Guest dashboard and features */}
-        <Route path="guest" element={<GuestDashboard />} />
-        <Route path="guest/collage" element={<CollageCreatorWrapper />} />
-        <Route path="guest/feedback" element={<FeedbackPage />} />
-        <Route path="guest/review" element={<PhotoReviewPage />} />
-        
-        {/* Default redirect to camera for mobile */}
-        <Route index element={
-          <Navigate to="guest/camera" replace />
-        } />
+        <Route path="guest">
+          {/* Camera route */}
+          <Route path="camera" element={<CameraPage />} />
+          
+          {/* Dashboard route */}
+          <Route index element={<GuestDashboard />} />
+          
+          {/* Other guest features */}
+          <Route path="collage" element={<CollageCreatorWrapper />} />
+          <Route path="feedback" element={<FeedbackPage />} />
+          <Route path="review" element={<PhotoReviewPage />} />
+        </Route>
       </Route>
       
       {/* Catch all redirect */}
