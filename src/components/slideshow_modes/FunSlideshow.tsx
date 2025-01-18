@@ -163,37 +163,17 @@ function processFunPhoto(
 }
 
 export default function FunSlideshow({ photos, containerDimensions }: Props) {
-  const [isVisible, setIsVisible] = useState(true);
   const [displayedPhotos, setDisplayedPhotos] = useState<FunPhoto[]>([]);
   const timeoutsRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
-  const [currentSet, setCurrentSet] = useState<FunPhoto[]>([]);
-  const [setKey, setSetKey] = useState(0);
   const photosRef = useRef(photos);
   const dimensionsRef = useRef(containerDimensions);
-  const intervalRef = useRef<NodeJS.Timeout>();
+
 
   // Update refs when props change
   useEffect(() => {
     photosRef.current = photos;
     dimensionsRef.current = containerDimensions;
   }, [photos, containerDimensions]);
-
-  // Function to generate and set new photo set
-  const updatePhotoSet = () => {
-    console.log("Generating new photo set at:", new Date().toISOString());
-    const count = Math.min(MAX_PHOTOS, photosRef.current.length);
-    const selectedPhotos = [...photosRef.current]
-      .sort(() => Math.random() - 0.5)
-      .slice(0, count);
-
-    const newSet = selectedPhotos.reduce<FunPhoto[]>((acc, photo, now) => {
-      const processedPhoto = processFunPhoto(photo, dimensionsRef.current, acc, now);
-      return [...acc, processedPhoto];
-    }, []);
-
-    setCurrentSet(newSet);
-    setSetKey((prev) => prev + 1);
-  };
 
   // Set up the main display cycle
   useEffect(() => {

@@ -3,7 +3,7 @@ import { Suspense, useRef, useEffect } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import Tables from "./Tables";
-import * as THREE from "three";
+
 
 function CameraController() {
   const controls = useRef<any>(null);
@@ -11,7 +11,6 @@ function CameraController() {
 
   useEffect(() => {
     if (controls.current) {
-      const cameraHeight = 40;
       const cameraDistance = 45;
       const fixedPolarAngle = Math.PI / 3.5;
 

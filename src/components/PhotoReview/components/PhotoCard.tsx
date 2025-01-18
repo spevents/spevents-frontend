@@ -90,10 +90,7 @@ export const PhotoCard: React.FC<PhotoCardProps> = ({
   screenHeight,
   isNearThreshold,
   isOverThreshold,
-  dragHandlers,
-  springConfig,
-  bounceTransition,
-  dragTransitionConfig
+  dragHandlers
 }) => {
   const isActive = isPrevPhoto || isCurrentPhoto || isNextPhoto;
 

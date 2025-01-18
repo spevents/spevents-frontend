@@ -1,7 +1,5 @@
 // Tables.tsx
-import { useState, useEffect, useMemo } from 'react';
-import { useFrame } from '@react-three/fiber';
-import { Html } from '@react-three/drei';
+import { useState, useEffect } from 'react';
 import { Vector3 } from 'three';
 
 interface TrophyFigure {
@@ -96,8 +94,7 @@ function GuestTrophy({ position, rotation, scale, type }: TrophyFigure) {
 export default function Tables() {
   const [guestTables, setGuestTables] = useState<TrophyFigure[][]>([]);
 
-  const tableRadius = 12;
-  const guestRadius = 1.2
+
   
   useEffect(() => {
     const tables: TrophyFigure[][] = [];

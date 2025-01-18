@@ -1,12 +1,11 @@
 // src/pages/guest/GuestRoutes.tsx
-import { Routes, Route, useParams } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import CameraPage from '../CameraPage';
 import PhotoReviewPage from '../PhotoReviewPage';
 import { GuestDashboard } from '../../components/guest/GuestDashboard';
 import FeedbackPage from '../../components/guest/FeedbackPage';
 
 export const GuestRoutes = () => {
-  const { eventId } = useParams<{ eventId: string }>();
 
   return (
     <Routes>
