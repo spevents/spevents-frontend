@@ -6,9 +6,10 @@ import { HostRoutes } from './pages/HostRoutes/HostRoutes';
 import { GuestRoutes } from './pages/guest/GuestRoutes';
 import { LandingPage } from './pages/landing/LandingPage';
 import { isHostDomain, isGuestDomain } from './components/config/routes';
+import { Navigate } from 'react-router-dom';
 
 export default function App() {
-  // Determine which routes to show based on domain
+
   if (isHostDomain()) {
     return (
       <SessionProvider>
@@ -28,12 +29,14 @@ export default function App() {
     );
   }
 
+
   if (isGuestDomain()) {
     return (
       <SessionProvider>
         <BrowserRouter>
+          {/* Remove the :eventId requirement for the root path */}
           <Routes>
-            <Route path="/:eventId/*" element={<GuestRoutes />} />
+            <Route path="/*" element={<GuestRoutes />} />
           </Routes>
         </BrowserRouter>
       </SessionProvider>
@@ -45,6 +48,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

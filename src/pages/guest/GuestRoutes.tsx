@@ -1,18 +1,23 @@
 // src/pages/guest/GuestRoutes.tsx
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { GuestLanding } from './GuestLanding';
 import CameraPage from '../CameraPage';
 import PhotoReviewPage from '../PhotoReviewPage';
 import { GuestDashboard } from '../../components/guest/GuestDashboard';
-import FeedbackPage from '../../components/guest/FeedbackPage';
 
 export const GuestRoutes = () => {
-
   return (
     <Routes>
-      <Route path="/camera" element={<CameraPage />} />
-      <Route path="/review" element={<PhotoReviewPage />} />
-      <Route path="/guest" element={<GuestDashboard />} />
-      <Route path="/feedback" element={<FeedbackPage />} />
+      {/* Add root route for GuestLanding */}
+      <Route path="/" element={<GuestLanding />} />
+      
+      {/* Event specific routes */}
+      <Route path="/:eventId/camera" element={<CameraPage />} />
+      <Route path="/:eventId/review" element={<PhotoReviewPage />} />
+      <Route path="/:eventId/guest" element={<GuestDashboard />} />
+      
+      {/* Catch all redirect */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 };

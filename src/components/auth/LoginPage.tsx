@@ -12,23 +12,33 @@ if (!ALLOWED_EMAIL) {
 export const LoginPage = () => {
   const navigate = useNavigate();
 
-  const handleGoogleSignIn = async () => {
-    try {
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      
-      if (result.user.email === ALLOWED_EMAIL) {
-        localStorage.setItem('spevents-auth', result.user.email);
-        navigate('/host');
-      } else {
-        auth.signOut();
-        alert('Unauthorized access');
-      }
-    } catch (error) {
-      console.error('Error signing in with Google:', error);
-      alert('Authentication failed. Please try again.');
+// src/auth/LoginPage.tsx
+const handleGoogleSignIn = async () => {
+  try {
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+    
+    if (result.user.email === ALLOWED_EMAIL) {
+      localStorage.setItem('spevents-auth', result.user.email);
+      navigate('/host');
+    } else {
+      await auth.signOut();
+      alert('Unauthorized access');
     }
-  };
+  } catch (error: any) {
+    console.error('Firebase Auth Error:', {
+      code: error.code,
+      message: error.message,
+      fullError: error
+    });
+    
+    if (error.code === 'auth/popup-closed-by-user') {
+      return; // Don't show error for user-closed popup
+    }
+    
+    alert(`Authentication failed: ${error.message}`);
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900">
