@@ -116,7 +116,7 @@ const PhotoGallery: React.FC = () => {
             {photos.length > 0 && (
               <>
                 <button
-                  onClick={() => navigate("/slideshow")}
+                  onClick={() => navigate("/host/slideshow")}
                   className="px-4 py-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors"
                 >
                   View Slideshow
