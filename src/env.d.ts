@@ -5,7 +5,6 @@ interface ImportMetaEnv {
   readonly VITE_ALLOWED_EMAIL: string
 
 }
-
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
