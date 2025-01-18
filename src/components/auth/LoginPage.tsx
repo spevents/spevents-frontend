@@ -3,9 +3,11 @@ import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import { useNavigate } from 'react-router-dom';
 
+const ALLOWED_EMAIL = import.meta.env.VITE_ALLOWED_EMAIL;
 
-
-const ALLOWED_EMAIL = import.meta.env.VITE_ALLOWED_EMAIL
+if (!ALLOWED_EMAIL) {
+  throw new Error('VITE_ALLOWED_EMAIL environment variable is not set');
+}
 
 export const LoginPage = () => {
   const navigate = useNavigate();
@@ -15,9 +17,7 @@ export const LoginPage = () => {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       
-      // Check if the user's email is authorized
       if (result.user.email === ALLOWED_EMAIL) {
-        // Store auth state
         localStorage.setItem('spevents-auth', result.user.email);
         navigate('/host');
       } else {
@@ -26,15 +26,16 @@ export const LoginPage = () => {
       }
     } catch (error) {
       console.error('Error signing in with Google:', error);
+      alert('Authentication failed. Please try again.');
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900">
       <div className="w-full max-w-md space-y-8 p-8">
-        <div className="text-center">
+        <div className="text-center space-y-2">
           <h2 className="text-3xl font-bold text-white">Welcome Back</h2>
-          <p className="mt-2 text-white/60">Sign in to access your dashboard</p>
+          <p className="text-white/60">Sign in to access your dashboard</p>
         </div>
 
         <button
@@ -61,6 +62,23 @@ export const LoginPage = () => {
           </svg>
           Continue with Google
         </button>
+
+
+
+        <div className="space-y-4 pt-4">
+          <a 
+            href="https://join.spevents.live" 
+            className="block w-full px-6 py-3 bg-white/10 text-white rounded-lg text-center font-medium hover:bg-white/20 transition-colors"
+          >
+            Guest? Join here
+          </a>
+          <a 
+            href="https://spevents.github.io" 
+            className="block text-white/60 text-sm text-center hover:text-white transition-colors"
+          >
+            Learn more at spevents.github.io
+          </a>
+        </div>
       </div>
     </div>
   );
