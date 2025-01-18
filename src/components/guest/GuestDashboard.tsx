@@ -24,15 +24,30 @@ export function GuestDashboard() {
   const [showCollageCreator, setShowCollageCreator] = useState(false);
   const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState('gallery');
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor;
+      return /android|iphone|ipad|ipod/i.test(userAgent.toLowerCase());
+    };
+
+    setIsMobile(checkMobile());
+
+    if (!checkMobile()) navigate('/camera');
+  }, [navigate]);
+
+
+  if (!isMobile) {
+    navigate('/');
+    return <></>; 
+  }
+
 
   const tabs: TabConfig[] = [
     { id: 'gallery', icon: <Grid className="w-6 h-6" />, label: 'Gallery' },
-
-    // Can you add an 'X' at the top left here so users can navigate back to the GuestDashboard? 
     { id: 'camera', icon: <Camera className="w-6 h-6" />, label: 'Camera' },
     { id: 'create', icon: <Palette className="w-6 h-6" />, label: 'Create' },
-
-    // When I click here, it goes to '/' instead of <FeedbackPage>
     { id: 'prize', icon: <Award className="w-6 h-6" />, label: 'Prize' },
   ];
 

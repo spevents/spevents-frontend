@@ -14,9 +14,8 @@ export default function App() {
           <Route path="/" element={<MainLayout />}>
             <Route index element={<GalleryPage />} />
             <Route path="slideshow" element={<SlideshowPage />} />
-            <Route path="/camera" element={<CameraPage />} />
-
-            <Route path="/guest" element={<GuestDashboard />} />
+            {/* <Route path="/camera" element={<CameraPage />} /> */}
+            {/* <Route path="/guest" element={<GuestDashboard />} /> */}
 
           </Route>
           
