@@ -5,15 +5,17 @@ export const ROUTES = {
   guest: 'join.spevents.live'
 } as const;
 
-export type Domain = 'main' | 'host' | 'guest' | 'local' | 'unknown';
-
-export const getDomain = (): Domain => {
+export const getDomain = () => {
   const hostname = window.location.hostname;
+  const pathname = window.location.pathname;
+  
+  // Debug logs
+  console.log('Checking domain for:', { hostname, pathname });
   
   // Local development - includes both localhost and ngrok
   if (hostname === 'localhost' || hostname.includes('ngrok')) {
-    // Check if the path includes /guest/ to determine if it's a guest route in development
-    const isGuestPath = window.location.pathname.includes('/guest/');
+    const isGuestPath = pathname.includes('/guest/');
+    console.log('Development environment:', { isGuestPath });
     return isGuestPath ? 'guest' : 'local';
   }
   
@@ -27,23 +29,14 @@ export const getDomain = (): Domain => {
 
 export const isHostDomain = () => {
   const domain = getDomain();
-  // Host domain in production or local development (but not guest routes)
-  return domain === 'host' || (domain === 'local' && !window.location.pathname.includes('/guest/'));
+  const result = domain === 'host' || (domain === 'local' && !window.location.pathname.includes('/guest/'));
+  console.log('isHostDomain check:', result);
+  return result;
 };
 
 export const isGuestDomain = () => {
   const domain = getDomain();
-  // Guest domain in production or guest routes in development
-  return domain === 'guest' || (domain === 'local' && window.location.pathname.includes('/guest/'));
-};
-
-// Helper function to get the event ID from the URL
-export const getEventIdFromUrl = () => {
-  const pathParts = window.location.pathname.split('/');
-  // Find the part before /guest/ in the path
-  const guestIndex = pathParts.findIndex(part => part === 'guest');
-  if (guestIndex > 0) {
-    return pathParts[guestIndex - 1];
-  }
-  return null;
+  const result = domain === 'guest' || (domain === 'local' && window.location.pathname.includes('/guest/'));
+  console.log('isGuestDomain check:', result);
+  return result;
 };

@@ -9,6 +9,12 @@ import { LoginPage } from './components/auth/LoginPage';
 import { isHostDomain, isGuestDomain } from './components/config/routes';
 
 export default function App() {
+  // Debug logs
+  console.log('Current domain:', window.location.hostname);
+  console.log('Is guest domain?', isGuestDomain());
+  console.log('Is host domain?', isHostDomain());
+  console.log('Current path:', window.location.pathname);
+
   // Guest domain handling (join.spevents.live or /guest/ paths)
   if (isGuestDomain()) {
     return (
@@ -26,17 +32,10 @@ export default function App() {
       <SessionProvider>
         <BrowserRouter>
           <Routes>
-            {/* Show login page at root */}
             <Route path="/" element={<LoginPage />} />
-            
-            {/* Protected host routes */}
             <Route element={<AuthGuard />}>
               <Route path="/host/*" element={<HostRoutes />} />
             </Route>
-            
-            {/* Redirect old routes to login if not authenticated */}
-            <Route path="/gallery" element={<Navigate to="/" replace />} />
-            <Route path="/slideshow" element={<Navigate to="/" replace />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
