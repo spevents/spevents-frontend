@@ -25,13 +25,13 @@
 ## What is Spevents?
 Spevents (special + events) is a real-time photo sharing platform that turns guests' phones into a live photo gallery without an app - just scan the host’s QR code and swipe up to share.
 
-### The Problem
-At weddings and events, guests are constantly switching between enjoying moments and trying to capture them. Traditional solutions like hashtags scatter photos across platforms, while "upload your photos" websites get low engagement. Custom event apps have high friction and low adoption.
+### Problem
+At weddings or conferences, guests are constantly switching between enjoying moments and trying to capture them. Traditional solutions like hashtags scatter photos across platforms and "upload your photos" services get low engagement.
 
-### Our Solution
-- **Instant Access**: Just scan a QR code - no apps, no accounts
+### Solution
+- **"It just works"**: Just scan a QR code - no apps, no accounts
 - **Real-time Sharing**: Photos appear instantly in the venue visualization
-- **Interactive Display**: 3D venue visualization creates an engaging experience
+- **Fun Displays**: Animated gallery displays create a beautiful, engaging experience
 - **Frictionless Experience**: Designed for maximum guest participation
 
 ## Market & Traction

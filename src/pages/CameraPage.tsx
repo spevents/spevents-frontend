@@ -29,7 +29,7 @@ export default function CameraPage(): JSX.Element {
     <div className="relative min-h-screen bg-black">
       {/* Back Button */}
       <button
-        onClick={() => navigate(-1)}
+        onClick={() => navigate('/guest')}
         className="absolute top-4 left-4 z-50 p-2 rounded-full bg-black/20 backdrop-blur-sm 
           text-white hover:bg-black/30 transition-colors"
       >
