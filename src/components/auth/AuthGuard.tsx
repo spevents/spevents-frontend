@@ -1,25 +1,18 @@
-// src/auth/AuthGuard.tsx
+// src/components/auth/AuthGuard.tsx
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import { isHostDomain } from '../config/routes';
-import { LoginPage } from './LoginPage';
 
-const ALLOWED_EMAIL = 'your@email.com'; // Your email only for now
+const ALLOWED_EMAIL = import.meta.env.VITE_ALLOWED_EMAIL;
 
-interface AuthGuardProps {
-  children: React.ReactNode;
-}
-
-export const AuthGuard = ({ children }: AuthGuardProps) => {
+export const AuthGuard = () => {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (!isHostDomain()) {
-      navigate('/');
       return;
     }
 
@@ -33,7 +26,7 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
     });
 
     return () => unsubscribe();
-  }, [navigate]);
+  }, []);
 
   if (isLoading) {
     return (
@@ -44,8 +37,8 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
   }
 
   if (!isAuthorized) {
-    return <LoginPage />;
+    return <Navigate to="/" replace />;
   }
 
-  return <>{children}</>;
+  return <Outlet />;
 };

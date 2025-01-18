@@ -1,4 +1,4 @@
-// src/auth/LoginPage.tsx
+// src/components/auth/LoginPage.tsx
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import { useNavigate } from 'react-router-dom';
@@ -12,33 +12,32 @@ if (!ALLOWED_EMAIL) {
 export const LoginPage = () => {
   const navigate = useNavigate();
 
-// src/auth/LoginPage.tsx
-const handleGoogleSignIn = async () => {
-  try {
-    const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
-    
-    if (result.user.email === ALLOWED_EMAIL) {
-      localStorage.setItem('spevents-auth', result.user.email);
-      navigate('/host');
-    } else {
-      await auth.signOut();
-      alert('Unauthorized access');
+  const handleGoogleSignIn = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      
+      if (result.user.email === ALLOWED_EMAIL) {
+        localStorage.setItem('spevents-auth', result.user.email);
+        navigate('/host/gallery');
+      } else {
+        await auth.signOut();
+        alert('Unauthorized access');
+      }
+    } catch (error: any) {
+      console.error('Firebase Auth Error:', {
+        code: error.code,
+        message: error.message,
+        fullError: error
+      });
+      
+      if (error.code === 'auth/popup-closed-by-user') {
+        return; // Don't show error for user-closed popup
+      }
+      
+      alert(`Authentication failed: ${error.message}`);
     }
-  } catch (error: any) {
-    console.error('Firebase Auth Error:', {
-      code: error.code,
-      message: error.message,
-      fullError: error
-    });
-    
-    if (error.code === 'auth/popup-closed-by-user') {
-      return; // Don't show error for user-closed popup
-    }
-    
-    alert(`Authentication failed: ${error.message}`);
-  }
-};
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900">
@@ -72,8 +71,6 @@ const handleGoogleSignIn = async () => {
           </svg>
           Continue with Google
         </button>
-
-
 
         <div className="space-y-4 pt-4">
           <a 

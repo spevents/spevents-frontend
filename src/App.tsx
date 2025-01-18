@@ -5,6 +5,7 @@ import { AuthGuard } from './components/auth/AuthGuard';
 import { HostRoutes } from './pages/HostRoutes/HostRoutes';
 import { GuestRoutes } from './pages/guest/GuestRoutes';
 import { LandingPage } from './pages/landing/LandingPage';
+import { LoginPage } from './components/auth/LoginPage';
 import { isHostDomain, isGuestDomain } from './components/config/routes';
 
 export default function App() {
@@ -13,19 +14,18 @@ export default function App() {
       <SessionProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Navigate to="/host" replace />} />
-            <Route
-              path="/host/*"
-              element={
-                <AuthGuard>
-                  <HostRoutes />
-                </AuthGuard>
-              }
-            />
-            {/* Redirect old routes to new structure */}
-            <Route path="/gallery" element={<Navigate to="/host/gallery" replace />} />
-            <Route path="/slideshow" element={<Navigate to="/host/slideshow" replace />} />
-            <Route path="*" element={<Navigate to="/host" replace />} />
+            {/* Show login page at root */}
+            <Route path="/" element={<LoginPage />} />
+            
+            {/* Protected host routes */}
+            <Route element={<AuthGuard />}>
+              <Route path="/host/*" element={<HostRoutes />} />
+            </Route>
+            
+            {/* Redirect old routes to login if not authenticated */}
+            <Route path="/gallery" element={<Navigate to="/" replace />} />
+            <Route path="/slideshow" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
       </SessionProvider>
