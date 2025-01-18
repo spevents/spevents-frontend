@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { CheckCircle2, Trash2, Camera } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useSwipeable } from "react-swipeable";
 import {
   getPresignedUrl,
@@ -10,6 +10,7 @@ import {
   getTempPhotos,
   storeTempPhotos,
 } from "../../lib/aws";
+import { useNgrok } from "../../contexts/NgrokContext";
 
 interface Photo {
   id: number;
@@ -68,7 +69,27 @@ const PhotoProgress: React.FC<{ total: number; current: number }> = ({
 
 // Review Complete Component
 const ReviewComplete: React.FC = () => {
-  const navigate = useNavigate();
+    // I've added these to try route from after /guest/review --> /guest
+    const { eventId } = useParams();
+    const { baseUrl } = useNgrok();
+    const navigate = useNavigate();
+    
+  
+    const currentEventId = eventId || location.pathname.split("/")[1];
+  
+    const navigateWithBaseUrl = (path: string) => {
+      // Construct the full path with event ID
+      const fullPath = `/${currentEventId}/guest${path}`;
+  
+      // If we're on mobile and using ngrok, use the full ngrok URL
+      if (window.innerWidth <= 768 && baseUrl) {
+        window.location.href = `${baseUrl}${fullPath}`;
+      } else {
+        // On desktop or without ngrok, use regular navigation
+        navigate(fullPath);
+      }
+    };
+
 
   return (
     <motion.div
@@ -88,7 +109,8 @@ const ReviewComplete: React.FC = () => {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => navigate("/guest")}
+            onClick={() => navigateWithBaseUrl("/guest")}
+            // onClick={() => navigate("/guest")}
             className="w-full px-6 py-3 bg-white text-gray-900 rounded-full font-medium 
               transition-colors hover:bg-white/90"
           >
@@ -113,7 +135,6 @@ const ReviewComplete: React.FC = () => {
 };
 
 export default function PhotoReview() {
-  // const navigate = useNavigate();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [processingPhotos, setProcessingPhotos] = useState<Set<number>>(
     new Set()
@@ -126,11 +147,13 @@ export default function PhotoReview() {
   const [exitDirection, setExitDirection] = useState<"up" | "down" | null>(
     null
   );
+
   const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(
     null
   );
   const [horizontalDrag, setHorizontalDrag] = useState(0);
   const [isHorizontalDragging, setIsHorizontalDragging] = useState(false);
+
 
   useEffect(() => {
     const updateScreenHeight = () => setScreenHeight(window.innerHeight);
