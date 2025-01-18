@@ -226,7 +226,7 @@ const PhotoGallery: React.FC = () => {
         )}
       </div>
       <QRCodeModal 
-        isOpen={isQRModalOpen} 
+        isOpen={isQRModalOpen}
         onClose={() => setIsQRModalOpen(false)}
       />
     </div>

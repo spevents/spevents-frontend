@@ -48,7 +48,7 @@ export function GuestDashboard() {
     { id: 'gallery', icon: <Grid className="w-6 h-6" />, label: 'Gallery' },
     { id: 'camera', icon: <Camera className="w-6 h-6" />, label: 'Camera' },
     { id: 'create', icon: <Palette className="w-6 h-6" />, label: 'Create' },
-    { id: 'prize', icon: <Award className="w-6 h-6" />, label: 'Prize' },
+    { id: 'feedback', icon: <Award className="w-6 h-6" />, label: 'Feedback' },
   ];
 
   useEffect(() => {
@@ -85,7 +85,7 @@ export function GuestDashboard() {
       case 'create':
         setShowCollageCreator(true);
         break;
-      case 'prize':
+      case 'feedback':
         navigate('/feedback');
         break;
       default:

@@ -4,6 +4,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { X, RefreshCw } from 'lucide-react';
 import { useNgrok } from '../contexts/NgrokContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSession } from '../contexts/SessionContext';
 
 interface QRCodeModalProps {
   isOpen: boolean;
@@ -12,7 +13,9 @@ interface QRCodeModalProps {
 
 export function QRCodeModal({ isOpen, onClose }: QRCodeModalProps) {
   const { baseUrl, setBaseUrl } = useNgrok();
+  const { sessionCode } = useSession();
   const [isUpdating, setIsUpdating] = useState(false);
+  const isDevelopment = process.env.NODE_ENV === 'development';
 
   const handleUpdateNgrokUrl = () => {
     const newUrl = prompt('Enter your ngrok URL (e.g., https://xxxx-xxx-xx-xxx-xx.ngrok.io)');
@@ -24,10 +27,10 @@ export function QRCodeModal({ isOpen, onClose }: QRCodeModalProps) {
   };
 
   const getCameraUrl = () => {
-    if (baseUrl) {
-      return `${baseUrl}/camera`;
+    if (isDevelopment) {
+      return baseUrl ? `${baseUrl}/camera` : '';
     }
-    return '';
+    return `https://join.spevents.live/${sessionCode}/guest/camera`;
   };
 
   return (
@@ -58,7 +61,7 @@ export function QRCodeModal({ isOpen, onClose }: QRCodeModalProps) {
             </div>
 
             <div className="space-y-6">
-              {baseUrl ? (
+              {(!isDevelopment || baseUrl) && (
                 <>
                   <div className="bg-white p-4 rounded-xl">
                     <QRCodeSVG
@@ -80,19 +83,35 @@ export function QRCodeModal({ isOpen, onClose }: QRCodeModalProps) {
                     </div>
                   </div>
                 </>
-              ) : (
-                <div className="text-center text-white/60">
-                  Click "Update URL" to set the ngrok URL
-                </div>
               )}
 
-              <button
-                onClick={handleUpdateNgrokUrl}
-                className="w-full flex items-center justify-center space-x-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                <RefreshCw className={`w-5 h-5 ${isUpdating ? 'animate-spin' : ''}`} />
-                <span>Update URL</span>
-              </button>
+              {isDevelopment && (
+                <>
+                  {!baseUrl && (
+                    <div className="text-center text-white/60">
+                      Click "Update URL" to set the ngrok URL
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleUpdateNgrokUrl}
+                    className="w-full flex items-center justify-center space-x-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-colors"
+                  >
+                    <RefreshCw className={`w-5 h-5 ${isUpdating ? 'animate-spin' : ''}`} />
+                    <span>Update URL</span>
+                  </button>
+
+                  <div className="text-xs text-center text-white/40">
+                    Development Mode - Using ngrok URL
+                  </div>
+                </>
+              )}
+
+              {!isDevelopment && (
+                <div className="text-xs text-center text-white/40">
+                  Production Mode - Using spevents.live
+                </div>
+              )}
             </div>
           </motion.div>
         </motion.div>
