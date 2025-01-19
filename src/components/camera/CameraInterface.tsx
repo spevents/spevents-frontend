@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useNgrok } from "../../contexts/NgrokContext";
 import { useZoom } from "./hooks/useZoom";
+import { useOrientation } from "./hooks/useOrientation";
 import { ZoomControl } from "./ZoomControl";
 import { PhotoCounter } from "./PhotoCounter";
 import { CameraControls } from "./CameraControls";
@@ -29,12 +30,11 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
   const { baseUrl } = useNgrok();
   const isDemoMode = location.pathname.startsWith("/demo");
   const basePrefix = isDemoMode ? "/demo" : "";
+  const orientation = useOrientation();
 
   // State
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [facingMode, setFacingMode] = useState<"environment" | "user">(
-    "environment"
-  );
+  const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const [isCapturing, setIsCapturing] = useState(false);
   const [lastTapTime, setLastTapTime] = useState(0);
 
@@ -42,6 +42,16 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const flashRef = useRef<HTMLDivElement>(null);
+
+  // Zoom hook
+  const {
+    zoomLevel,
+    isZoomVisible,
+    handleZoom,
+    applyZoom,
+    initializeZoom,
+    toggleZoomVisibility,
+  } = useZoom(facingMode);
 
   // Cleanup function
   const cleanup = useCallback(() => {
@@ -61,6 +71,11 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
     return cleanup;
   }, [initialMode, cleanup]);
 
+  // Effect to handle orientation changes
+  useEffect(() => {
+    startCamera(facingMode);
+  }, [orientation, facingMode]);
+
   // Effect to prevent scroll during camera use
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -68,15 +83,6 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
       document.body.style.overflow = "auto";
     };
   }, []);
-  // Zoom hook
-  const {
-    zoomLevel,
-    isZoomVisible,
-    handleZoom,
-    applyZoom,
-    initializeZoom,
-    toggleZoomVisibility,
-  } = useZoom(facingMode);
 
   // Camera handlers
   const startCamera = async (facing?: "environment" | "user") => {
@@ -117,7 +123,16 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
     [handleZoom, applyZoom]
   );
 
-  const handleScreenTap = useCallback(() => {
+  const handleScreenTap = useCallback((event: { target: any; }) => {
+    const target = event.target;
+    if (
+      target.closest('.capture-button') ||
+      target.closest('.flip-button') ||
+      target.closest('.navigate-to-review-button')
+    ) {
+      return; // Ignore the tap if it was on an interactive element
+    }
+
     const now = Date.now();
     if (now - lastTapTime < DOUBLE_TAP_DELAY) {
       flipCamera();
@@ -129,7 +144,7 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
     startCamera(facingMode === "environment" ? "user" : "environment");
   }, [facingMode]);
 
-  const triggerCaptureEffect = () => {
+  const triggerCaptureEffect = useCallback(() => {
     if (flashRef.current) {
       flashRef.current.style.opacity = "0.3";
       setTimeout(() => {
@@ -141,7 +156,7 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
 
     setIsCapturing(true);
     setTimeout(() => setIsCapturing(false), 150);
-  };
+  }, []);
 
   const capturePhoto = useCallback(() => {
     if (!videoRef.current || photos.length >= PHOTO_LIMIT) return;
@@ -165,19 +180,12 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
     const photoUrl = canvas.toDataURL("image/jpeg", 0.8);
     const newPhoto = { id: Date.now(), url: photoUrl };
 
-    // Update state and storage
     setPhotos((prev) => [...prev, newPhoto]);
-    const sessionPhotos = JSON.parse(
-      sessionStorage.getItem("temp-photos") || "[]"
-    );
-    sessionStorage.setItem(
-      "temp-photos",
-      JSON.stringify([...sessionPhotos, newPhoto])
-    );
+    const sessionPhotos = JSON.parse(sessionStorage.getItem("temp-photos") || "[]");
+    sessionStorage.setItem("temp-photos", JSON.stringify([...sessionPhotos, newPhoto]));
 
-    // Haptic feedback
     navigator.vibrate?.(50);
-  }, [photos.length, facingMode]);
+  }, [photos.length, facingMode, triggerCaptureEffect]);
 
   const navigateWithBaseUrl = useCallback(
     (path: string) => {
@@ -201,7 +209,11 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
         style={{ opacity: 0 }}
       />
 
-      <PhotoCounter count={photos.length} limit={PHOTO_LIMIT} />
+      <PhotoCounter 
+        count={photos.length} 
+        limit={PHOTO_LIMIT}
+        orientation={orientation}
+      />
 
       <video
         ref={videoRef}
@@ -217,13 +229,13 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
         zoomLevel={zoomLevel}
         facingMode={facingMode}
         onToggleVisibility={toggleZoomVisibility}
-        onZoomChange={handleZoomChange}
-      />
+        onZoomChange={handleZoomChange} orientation={"portrait"}      />
       
       <CameraControls
         photoCount={photos.length}
         isCapturing={isCapturing}
         disabled={photos.length >= PHOTO_LIMIT}
+        orientation={orientation}
         onCapture={capturePhoto}
         onFlip={flipCamera}
         onNavigateToReview={() => navigateWithBaseUrl(`${basePrefix}/review`)}
