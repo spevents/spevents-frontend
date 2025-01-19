@@ -1,4 +1,3 @@
-// src/components/camera/CameraInterface.tsx
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useNgrok } from "../../contexts/NgrokContext";
@@ -16,30 +15,32 @@ interface Photo {
   url: string;
 }
 
-// Extended types for camera constraints
-type ExtendedCapabilities = MediaTrackCapabilities & {
-  zoom?: { min: number; max: number; step?: number };
-};
-
-interface ExtendedConstraints extends MediaTrackConstraintSet {
-  zoom?: number;
+interface ZoomCapabilities {
+  min: number;
+  max: number;
 }
+
+type ExtendedMediaTrack = MediaStreamTrack & {
+  zoomHandler?: (zoom: number) => void;
+};
 
 // Constants
 const PHOTO_LIMIT = 5;
-const MIN_ZOOM = 1;
-const MAX_ZOOM = 8;
-const DEFAULT_ZOOM = 1;
 const DOUBLE_TAP_DELAY = 300;
+const ZOOM_LEVELS = [0.5, 1.0, 1.1] as const;
+const DEFAULT_ZOOM = 1.0;
 
-// Helper functions
-const getDeviceZoomCapabilities = async (track: MediaStreamTrack): Promise<{ min: number; max: number } | null> => {
+// Camera zoom helper
+const getDeviceZoomCapabilities = async (track: MediaStreamTrack): Promise<ZoomCapabilities | null> => {
   try {
-    const capabilities = track.getCapabilities() as ExtendedCapabilities;
+    const capabilities = track.getCapabilities() as MediaTrackCapabilities & {
+      zoom?: { min: number; max: number; step?: number };
+    };
+    
     if (capabilities.zoom) {
       return {
-        min: capabilities.zoom.min || 1,
-        max: capabilities.zoom.max || 8
+        min: capabilities.zoom.min || ZOOM_LEVELS[0],
+        max: capabilities.zoom.max || ZOOM_LEVELS[2]
       };
     }
   } catch (error) {
@@ -48,24 +49,13 @@ const getDeviceZoomCapabilities = async (track: MediaStreamTrack): Promise<{ min
   return null;
 };
 
-const normalizeZoomForDevice = (
-  zoomLevel: number,
-  deviceMin: number,
-  deviceMax: number,
-  uiMin: number,
-  uiMax: number
-): number => {
-  const uiRange = uiMax - uiMin;
-  const deviceRange = deviceMax - deviceMin;
-  const normalizedZoom = ((zoomLevel - uiMin) / uiRange) * deviceRange + deviceMin;
-  return normalizedZoom;
-};
-
 export const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
-  // Router hooks
+  // Router and context
   const navigate = useNavigate();
   const location = useLocation();
   const { baseUrl } = useNgrok();
+  const isDemoMode = location.pathname.startsWith("/demo");
+  const basePrefix = isDemoMode ? "/demo" : "";
 
   // State
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -74,16 +64,31 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode })
   const [isZoomVisible, setIsZoomVisible] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(DEFAULT_ZOOM);
   const [lastTapTime, setLastTapTime] = useState(0);
-  const [deviceZoomCapabilities, setDeviceZoomCapabilities] = useState<{ min: number; max: number } | null>(null);
+  const [deviceZoomCapabilities, setDeviceZoomCapabilities] = useState<ZoomCapabilities | null>(null);
 
   // Refs
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const flashRef = useRef<HTMLDivElement>(null);
+  const initialDeviceZoomRef = useRef<number | null>(null);
 
-  // Computed values
-  const isDemoMode = location.pathname.startsWith("/demo");
-  const basePrefix = isDemoMode ? "/demo" : "";
+  // Cleanup function
+  const cleanup = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track: ExtendedMediaTrack) => {
+        track.stop();
+      });
+      streamRef.current = null;
+    }
+  }, []);
+
+  // Effect to initialize camera
+  useEffect(() => {
+    if (initialMode === "camera") {
+      startCamera();
+    }
+    return cleanup;
+  }, [initialMode, cleanup]);
 
   // Effect to prevent scroll during camera use
   useEffect(() => {
@@ -93,55 +98,53 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode })
     };
   }, []);
 
-  // Effect to initialize camera
-  useEffect(() => {
-    if (initialMode === "camera") {
-      startCamera();
-    }
-    return () => cleanup();
-  }, [initialMode]);
-
-  const cleanup = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-    }
-  };
-
-  const getConstraints = (facing: "environment" | "user") => ({
-    video: {
-      facingMode: facing,
-      width: { ideal: 1920 },
-      height: { ideal: 1080 },
-    },
-    audio: false,
-  });
-
   const handleZoom = useCallback((newZoom: number) => {
     if (!streamRef.current) return;
     
-    const track = streamRef.current.getVideoTracks()[0];
-    if (!track) return;
-
+    const track = streamRef.current.getVideoTracks()[0] as ExtendedMediaTrack;
+    if (!track || !deviceZoomCapabilities) return;
+  
     // Update UI immediately
     setZoomLevel(newZoom);
-
-    // Apply zoom to device if capabilities are available
-    if (deviceZoomCapabilities) {
-      const deviceZoom = normalizeZoomForDevice(
-        newZoom,
-        deviceZoomCapabilities.min,
-        deviceZoomCapabilities.max,
-        MIN_ZOOM,
-        MAX_ZOOM
-      );
-
-      // Apply constraints without awaiting to make it more responsive
-      track.applyConstraints({
-        advanced: [{ zoom: deviceZoom } as ExtendedConstraints]
-      }).catch(error => {
-        console.warn('Error applying zoom:', error);
-      });
+  
+    // Create or use existing zoom handler
+    if (!track.zoomHandler) {
+      track.zoomHandler = (zoom: number) => {
+        const { min, max } = deviceZoomCapabilities;
+  
+        // If returning to default zoom (1.0), use the initial device zoom value
+        if (zoom === DEFAULT_ZOOM && initialDeviceZoomRef.current !== null) {
+          track.applyConstraints({
+            advanced: [{ zoom: initialDeviceZoomRef.current } as unknown as MediaTrackConstraints]
+          }).catch(error => {
+            console.warn('Error applying zoom:', error);
+          });
+          return;
+        }
+  
+        let deviceZoom;
+        if (zoom < DEFAULT_ZOOM) {
+          // For zooming out (0.5), keep the existing calculation as it works well
+          deviceZoom = min + (initialDeviceZoomRef.current! - min) * (zoom / DEFAULT_ZOOM);
+        } else if (zoom > DEFAULT_ZOOM) {
+          // For zooming in (1.1), use a gentler scale
+          const zoomInRatio = (zoom - DEFAULT_ZOOM) / (ZOOM_LEVELS[2] - DEFAULT_ZOOM);
+          // Only use 20% of the remaining zoom range above the initial zoom
+          const maxZoomIncrease = (max - initialDeviceZoomRef.current!) * 0.2;
+          deviceZoom = initialDeviceZoomRef.current! + (maxZoomIncrease * zoomInRatio);
+        } else {
+          deviceZoom = initialDeviceZoomRef.current!;
+        }
+  
+        track.applyConstraints({
+          advanced: [{ zoom: deviceZoom } as unknown as MediaTrackConstraints]
+        }).catch(error => {
+          console.warn('Error applying zoom:', error);
+        });
+      };
     }
+  
+    track.zoomHandler(newZoom);
   }, [deviceZoomCapabilities]);
 
   const startCamera = async (facing?: "environment" | "user") => {
@@ -149,44 +152,49 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode })
     const currentFacing = facing || facingMode;
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia(
-        getConstraints(currentFacing)
-      );
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: currentFacing,
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
+        audio: false,
+      });
       
       if (videoRef.current) {
         streamRef.current = stream;
         videoRef.current.srcObject = stream;
         setFacingMode(currentFacing);
         
-        // Check zoom capabilities
         const track = stream.getVideoTracks()[0];
         const capabilities = await getDeviceZoomCapabilities(track);
         setDeviceZoomCapabilities(capabilities);
         
-        // Reset zoom
-        setZoomLevel(MIN_ZOOM);
-        handleZoom(MIN_ZOOM);
+        // Store the initial device zoom level
+        if (capabilities) {
+          const currentSettings = track.getSettings() as any;
+          initialDeviceZoomRef.current = currentSettings.zoom || 
+            (capabilities.min + (capabilities.max - capabilities.min) * 0.5);
+        }
+        
+        setZoomLevel(DEFAULT_ZOOM);
       }
     } catch (err) {
       console.error("Error accessing camera:", err);
     }
   };
 
-  const handleScreenTap = () => {
+  const handleScreenTap = useCallback(() => {
     const now = Date.now();
-    const timeSinceLastTap = now - lastTapTime;
-    
-    if (timeSinceLastTap < DOUBLE_TAP_DELAY) {
+    if (now - lastTapTime < DOUBLE_TAP_DELAY) {
       flipCamera();
     }
-    
     setLastTapTime(now);
-  };
+  }, [lastTapTime]);
 
-  const flipCamera = () => {
-    const newFacingMode = facingMode === "environment" ? "user" : "environment";
-    startCamera(newFacingMode);
-  };
+  const flipCamera = useCallback(() => {
+    startCamera(facingMode === "environment" ? "user" : "environment");
+  }, [facingMode]);
 
   const triggerCaptureEffect = () => {
     if (flashRef.current) {
@@ -202,12 +210,12 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode })
     setTimeout(() => setIsCapturing(false), 150);
   };
 
-  const capturePhoto = () => {
-    const video = videoRef.current;
-    if (!video || photos.length >= PHOTO_LIMIT) return;
+  const capturePhoto = useCallback(() => {
+    if (!videoRef.current || photos.length >= PHOTO_LIMIT) return;
 
     triggerCaptureEffect();
 
+    const video = videoRef.current;
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -222,55 +230,45 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode })
 
     context.drawImage(video, 0, 0);
     const photoUrl = canvas.toDataURL("image/jpeg", 0.8);
-
     const newPhoto = { id: Date.now(), url: photoUrl };
-    setPhotos((prev) => [...prev, newPhoto]);
 
-    const sessionPhotos = JSON.parse(
-      sessionStorage.getItem("temp-photos") || "[]"
-    );
-    sessionPhotos.push(newPhoto);
-    sessionStorage.setItem("temp-photos", JSON.stringify(sessionPhotos));
+    // Update state and storage
+    setPhotos(prev => [...prev, newPhoto]);
+    const sessionPhotos = JSON.parse(sessionStorage.getItem("temp-photos") || "[]");
+    sessionStorage.setItem("temp-photos", JSON.stringify([...sessionPhotos, newPhoto]));
 
-    if (navigator.vibrate) {
-      navigator.vibrate(50);
-    }
-  };
+    // Haptic feedback
+    navigator.vibrate?.(50);
+  }, [photos.length, facingMode]);
 
-  const navigateWithBaseUrl = (path: string) => {
+  const navigateWithBaseUrl = useCallback((path: string) => {
     if (window.innerWidth <= 768 && baseUrl) {
       window.location.href = `${baseUrl}${path}`;
     } else {
       navigate(path);
     }
-  };
+  }, [navigate, baseUrl]);
 
   return (
     <div 
       className="relative h-screen bg-black overflow-hidden"
       onClick={handleScreenTap}
     >
-      {/* Flash effect overlay */}
       <div
         ref={flashRef}
         className="absolute inset-0 bg-black pointer-events-none transition-opacity duration-150 z-20"
         style={{ opacity: 0 }}
       />
 
-      {/* Photo counter */}
       <PhotoCounter count={photos.length} limit={PHOTO_LIMIT} />
 
-      {/* Camera preview */}
       <video
         ref={videoRef}
         autoPlay
         playsInline
-        className={`h-full w-full object-cover ${
-          facingMode === "user" ? "scale-x-[-1]" : ""
-        }`}
+        className={`h-full w-full object-cover ${facingMode === "user" ? "scale-x-[-1]" : ""}`}
       />
 
-      {/* Zoom controls */}
       <ZoomControl
         isVisible={isZoomVisible}
         zoomLevel={zoomLevel}
@@ -278,7 +276,6 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode })
         onZoomChange={handleZoom}
       />
 
-      {/* Camera controls */}
       <CameraControls
         photoCount={photos.length}
         isCapturing={isCapturing}

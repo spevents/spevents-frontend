@@ -1,7 +1,7 @@
 // File: src/pages/Camera.tsx
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import CameraInterface from '../components/camera/CameraInterface';
+import { CameraInterface } from '../components/camera/CameraInterface';
 import { X } from 'lucide-react';
 
 export default function CameraPage(): JSX.Element {
