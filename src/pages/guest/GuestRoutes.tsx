@@ -20,6 +20,9 @@ const MobileCheck = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   
   useEffect(() => {
+    alert(`MobileCheck: Accessing ${location.pathname}
+    Is Mobile: ${isMobileDevice()}`);
+    
     if (!isMobileDevice()) {
       sessionStorage.setItem('attempted-url', location.pathname);
     }
@@ -37,11 +40,12 @@ export const GuestRoutes = () => {
   const { eventId } = useParams();
   
   useEffect(() => {
-    console.log('Current path:', location.pathname);
-    console.log('Event ID:', eventId);
+    alert(`GuestRoutes:
+    Path: ${location.pathname}
+    Event ID: ${eventId}`);
   }, [location, eventId]);
 
-  // If no eventId, show landing or redirect to it
+  // If no eventId, show landing
   if (!eventId) {
     return (
       <Routes>
@@ -53,27 +57,28 @@ export const GuestRoutes = () => {
 
   return (
     <Routes>
-      {/* Event specific routes - all wrapped with SessionValidator and MobileCheck */}
-      <Route element={<SessionValidator><MobileCheck>
-        <Routes>
-          <Route path="guest">
-            {/* Keep user on camera if they came from QR code */}
-            <Route path="camera" element={<CameraPage />} />
-            
-            {/* Other guest routes */}
-            <Route index element={<GuestDashboard />} />
-            <Route path="review" element={<PhotoReviewPage />} />
-            <Route path="collage" element={<CollageCreatorWrapper />} />
-            <Route path="feedback" element={<FeedbackPage />} />
-          </Route>
-        </Routes>
-      </MobileCheck></SessionValidator>} />
+      {/* Guest routes with validators */}
+      <Route path="guest" element={
+        <SessionValidator>
+          <MobileCheck>
+            <Routes>
+              <Route path="camera" element={<CameraPage />} />
+              <Route index element={<GuestDashboard />} />
+              <Route path="review" element={<PhotoReviewPage />} />
+              <Route path="collage" element={<CollageCreatorWrapper />} />
+              <Route path="feedback" element={<FeedbackPage />} />
+            </Routes>
+          </MobileCheck>
+        </SessionValidator>
+      } />
       
-      {/* All other routes redirect appropriately */}
+      {/* Default redirect */}
       <Route path="*" element={
-        isMobileDevice() 
-          ? <Navigate to={`/${eventId}/guest/camera`} replace />
-          : <Navigate to="/" replace />
+        isMobileDevice() ? (
+          <Navigate to={`/${eventId}/guest/camera`} replace />
+        ) : (
+          <Navigate to="/" replace />
+        )
       } />
     </Routes>
   );

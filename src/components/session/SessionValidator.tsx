@@ -15,21 +15,32 @@ export function SessionValidator({ children }: SessionValidatorProps) {
 
   useEffect(() => {
     const checkSession = async () => {
+      alert(`Checking session for: ${eventId || 'no eventId'}`);
+      
       if (!eventId) {
+        alert('No eventId found');
         setIsValid(false);
         setIsChecking(false);
         return;
       }
 
-      const valid = await isValidSession(eventId);
-      setIsValid(valid);
-      setIsChecking(false);
+      try {
+        const valid = await isValidSession(eventId);
+        alert(`Session validity: ${valid}`);
+        setIsValid(valid);
+      } catch (error) {
+        alert(`Error checking session: ${error}`);
+        setIsValid(false);
+      } finally {
+        setIsChecking(false);
+      }
     };
 
     checkSession();
   }, [eventId, isValidSession]);
 
   if (isChecking) {
+    alert('Still checking session...');
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" />
@@ -46,9 +57,15 @@ export function SessionValidator({ children }: SessionValidatorProps) {
             This session code is not valid or has expired.
             Please scan a valid QR code to join an event.
           </p>
+          <button
+            onClick={() => alert(`Current session state: ${JSON.stringify({ eventId, isValid, isChecking })}`)}
+            className="px-6 py-3 bg-white/10 text-white rounded-full hover:bg-white/20"
+          >
+            Debug Info
+          </button>
           <a
             href="/"
-            className="inline-block px-6 py-3 bg-white/10 text-white rounded-full hover:bg-white/20"
+            className="block px-6 py-3 bg-white/10 text-white rounded-full hover:bg-white/20"
           >
             Return Home
           </a>
