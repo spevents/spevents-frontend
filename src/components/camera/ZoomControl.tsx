@@ -5,21 +5,24 @@ import { useCallback } from "react";
 interface ZoomControlProps {
   isVisible: boolean;
   zoomLevel: number;
+  facingMode: 'user' | 'environment';
   onToggleVisibility: () => void;
   onZoomChange: (zoom: number) => void;
 }
 
-// Adjusted zoom levels - reduced max zoom
-const ZOOM_LEVELS = [0.5, 1.0, 1.1] as const;
-type ZoomLevel = typeof ZOOM_LEVELS[number];
+const REAR_ZOOM_LEVELS = [0.5, 1.0, 1.1] as const;
+const FRONT_ZOOM_LEVELS = [1.0, 1.1] as const;
 
 export const ZoomControl: React.FC<ZoomControlProps> = ({
   isVisible,
   zoomLevel,
+  facingMode,
   onToggleVisibility,
   onZoomChange,
 }) => {
-  const handleZoomClick = useCallback((level: ZoomLevel) => {
+  const zoomLevels = facingMode === 'user' ? FRONT_ZOOM_LEVELS : REAR_ZOOM_LEVELS;
+
+  const handleZoomClick = useCallback((level: number) => {
     onZoomChange(level);
   }, [onZoomChange]);
 
@@ -34,7 +37,7 @@ export const ZoomControl: React.FC<ZoomControlProps> = ({
         className="absolute bottom-52 sm:bottom-56 left-1/2 transform -translate-x-1/2 bg-black/50 backdrop-blur-md rounded-full p-4 z-10"
       >
         <div className="flex items-center gap-2">
-          {ZOOM_LEVELS.map((level) => (
+          {zoomLevels.map((level) => (
             <motion.button
               key={level}
               onClick={() => handleZoomClick(level)}

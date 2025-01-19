@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useNgrok } from "../../contexts/NgrokContext";
+import { useZoom } from "./hooks/useZoom";
 import { ZoomControl } from "./ZoomControl";
 import { PhotoCounter } from "./PhotoCounter";
 import { CameraControls } from "./CameraControls";
@@ -15,41 +16,13 @@ interface Photo {
   url: string;
 }
 
-interface ZoomCapabilities {
-  min: number;
-  max: number;
-}
-
-type ExtendedMediaTrack = MediaStreamTrack & {
-  zoomHandler?: (zoom: number) => void;
-};
-
 // Constants
 const PHOTO_LIMIT = 5;
 const DOUBLE_TAP_DELAY = 300;
-const ZOOM_LEVELS = [0.5, 1.0, 1.1] as const;
-const DEFAULT_ZOOM = 1.0;
 
-// Camera zoom helper
-const getDeviceZoomCapabilities = async (track: MediaStreamTrack): Promise<ZoomCapabilities | null> => {
-  try {
-    const capabilities = track.getCapabilities() as MediaTrackCapabilities & {
-      zoom?: { min: number; max: number; step?: number };
-    };
-    
-    if (capabilities.zoom) {
-      return {
-        min: capabilities.zoom.min || ZOOM_LEVELS[0],
-        max: capabilities.zoom.max || ZOOM_LEVELS[2]
-      };
-    }
-  } catch (error) {
-    console.warn('Error getting zoom capabilities:', error);
-  }
-  return null;
-};
-
-export const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
+export const CameraInterface: React.FC<CameraInterfaceProps> = ({
+  initialMode,
+}) => {
   // Router and context
   const navigate = useNavigate();
   const location = useLocation();
@@ -59,23 +32,21 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode })
 
   // State
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
+  const [facingMode, setFacingMode] = useState<"environment" | "user">(
+    "environment"
+  );
   const [isCapturing, setIsCapturing] = useState(false);
-  const [isZoomVisible, setIsZoomVisible] = useState(false);
-  const [zoomLevel, setZoomLevel] = useState(DEFAULT_ZOOM);
   const [lastTapTime, setLastTapTime] = useState(0);
-  const [deviceZoomCapabilities, setDeviceZoomCapabilities] = useState<ZoomCapabilities | null>(null);
 
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const flashRef = useRef<HTMLDivElement>(null);
-  const initialDeviceZoomRef = useRef<number | null>(null);
 
   // Cleanup function
   const cleanup = useCallback(() => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track: ExtendedMediaTrack) => {
+      streamRef.current.getTracks().forEach((track) => {
         track.stop();
       });
       streamRef.current = null;
@@ -92,61 +63,22 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode })
 
   // Effect to prevent scroll during camera use
   useEffect(() => {
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = "auto";
     };
   }, []);
+  // Zoom hook
+  const {
+    zoomLevel,
+    isZoomVisible,
+    handleZoom,
+    applyZoom,
+    initializeZoom,
+    toggleZoomVisibility,
+  } = useZoom(facingMode);
 
-  const handleZoom = useCallback((newZoom: number) => {
-    if (!streamRef.current) return;
-    
-    const track = streamRef.current.getVideoTracks()[0] as ExtendedMediaTrack;
-    if (!track || !deviceZoomCapabilities) return;
-  
-    // Update UI immediately
-    setZoomLevel(newZoom);
-  
-    // Create or use existing zoom handler
-    if (!track.zoomHandler) {
-      track.zoomHandler = (zoom: number) => {
-        const { min, max } = deviceZoomCapabilities;
-  
-        // If returning to default zoom (1.0), use the initial device zoom value
-        if (zoom === DEFAULT_ZOOM && initialDeviceZoomRef.current !== null) {
-          track.applyConstraints({
-            advanced: [{ zoom: initialDeviceZoomRef.current } as unknown as MediaTrackConstraints]
-          }).catch(error => {
-            console.warn('Error applying zoom:', error);
-          });
-          return;
-        }
-  
-        let deviceZoom;
-        if (zoom < DEFAULT_ZOOM) {
-          // For zooming out (0.5), keep the existing calculation as it works well
-          deviceZoom = min + (initialDeviceZoomRef.current! - min) * (zoom / DEFAULT_ZOOM);
-        } else if (zoom > DEFAULT_ZOOM) {
-          // For zooming in (1.1), use a gentler scale
-          const zoomInRatio = (zoom - DEFAULT_ZOOM) / (ZOOM_LEVELS[2] - DEFAULT_ZOOM);
-          // Only use 20% of the remaining zoom range above the initial zoom
-          const maxZoomIncrease = (max - initialDeviceZoomRef.current!) * 0.2;
-          deviceZoom = initialDeviceZoomRef.current! + (maxZoomIncrease * zoomInRatio);
-        } else {
-          deviceZoom = initialDeviceZoomRef.current!;
-        }
-  
-        track.applyConstraints({
-          advanced: [{ zoom: deviceZoom } as unknown as MediaTrackConstraints]
-        }).catch(error => {
-          console.warn('Error applying zoom:', error);
-        });
-      };
-    }
-  
-    track.zoomHandler(newZoom);
-  }, [deviceZoomCapabilities]);
-
+  // Camera handlers
   const startCamera = async (facing?: "environment" | "user") => {
     cleanup();
     const currentFacing = facing || facingMode;
@@ -160,29 +92,30 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode })
         },
         audio: false,
       });
-      
+
       if (videoRef.current) {
         streamRef.current = stream;
         videoRef.current.srcObject = stream;
         setFacingMode(currentFacing);
-        
+
         const track = stream.getVideoTracks()[0];
-        const capabilities = await getDeviceZoomCapabilities(track);
-        setDeviceZoomCapabilities(capabilities);
-        
-        // Store the initial device zoom level
-        if (capabilities) {
-          const currentSettings = track.getSettings() as any;
-          initialDeviceZoomRef.current = currentSettings.zoom || 
-            (capabilities.min + (capabilities.max - capabilities.min) * 0.5);
-        }
-        
-        setZoomLevel(DEFAULT_ZOOM);
+        await initializeZoom(track);
       }
     } catch (err) {
       console.error("Error accessing camera:", err);
     }
   };
+
+  const handleZoomChange = useCallback(
+    (newZoom: number) => {
+      if (!streamRef.current) return;
+
+      handleZoom(newZoom);
+      const track = streamRef.current.getVideoTracks()[0];
+      applyZoom(track, newZoom);
+    },
+    [handleZoom, applyZoom]
+  );
 
   const handleScreenTap = useCallback(() => {
     const now = Date.now();
@@ -233,24 +166,32 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode })
     const newPhoto = { id: Date.now(), url: photoUrl };
 
     // Update state and storage
-    setPhotos(prev => [...prev, newPhoto]);
-    const sessionPhotos = JSON.parse(sessionStorage.getItem("temp-photos") || "[]");
-    sessionStorage.setItem("temp-photos", JSON.stringify([...sessionPhotos, newPhoto]));
+    setPhotos((prev) => [...prev, newPhoto]);
+    const sessionPhotos = JSON.parse(
+      sessionStorage.getItem("temp-photos") || "[]"
+    );
+    sessionStorage.setItem(
+      "temp-photos",
+      JSON.stringify([...sessionPhotos, newPhoto])
+    );
 
     // Haptic feedback
     navigator.vibrate?.(50);
   }, [photos.length, facingMode]);
 
-  const navigateWithBaseUrl = useCallback((path: string) => {
-    if (window.innerWidth <= 768 && baseUrl) {
-      window.location.href = `${baseUrl}${path}`;
-    } else {
-      navigate(path);
-    }
-  }, [navigate, baseUrl]);
+  const navigateWithBaseUrl = useCallback(
+    (path: string) => {
+      if (window.innerWidth <= 768 && baseUrl) {
+        window.location.href = `${baseUrl}${path}`;
+      } else {
+        navigate(path);
+      }
+    },
+    [navigate, baseUrl]
+  );
 
   return (
-    <div 
+    <div
       className="relative h-screen bg-black overflow-hidden"
       onClick={handleScreenTap}
     >
@@ -266,16 +207,19 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode })
         ref={videoRef}
         autoPlay
         playsInline
-        className={`h-full w-full object-cover ${facingMode === "user" ? "scale-x-[-1]" : ""}`}
+        className={`h-full w-full object-cover ${
+          facingMode === "user" ? "scale-x-[-1]" : ""
+        }`}
       />
 
       <ZoomControl
         isVisible={isZoomVisible}
         zoomLevel={zoomLevel}
-        onToggleVisibility={() => setIsZoomVisible(!isZoomVisible)}
-        onZoomChange={handleZoom}
+        facingMode={facingMode}
+        onToggleVisibility={toggleZoomVisibility}
+        onZoomChange={handleZoomChange}
       />
-
+      
       <CameraControls
         photoCount={photos.length}
         isCapturing={isCapturing}
