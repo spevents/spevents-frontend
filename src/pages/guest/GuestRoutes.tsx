@@ -7,6 +7,7 @@ import PhotoReviewPage from '../PhotoReviewPage';
 import { GuestDashboard } from '../../components/guest/GuestDashboard';
 import { CollageCreatorWrapper } from '../../components/guest/CollageCreatorWrapper';
 import FeedbackPage from '../../components/guest/FeedbackPage';
+import { SessionValidator } from '../../components/session/SessionValidator';
 
 // Mobile detection utility
 const isMobileDevice = () => {
@@ -20,7 +21,6 @@ const MobileCheck = ({ children }: { children: React.ReactNode }) => {
   
   useEffect(() => {
     if (!isMobileDevice()) {
-      // Store the attempted URL to show a message on the landing page
       sessionStorage.setItem('attempted-url', location.pathname);
     }
   }, [location]);
@@ -53,26 +53,26 @@ export const GuestRoutes = () => {
 
   return (
     <Routes>
-      {/* Event specific routes - all wrapped with MobileCheck */}
-      <Route path="guest" element={<MobileCheck><Routes>
-        <Route index element={<GuestDashboard />} />
-        <Route path="camera" element={<CameraPage />} />
-        <Route path="review" element={<PhotoReviewPage />} />
-        <Route path="collage" element={<CollageCreatorWrapper />} />
-        <Route path="feedback" element={<FeedbackPage />} />
-      </Routes></MobileCheck>} />
+      {/* Event specific routes - all wrapped with SessionValidator and MobileCheck */}
+      <Route element={<SessionValidator><MobileCheck>
+        <Routes>
+          <Route path="guest">
+            {/* Keep user on camera if they came from QR code */}
+            <Route path="camera" element={<CameraPage />} />
+            
+            {/* Other guest routes */}
+            <Route index element={<GuestDashboard />} />
+            <Route path="review" element={<PhotoReviewPage />} />
+            <Route path="collage" element={<CollageCreatorWrapper />} />
+            <Route path="feedback" element={<FeedbackPage />} />
+          </Route>
+        </Routes>
+      </MobileCheck></SessionValidator>} />
       
-      {/* Mobile users entering root event URL go to camera */}
-      <Route index element={
+      {/* All other routes redirect appropriately */}
+      <Route path="*" element={
         isMobileDevice() 
           ? <Navigate to={`/${eventId}/guest/camera`} replace />
-          : <Navigate to="/" replace />
-      } />
-      
-      {/* Catch all redirect */}
-      <Route path="*" element={
-        isMobileDevice()
-          ? <Navigate to={`/${eventId}/guest/`} replace />
           : <Navigate to="/" replace />
       } />
     </Routes>
