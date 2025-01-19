@@ -75,7 +75,7 @@ export const GuestRoutes = () => {
       {/* Default redirect */}
       <Route path="*" element={
         isMobileDevice() ? (
-          <Navigate to={`/${eventId}/guest/camera`} replace />
+          <Navigate to={`/${eventId}/guest/`} replace />
         ) : (
           <Navigate to="/" replace />
         )
