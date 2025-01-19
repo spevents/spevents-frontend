@@ -4,6 +4,7 @@ import { Upload as UploadIcon, Repeat } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNgrok } from "../contexts/NgrokContext";
+import { X } from "lucide-react";
 
 const PHOTO_LIMIT = 5;
 
@@ -18,7 +19,9 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
   const { baseUrl } = useNgrok();
   const [_hasPermission, setHasPermission] = useState(false);
   const [photos, setPhotos] = useState<Array<{ id: number; url: string }>>([]);
-  const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
+  const [facingMode, setFacingMode] = useState<"environment" | "user">(
+    "environment"
+  );
   const [isCapturing, setIsCapturing] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -50,7 +53,7 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
         },
         audio: false,
       });
-      
+
       if (videoRef.current) {
         streamRef.current = stream;
         videoRef.current.srcObject = stream;
@@ -119,7 +122,7 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
 
   const navigateWithBaseUrl = (path: string) => {
     const fullPath = `/${eventId}/guest${path}`;
-    
+
     if (window.innerWidth <= 768 && baseUrl) {
       window.location.href = `${baseUrl}${fullPath}`;
     } else {
@@ -129,6 +132,14 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
 
   return (
     <div className="relative h-screen bg-black">
+      <button
+        onClick={() => navigateWithBaseUrl(`/`)}
+        className="absolute top-4 left-4 z-50 p-2 rounded-full bg-black/20 backdrop-blur-sm 
+          text-white hover:bg-black/30 transition-colors"
+      >
+        <X className="w-6 h-6" />
+      </button>
+
       <div
         ref={flashRef}
         className="absolute inset-0 bg-black pointer-events-none transition-opacity duration-150 z-20"
@@ -206,7 +217,11 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
             }}
             transition={{ duration: 0.15 }}
             className={`w-20 h-20 rounded-full transform relative
-              ${photos.length >= PHOTO_LIMIT ? "opacity-50 cursor-not-allowed" : ""}`}
+              ${
+                photos.length >= PHOTO_LIMIT
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+              }`}
           >
             <span className="absolute inset-2 rounded-full border-2 border-gray-200" />
           </motion.button>
