@@ -15,10 +15,10 @@ export function SessionValidator({ children }: SessionValidatorProps) {
 
   useEffect(() => {
     const checkSession = async () => {
-      alert(`Checking session for: ${eventId || 'no eventId'}`);
+
       
       if (!eventId) {
-        alert('No eventId found');
+
         setIsValid(false);
         setIsChecking(false);
         return;
@@ -26,10 +26,10 @@ export function SessionValidator({ children }: SessionValidatorProps) {
 
       try {
         const valid = await isValidSession(eventId);
-        alert(`Session validity: ${valid}`);
+
         setIsValid(valid);
       } catch (error) {
-        alert(`Error checking session: ${error}`);
+
         setIsValid(false);
       } finally {
         setIsChecking(false);
@@ -40,7 +40,6 @@ export function SessionValidator({ children }: SessionValidatorProps) {
   }, [eventId, isValidSession]);
 
   if (isChecking) {
-    alert('Still checking session...');
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" />

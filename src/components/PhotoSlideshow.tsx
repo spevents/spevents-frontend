@@ -178,7 +178,7 @@ export default function PhotoSlideshow() {
       {!hideUI && (
         <div className="absolute top-4 left-4 z-50 flex items-center space-x-4">
           <button
-            onClick={() => navigate(`${basePrefix}/gallery`)}
+            onClick={() => navigate(`${basePrefix}/guest`)}
             className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-white hover:bg-white/20 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />

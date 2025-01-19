@@ -20,24 +20,17 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   const generateSessionCode = useCallback(() => {
     const code = Math.random().toString(36).substring(2, 8);
-    alert(`Generated new code: ${code}`);
     setSessionCode(code);
     localStorage.setItem('spevents-session', code);
   }, []);
 
   const setCustomSessionCode = useCallback((code: string) => {
-    alert(`Setting custom code: ${code}`);
     setSessionCode(code);
     localStorage.setItem('spevents-session', code);
   }, []);
 
   const isValidSession = useCallback(async (code: string): Promise<boolean> => {
     const storedCode = localStorage.getItem('spevents-session');
-    alert(`Checking session:
-    Code to check: ${code}
-    Stored code: ${storedCode}
-    Is mshaadi-2025: ${code === 'mshaadi-2025'}
-    `);
     
     // For mshaadi-2025, always valid
     if (code === 'mshaadi-2025') {

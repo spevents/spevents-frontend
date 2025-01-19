@@ -1,10 +1,23 @@
 // src/pages/FeedbackPage.tsx
 import { ArrowLeft, Gift } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useNgrok } from "../../contexts/NgrokContext";
 
 export default function FeedbackPage() {
+  const { eventId } = useParams();
+  const { baseUrl } = useNgrok();
   const navigate = useNavigate();
+
+  const navigateWithBaseUrl = (path: string) => {
+    const fullPath =
+      path === "/" ? `/${eventId}/guest` : `/${eventId}/guest${path}`;
+    if (window.innerWidth <= 768 && baseUrl) {
+      window.location.href = `${baseUrl}${fullPath}`;
+    } else {
+      navigate(fullPath);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
@@ -15,7 +28,7 @@ export default function FeedbackPage() {
         className="sticky top-0 backdrop-blur-lg z-10 px-4 py-4 flex items-center"
       >
         <button
-          onClick={() => navigate(`/guest`)}
+          onClick={() => navigateWithBaseUrl(`/`)}
           className="p-2 rounded-full hover:bg-white/10 active:bg-white/20 transition-colors"
         >
           <ArrowLeft className="w-6 h-6 text-white" />

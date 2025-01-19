@@ -75,7 +75,7 @@ const ReviewComplete: React.FC = () => {
   
   
     const navigateWithBaseUrl = (path: string) => {
-      const fullPath = `/${eventId}/guest${path}`;
+      const fullPath = path === "/" ? `/${eventId}/guest` : `/${eventId}/guest${path}`;
       if (window.innerWidth <= 768 && baseUrl) {
         window.location.href = `${baseUrl}${fullPath}`;
       } else {
@@ -102,7 +102,7 @@ const ReviewComplete: React.FC = () => {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => navigateWithBaseUrl("/guest")}
+            onClick={() => navigateWithBaseUrl("/")}
             // onClick={() => navigate("/guest")}
             className="w-full px-6 py-3 bg-white text-gray-900 rounded-full font-medium 
               transition-colors hover:bg-white/90"
@@ -113,7 +113,7 @@ const ReviewComplete: React.FC = () => {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => navigate("/camera")}
+            onClick={() => navigateWithBaseUrl("/camera")}
             className="w-full flex items-center justify-center gap-2 px-6 py-3 
               bg-white/10 text-white rounded-full font-medium 
               transition-colors hover:bg-white/20"

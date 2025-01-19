@@ -26,7 +26,7 @@ export default function CameraPage(): JSX.Element {
   }
 
   return (
-    <div className="relative min-h-screen bg-black no-scroll">
+    <div className="relative min-h-screen bg-black">
       <button
         onClick={() => navigate(`/${eventId}/guest`)}
         className="absolute top-4 left-4 z-50 p-2 rounded-full bg-black/20 backdrop-blur-sm 
