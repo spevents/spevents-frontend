@@ -1,7 +1,7 @@
 // src/components/CameraInterface.tsx
 import React, { useState, useRef, useEffect } from "react";
 import { Upload as UploadIcon, Repeat } from "lucide-react";
-import { useNavigate, useLocation, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNgrok } from "../contexts/NgrokContext";
 
@@ -13,7 +13,7 @@ interface CameraInterfaceProps {
 
 const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
   const navigate = useNavigate();
-  const location = useLocation();
+  // const location = useLocation();
   const { eventId } = useParams();
   const { baseUrl } = useNgrok();
   const [_hasPermission, setHasPermission] = useState(false);
@@ -23,9 +23,6 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const flashRef = useRef<HTMLDivElement>(null);
-
-  // Ensure we always have the event ID from the URL
-  const currentEventId = eventId || location.pathname.split('/')[1];
 
   useEffect(() => {
     if (initialMode === "camera") {
@@ -121,14 +118,11 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
   };
 
   const navigateWithBaseUrl = (path: string) => {
-    // Construct the full path with event ID
-    const fullPath = `/${currentEventId}/guest${path}`;
+    const fullPath = `/${eventId}/guest${path}`;
     
-    // If we're on mobile and using ngrok, use the full ngrok URL
     if (window.innerWidth <= 768 && baseUrl) {
       window.location.href = `${baseUrl}${fullPath}`;
     } else {
-      // On desktop or without ngrok, use regular navigation
       navigate(fullPath);
     }
   };

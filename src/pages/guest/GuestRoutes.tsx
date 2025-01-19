@@ -2,8 +2,8 @@
 import { Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import { useEffect } from 'react';
 import { GuestLanding } from './GuestLanding';
-import CameraPage from '../CameraPage';
-import PhotoReviewPage from '../PhotoReviewPage';
+import CameraInterface from '../../components/CameraInterface';
+import PhotoReview from '../../components/PhotoReview/PhotoReview';
 import { GuestDashboard } from '../../components/guest/GuestDashboard';
 import { CollageCreatorWrapper } from '../../components/guest/CollageCreatorWrapper';
 import FeedbackPage from '../../components/guest/FeedbackPage';
@@ -15,35 +15,23 @@ const isMobileDevice = () => {
   return /android|iphone|ipad|ipod/i.test(userAgent.toLowerCase());
 };
 
-// Mobile check wrapper component
-const MobileCheck = ({ children }: { children: React.ReactNode }) => {
-  const location = useLocation();
-  
-  useEffect(() => {
-    alert(`MobileCheck: Accessing ${location.pathname}
-    Is Mobile: ${isMobileDevice()}`);
-    
-    if (!isMobileDevice()) {
-      sessionStorage.setItem('attempted-url', location.pathname);
-    }
-  }, [location]);
-
-  if (!isMobileDevice()) {
-    return <Navigate to="/" replace />;
-  }
-
-  return <>{children}</>;
-};
-
 export const GuestRoutes = () => {
   const location = useLocation();
   const { eventId } = useParams();
   
   useEffect(() => {
-    alert(`GuestRoutes:
-    Path: ${location.pathname}
-    Event ID: ${eventId}`);
+    console.log(`GuestRoutes - Path: ${location.pathname}, Event ID: ${eventId}`);
+    
+    // Store attempted URL for mobile redirect if needed
+    if (!isMobileDevice()) {
+      sessionStorage.setItem('attempted-url', location.pathname);
+    }
   }, [location, eventId]);
+
+  // If not on mobile, redirect to landing
+  if (!isMobileDevice()) {
+    return <Navigate to="/" replace />;
+  }
 
   // If no eventId, show landing
   if (!eventId) {
@@ -57,29 +45,23 @@ export const GuestRoutes = () => {
 
   return (
     <Routes>
-      {/* Guest routes with validators */}
-      <Route path="guest" element={
-        <SessionValidator>
-          <MobileCheck>
+      <Route
+        path="guest/*"
+        element={
+          <SessionValidator>
             <Routes>
-              <Route path="camera" element={<CameraPage />} />
+              <Route path="camera" element={<CameraInterface initialMode="camera" />} />
               <Route index element={<GuestDashboard />} />
-              <Route path="review" element={<PhotoReviewPage />} />
+              <Route path="review" element={<PhotoReview />} />
               <Route path="collage" element={<CollageCreatorWrapper />} />
               <Route path="feedback" element={<FeedbackPage />} />
             </Routes>
-          </MobileCheck>
-        </SessionValidator>
-      } />
+          </SessionValidator>
+        }
+      />
       
-      {/* Default redirect */}
-      <Route path="*" element={
-        isMobileDevice() ? (
-          <Navigate to={`/${eventId}/guest/`} replace />
-        ) : (
-          <Navigate to="/" replace />
-        )
-      } />
+      {/* Default redirect to guest dashboard */}
+      <Route path="*" element={<Navigate to={`/${eventId}/guest`} replace />} />
     </Routes>
   );
 };

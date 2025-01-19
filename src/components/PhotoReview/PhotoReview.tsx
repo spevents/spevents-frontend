@@ -69,23 +69,16 @@ const PhotoProgress: React.FC<{ total: number; current: number }> = ({
 
 // Review Complete Component
 const ReviewComplete: React.FC = () => {
-    // I've added these to try route from after /guest/review --> /guest
     const { eventId } = useParams();
     const { baseUrl } = useNgrok();
     const navigate = useNavigate();
-    
   
-    const currentEventId = eventId || location.pathname.split("/")[1];
   
     const navigateWithBaseUrl = (path: string) => {
-      // Construct the full path with event ID
-      const fullPath = `/${currentEventId}/guest${path}`;
-  
-      // If we're on mobile and using ngrok, use the full ngrok URL
+      const fullPath = `/${eventId}/guest${path}`;
       if (window.innerWidth <= 768 && baseUrl) {
         window.location.href = `${baseUrl}${fullPath}`;
       } else {
-        // On desktop or without ngrok, use regular navigation
         navigate(fullPath);
       }
     };
