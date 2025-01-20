@@ -131,11 +131,11 @@ const GridCollage = ({ selectedPhotos, onClose }: GridCollageProps) => {
 
       // Add watermark
       const watermarkSize = Math.max(32, Math.floor(canvas.width * 0.03));
-      ctx.font = `bold ${watermarkSize}px Arial`;
+      ctx.font = `bold ${watermarkSize}px Quicksand`;
       ctx.textAlign = "end";
       ctx.textBaseline = "bottom";
 
-      const watermarkText = "www.spevents.live";
+      const watermarkText = "spevents.live";
       const metrics = ctx.measureText(watermarkText);
       const watermarkPadding = watermarkSize * 0.5;
       const watermarkX = canvas.width - watermarkPadding;
@@ -173,6 +173,11 @@ const GridCollage = ({ selectedPhotos, onClose }: GridCollageProps) => {
       alert("Error sharing to Instagram. Please try again.");
     }
   };
+
+
+
+
+  
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
@@ -271,7 +276,7 @@ const GridCollage = ({ selectedPhotos, onClose }: GridCollageProps) => {
                   className="flex-1 bg-white text-gray-900 rounded-full py-3 font-medium flex items-center justify-center gap-2"
                 >
                   <Share2 className="w-5 h-5" />
-                  Share to Instagram
+                  Share
                 </button>
                 <button
                   onClick={() => setCollageUrl(null)}

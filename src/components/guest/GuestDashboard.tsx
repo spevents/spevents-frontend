@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Camera, Download, Award, Grid, WandSparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CollageCreator } from './CollageCreator';
-import { getPhotoUrl } from '../../lib/aws';
+import { getSignedPhotoUrl } from '../../lib/aws';
+import { shareToInstagram } from './utils/collage';
 
 interface Photo {
   url: string;
@@ -31,7 +32,6 @@ export function GuestDashboard() {
     { id: 'create', icon: <WandSparkles className="w-6 h-6 text-white font-bold" />, label: 'Create' },
     { id: 'prize', icon: <Award className="w-6 h-6 text-white font-bold" />, label: 'Prize' },
   ];
-  
 
   useEffect(() => {
     loadGuestPhotos();
@@ -45,7 +45,7 @@ export function GuestDashboard() {
           setPhotos(storedPhotos);
         } else {
           const photoUrls = storedPhotos.map((fileName: string) => ({
-            url: getPhotoUrl(fileName),
+            url: getSignedPhotoUrl(fileName),
             name: fileName,
             created_at: new Date().toISOString()
           }));
@@ -58,6 +58,30 @@ export function GuestDashboard() {
       setIsLoading(false);
     }
   };
+
+
+
+  /*
+
+  useEffect(() => {
+    const getSignedUrls = async () => {
+      try {
+        const urls = await Promise.all(
+          limitedPhotos.map(async (photoUrl) => {
+            const fileName = photoUrl.split("/").pop();
+            if (!fileName) throw new Error("Invalid photo URL");
+            return await getSignedPhotoUrl(fileName);
+          })
+        );
+        setSignedUrls(urls);
+      } catch (error) {
+        console.error("Error getting signed URLs:", error);
+      }
+    };
+
+    getSignedUrls();
+  }, [limitedPhotos]);
+  */
 
   const handleTabClick = (tabId: string) => {
     switch (tabId) {
@@ -87,44 +111,41 @@ export function GuestDashboard() {
     });
   };
 
-  const downloadSelectedPhotos = async () => {
+
+
+
+
+
+
+
+  const shareSelectedPhotos = async () => {
     const selectedPhotosList = photos.filter(photo => selectedPhotos.has(photo.name));
     
     if (selectedPhotosList.length === 0) return;
-
     try {
-      const photo = selectedPhotosList[0];
-      const response = await fetch(photo.url);
-      const blob = await response.blob();
-
-      const file = new File([blob], photo.name, { 
-        type: 'image/jpeg',
-        lastModified: Date.now()
-      });
-
-      if (navigator.share) {
-        try {
-          await navigator.share({
-            files: [file],
-            title: 'Save Photo',
-            text: 'Photo from event'
-          });
-        } catch (error) {
-          const url = URL.createObjectURL(blob);
-          window.open(url, '_blank');
-          setTimeout(() => URL.revokeObjectURL(url), 1000);
-        }
-      } else {
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-      }
+      const collageUrl = selectedPhotosList[0].url; // Assuming a single photo for simplicity
+      await shareToInstagram(collageUrl);
     } catch (error) {
-      alert('Unable to download photos at the moment. Please try again later.');
+      console.error('Error sharing:', error);
+      alert(`Error sharing to Instagram: ${error}`);
     }
-
     setSelectedPhotos(new Set());
   };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   return (
     <div className="min-h-screen bg-gray-900">
@@ -194,13 +215,13 @@ export function GuestDashboard() {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 exit={{ scale: 0 }}
-                onClick={downloadSelectedPhotos}
+                onClick={shareSelectedPhotos}
                 className="p-4 rounded-full text-white/60 hover:text-white hover:bg-white/5"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Download className="w-6 h-6  text-white font-bold" />
-                <span className="sr-only">Download Selected</span>
+                <Download className="w-6 h-6 text-white font-bold" />
+                <span className="sr-only">Share Selected</span>
               </motion.button>
             )}
           </div>

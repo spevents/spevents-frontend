@@ -16,7 +16,7 @@ export async function createCollage(images: string[]): Promise<string> {
 
   try {
     // Load all images using signed URLs
-    console.log('Loading images with signed URLs...');
+    console.log("Loading images with signed URLs...");
     const loadedImages = await Promise.all(
       images.map(
         (url) =>
@@ -24,7 +24,9 @@ export async function createCollage(images: string[]): Promise<string> {
             const img = new Image();
             img.crossOrigin = "anonymous";
             img.onload = () => {
-              console.log(`Successfully loaded image: ${url.substring(0, 50)}...`);
+              console.log(
+                `Successfully loaded image: ${url.substring(0, 50)}...`
+              );
               resolve(img);
             };
             img.onerror = () => {
@@ -104,27 +106,66 @@ export async function createCollage(images: string[]): Promise<string> {
     throw error;
   }
 }
+/**
+ * Convert a data URL to a File object
+ */
+const dataUrlToFile = async (dataUrl: string): Promise<File> => {
+  const blob = await fetch(dataUrl).then((res) => res.blob());
+  return new File([blob], "spevents-collage.jpg", {
+    type: "image/jpeg",
+    lastModified: Date.now(),
+  });
+};
 
+/**
+ * Share image and optionally open Instagram
+ */
 export async function shareToInstagram(imageDataUrl: string) {
   try {
-    // Create a temporary link and trigger download
+    const file = await dataUrlToFile(imageDataUrl);
+
+    // Check if Web Share API is available and can share files
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: "Made with  spevents.live"
+        });
+        return; // Successfully shared
+      } catch (error: unknown) {
+        if (error instanceof Error && error.name !== "AbortError") {
+          console.error("Web Share API error:", error);
+        }
+      }
+    }
+
+    // Fallback for browsers without Web Share API support
+    const fileBlob = await dataUrlToFile(imageDataUrl).then((file) => file);
+    const url = URL.createObjectURL(fileBlob);
     const link = document.createElement("a");
-    link.href = imageDataUrl;
+    link.href = url;
     link.download = "spevents-collage.jpg";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 
     // Small delay to ensure download starts
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    // Then try to open Instagram
+    // Open Instagram after download
     if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-      window.location.href = "instagram://camera";
+      // Try deep linking to Instagram Stories first
+      try {
+        window.location.href = "instagram-stories://share";
+      } catch {
+        // Fallback to camera
+        window.location.href = "instagram://camera";
+      }
     } else {
       window.open("https://instagram.com", "_blank");
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error sharing to Instagram:", error);
     throw error;
   }
