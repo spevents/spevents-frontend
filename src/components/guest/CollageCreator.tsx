@@ -8,7 +8,7 @@ interface Photo {
   url: string;
   name: string;
 }
-
+ 
 interface CollageCreatorProps {
   photos: Photo[];
   onClose: () => void;
