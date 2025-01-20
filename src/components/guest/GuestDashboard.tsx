@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Camera, Palette, Download, Award, Grid } from 'lucide-react';
+import { Camera, Download, Award, Grid, WandSparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CollageCreator } from './CollageCreator';
 import { getPhotoUrl } from '../../lib/aws';
@@ -26,15 +26,12 @@ export function GuestDashboard() {
   const [activeTab, setActiveTab] = useState('gallery');
 
   const tabs: TabConfig[] = [
-    { id: 'gallery', icon: <Grid className="w-6 h-6" />, label: 'Gallery' },
-
-    // Can you add an 'X' at the top left here so users can navigate back to the GuestDashboard? 
-    { id: 'camera', icon: <Camera className="w-6 h-6" />, label: 'Camera' },
-    { id: 'create', icon: <Palette className="w-6 h-6" />, label: 'Create' },
-
-    // When I click here, it goes to '/' instead of <FeedbackPage>
-    { id: 'prize', icon: <Award className="w-6 h-6" />, label: 'Prize' },
+    { id: 'gallery', icon: <Grid className="w-6 h-6 text-white font-bold" />, label: 'Gallery' },
+    { id: 'camera', icon: <Camera className="w-6 h-6 text-white font-bold" />, label: 'Camera' },
+    { id: 'create', icon: <WandSparkles className="w-6 h-6 text-white font-bold" />, label: 'Create' },
+    { id: 'prize', icon: <Award className="w-6 h-6 text-white font-bold" />, label: 'Prize' },
   ];
+  
 
   useEffect(() => {
     loadGuestPhotos();
@@ -90,96 +87,44 @@ export function GuestDashboard() {
     });
   };
 
+  const downloadSelectedPhotos = async () => {
+    const selectedPhotosList = photos.filter(photo => selectedPhotos.has(photo.name));
+    
+    if (selectedPhotosList.length === 0) return;
 
+    try {
+      const photo = selectedPhotosList[0];
+      const response = await fetch(photo.url);
+      const blob = await response.blob();
 
-  // VERSION_1 ==> Opens to a new tab and doesn't really work well
-  // const downloadSelectedPhotos = async () => {
-  //   const selectedPhotosList = photos.filter(photo => selectedPhotos.has(photo.name));
-  //   if (selectedPhotosList.length === 0) return;
-  
-  //   try {
-  //     const photo = selectedPhotosList[0];
-      
-  //     // For iOS devices, try opening in new tab first
-  //     if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-  //       try {
-  //         window.open(photo.url, '_blank');
-  //       } catch (iosError) {
-  //         // If opening in new tab fails, try direct navigation
-  //         window.location.href = photo.url;
-  //       }
-  //     } else {
-  //       // For non-iOS devices, use traditional download
-  //       const response = await fetch(photo.url);
-  //       if (!response.ok) {
-  //         throw new Error(`HTTP error! status: ${response.status}`);
-  //       }
-  //       const blob = await response.blob();
-  //       const url = window.URL.createObjectURL(blob);
-        
-  //       const a = document.createElement('a');
-  //       a.style.display = 'none';
-  //       a.href = url;
-  //       a.download = photo.name;
-  //       document.body.appendChild(a);
-  //       a.click();
-  //       window.URL.revokeObjectURL(url);
-  //       document.body.removeChild(a);
-  //     }
-  
-  //     // Clear selection after successful operation
-  //     setSelectedPhotos(new Set());
-  //   } catch (error) {
-  //     console.error('Download error:', error);
-  //     alert('Could not download the photo. Please try saving it directly from the opened image.');
-  //   }
-  // };
+      const file = new File([blob], photo.name, { 
+        type: 'image/jpeg',
+        lastModified: Date.now()
+      });
 
-  // VERSION_2 ==> Doesn't work well now
-const downloadSelectedPhotos = async () => {
-  const selectedPhotosList = photos.filter(photo => selectedPhotos.has(photo.name));
-  
-  if (selectedPhotosList.length === 0) return;
-
-  try {
-    // On iOS, we'll fetch the first selected photo and try to share it
-    const photo = selectedPhotosList[0];
-    const response = await fetch(photo.url);
-    const blob = await response.blob();
-
-    // For iOS, we need to ensure we're creating the right type of file
-    const file = new File([blob], photo.name, { 
-      type: 'image/jpeg',
-      lastModified: Date.now()
-    });
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          files: [file],
-          title: 'Save Photo',
-          text: 'Photo from event'
-        });
-      } catch (error) {
-        // If share fails, try opening the image in a new tab
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: 'Save Photo',
+            text: 'Photo from event'
+          });
+        } catch (error) {
+          const url = URL.createObjectURL(blob);
+          window.open(url, '_blank');
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+      } else {
         const url = URL.createObjectURL(blob);
         window.open(url, '_blank');
         setTimeout(() => URL.revokeObjectURL(url), 1000);
       }
-    } else {
-      // If share API isn't available, open in new tab
-      const url = URL.createObjectURL(blob);
-      window.open(url, '_blank');
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      alert('Unable to download photos at the moment. Please try again later.');
     }
-  } catch (error) {
-    // Show error message to user
-    alert('Unable to download photos at the moment. Sowwy UwU !');
-  }
 
-  // Don't clear selection immediately
-  setSelectedPhotos(new Set());
-};
+    setSelectedPhotos(new Set());
+  };
 
   return (
     <div className="min-h-screen bg-gray-900">
@@ -244,8 +189,6 @@ const downloadSelectedPhotos = async () => {
               </motion.button>
             ))}
 
-
-            {/* Download Photos Attempt, removed for now  */}
             {selectedPhotos.size > 0 && (
               <motion.button
                 initial={{ scale: 0 }}
@@ -256,14 +199,10 @@ const downloadSelectedPhotos = async () => {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Download className="w-6 h-6" />
+                <Download className="w-6 h-6  text-white font-bold" />
                 <span className="sr-only">Download Selected</span>
               </motion.button>
             )}
-
-
-
-
           </div>
         </div>
       </div>
@@ -274,6 +213,8 @@ const downloadSelectedPhotos = async () => {
           <CollageCreator
             photos={photos}
             onClose={() => setShowCollageCreator(false)}
+            initialSelectedPhotos={selectedPhotos}
+            onSelectPhotos={setSelectedPhotos}
           />
         )}
       </AnimatePresence>

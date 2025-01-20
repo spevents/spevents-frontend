@@ -12,8 +12,8 @@ interface ZoomControlProps {
   onZoomChange: (zoom: number) => void;
 }
 
-const REAR_ZOOM_LEVELS = [0.5, 1.0, 1.1] as const;
-const FRONT_ZOOM_LEVELS = [1.0, 1.1] as const;
+const REAR_ZOOM_LEVELS = [0.5, 1.0, 1.2] as const;
+const FRONT_ZOOM_LEVELS = [1.0, 1.2] as const;
 
 export const ZoomControl: React.FC<ZoomControlProps> = ({
   isVisible,

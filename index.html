@@ -1,4 +1,3 @@
-<!-- public/index.html -->
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -8,9 +7,42 @@
     <link rel="icon" media="(prefers-color-scheme: light)" href="src/assets/light-icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Spevents</title>
+    
+    <!-- Preconnect to Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Load all required fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&display=swap" rel="stylesheet">
+    
+    <!-- Add preload for critical fonts -->
+    <link 
+      rel="preload" 
+      href="https://fonts.gstatic.com/s/playfairdisplay/v30/nuFvD-vYSZviVYUb_rj3ij__anPXJzDwcbmjWBN2PKd3vXDXbtXK-F2qC0s.woff2" 
+      as="font" 
+      type="font/woff2" 
+      crossorigin
+    />
+    <link 
+      rel="preload" 
+      href="https://fonts.gstatic.com/s/instrumentserif/v3/W0pondvD3qsk_5NWpO_eMXK5iGlwHqi6.woff2" 
+      as="font" 
+      type="font/woff2" 
+      crossorigin
+    />
+    
+    <!-- Add font-display swap to ensure text remains visible during webfont load -->
+    <style>
+      /* Ensure fonts are properly loaded */
+      .font-playfair {
+        font-family: 'Playfair Display', serif !important;
+      }
+      .font-instrument {
+        font-family: 'Instrument Serif', serif !important;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

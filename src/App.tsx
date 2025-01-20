@@ -1,4 +1,3 @@
-// src/App.tsx
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { CameraPage, GalleryPage, PhotoReviewPage, SlideshowPage } from './pages';
 import FeedbackPage from './components/guest/FeedbackPage';
@@ -11,21 +10,19 @@ export default function App() {
     <NgrokProvider>
       <BrowserRouter>
         <Routes>
+          {/* Admin/Main Routes with Layout */}
           <Route path="/" element={<MainLayout />}>
             <Route index element={<GalleryPage />} />
             <Route path="slideshow" element={<SlideshowPage />} />
-            <Route path="/camera" element={<CameraPage />} />
-
-            <Route path="/guest" element={<GuestDashboard />} />
-
           </Route>
-          
+
           {/* Guest Routes */}
+          <Route path="/guest" element={<GuestDashboard />} />
           <Route path="/camera" element={<CameraPage />} />
           <Route path="/review" element={<PhotoReviewPage />} />
-          <Route path="/guest" element={<GuestDashboard />} />
-          <Route path="/feedback" element={<FeedbackPage/> } />
+          <Route path="/feedback" element={<FeedbackPage />} />
           
+          {/* Catch all redirect */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

@@ -27,7 +27,7 @@ export const useZoom = (facingMode: 'user' | 'environment' = 'environment') => {
 
         return {
           min: capabilities.zoom.min || currentZoom * 0.5,
-          max: capabilities.zoom.max || currentZoom * 2
+          max: capabilities.zoom.max || currentZoom * 1.1
         };
       }
     } catch (error) {
@@ -66,13 +66,11 @@ export const useZoom = (facingMode: 'user' | 'environment' = 'environment') => {
     } else {
       // Rear camera behavior
       if (zoom < DEFAULT_ZOOM) {
-        // For zooming out (0.5)
         const range = initialDeviceZoomRef.current - min;
-        deviceZoom = min + (range * 0.1);
+        deviceZoom = min + (range * 0.05);
       } else if (zoom > DEFAULT_ZOOM) {
-        // For zooming in (1.1)
         const range = max - initialDeviceZoomRef.current;
-        deviceZoom = initialDeviceZoomRef.current + (range * 0.2);
+        deviceZoom = initialDeviceZoomRef.current + (range * 0.1);
       }
     }
 
