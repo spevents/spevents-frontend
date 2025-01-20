@@ -1,6 +1,6 @@
 // src/components/guest/GuestDashboard.tsx
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Camera, Download, Award, Grid, WandSparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CollageCreator } from './CollageCreator';

@@ -5,7 +5,6 @@ import { GuestLanding } from './GuestLanding';
 import CameraInterface from '../../components/CameraInterface';
 import PhotoReview from '../../components/PhotoReview/PhotoReview';
 import { GuestDashboard } from '../../components/guest/GuestDashboard';
-import { CollageCreatorWrapper } from '../../components/guest/CollageCreatorWrapper';
 import FeedbackPage from '../../components/guest/FeedbackPage';
 import { SessionValidator } from '../../components/session/SessionValidator';
 
@@ -53,7 +52,6 @@ export const GuestRoutes = () => {
               <Route path="camera" element={<CameraInterface initialMode="camera" />} />
               <Route index element={<GuestDashboard />} />
               <Route path="review" element={<PhotoReview />} />
-              <Route path="collage" element={<CollageCreatorWrapper />} />
               <Route path="feedback" element={<FeedbackPage />} />
             </Routes>
           </SessionValidator>
