@@ -15,29 +15,24 @@ export async function createCollage(images: string[]): Promise<string> {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   try {
-    // Function to fetch and create blob URL for an image
-    const createBlobUrl = async (url: string): Promise<string> => {
-      try {
-        const response = await fetch(url);
-        const blob = await response.blob();
-        return URL.createObjectURL(blob);
-      } catch (error) {
-        console.error("Error fetching image:", error);
-        throw new Error(`Failed to load image: ${url}`);
-      }
-    };
-
-    // Create blob URLs for all images
-    const blobUrls = await Promise.all(images.map(createBlobUrl));
-
-    // Load all images using blob URLs
+    // Load all images using signed URLs
+    console.log("Loading images with signed URLs...");
     const loadedImages = await Promise.all(
-      blobUrls.map(
+      images.map(
         (url) =>
           new Promise<HTMLImageElement>((resolve, reject) => {
             const img = new Image();
-            img.onload = () => resolve(img);
-            img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
+            img.crossOrigin = "anonymous";
+            img.onload = () => {
+              console.log(
+                `Successfully loaded image: ${url.substring(0, 50)}...`
+              );
+              resolve(img);
+            };
+            img.onerror = () => {
+              console.error(`Failed to load image: ${url.substring(0, 50)}...`);
+              reject(new Error(`Failed to load image: ${url}`));
+            };
             img.src = url;
           })
       )
@@ -81,9 +76,6 @@ export async function createCollage(images: string[]): Promise<string> {
       }
     });
 
-    // Clean up blob URLs
-    blobUrls.forEach(URL.revokeObjectURL);
-
     // Add watermark
     const watermarkSize = Math.max(32, Math.floor(canvas.width * 0.03));
     ctx.font = `bold ${watermarkSize}px Arial`;
@@ -106,7 +98,7 @@ export async function createCollage(images: string[]): Promise<string> {
 
     // Draw watermark text
     ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-    ctx.fillText("spevents", watermarkX, watermarkY);
+    ctx.fillText("www.spevents.live", watermarkX, watermarkY);
 
     return canvas.toDataURL("image/jpeg", 0.92);
   } catch (error) {
@@ -114,27 +106,67 @@ export async function createCollage(images: string[]): Promise<string> {
     throw error;
   }
 }
+/**
+ * Convert a data URL to a File object
+ */
+const dataUrlToFile = async (dataUrl: string): Promise<File> => {
+  const blob = await fetch(dataUrl).then((res) => res.blob());
+  return new File([blob], "spevents-collage.jpg", {
+    type: "image/jpeg",
+    lastModified: Date.now(),
+  });
+};
 
+/**
+ * Share image and optionally open Instagram
+ */
 export async function shareToInstagram(imageDataUrl: string) {
   try {
-    // For mobile devices, first download the image
-    const link = document.createElement("a");
-    link.href = imageDataUrl;
-    link.download = "spevents-collage.jpg";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const file = await dataUrlToFile(imageDataUrl);
 
-    // Small delay to ensure download starts
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // Then open Instagram
-    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-      window.location.href = "instagram://camera";
+    // Check if Web Share API is available and can share files
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: "Made with  spevents.live",
+        });
+        return; // Successfully shared
+      } catch (error: unknown) {
+        if (error instanceof Error && error.name !== "AbortError") {
+          console.error("Web Share API error:", error);
+        }
+      }
     } else {
-      window.open("https://instagram.com", "_blank");
+      // Fallback for browsers without Web Share API support
+      const fileBlob = await dataUrlToFile(imageDataUrl).then((file) => file);
+      const url = URL.createObjectURL(fileBlob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "spevents-collage.jpg";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      // Small delay to ensure download starts
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Open Instagram after download
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        // Try deep linking to Instagram Stories first
+        try {
+          window.location.href = "instagram-stories://share";
+        } catch {
+          // Fallback to camera
+          window.location.href = "instagram://camera";
+        }
+      } else {
+        window.open("https://instagram.com", "_blank");
+      }
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error sharing to Instagram:", error);
+    throw error;
   }
 }
