@@ -21,6 +21,7 @@ Object.entries(firebaseConfig).forEach(([key, value]) => {
 });
 
 
+
 const app = initializeApp(firebaseConfig);
 export const analytics = getAnalytics(app);
 export const auth = getAuth(app);
