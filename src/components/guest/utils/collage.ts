@@ -129,7 +129,7 @@ export async function shareToInstagram(imageDataUrl: string) {
       try {
         await navigator.share({
           files: [file],
-          title: "Made with  spevents.live"
+          title: "Made with  spevents.live",
         });
         return; // Successfully shared
       } catch (error: unknown) {
@@ -137,33 +137,33 @@ export async function shareToInstagram(imageDataUrl: string) {
           console.error("Web Share API error:", error);
         }
       }
-    }
-
-    // Fallback for browsers without Web Share API support
-    const fileBlob = await dataUrlToFile(imageDataUrl).then((file) => file);
-    const url = URL.createObjectURL(fileBlob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "spevents-collage.jpg";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    // Small delay to ensure download starts
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // Open Instagram after download
-    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-      // Try deep linking to Instagram Stories first
-      try {
-        window.location.href = "instagram-stories://share";
-      } catch {
-        // Fallback to camera
-        window.location.href = "instagram://camera";
-      }
     } else {
-      window.open("https://instagram.com", "_blank");
+      // Fallback for browsers without Web Share API support
+      const fileBlob = await dataUrlToFile(imageDataUrl).then((file) => file);
+      const url = URL.createObjectURL(fileBlob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "spevents-collage.jpg";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      // Small delay to ensure download starts
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Open Instagram after download
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        // Try deep linking to Instagram Stories first
+        try {
+          window.location.href = "instagram-stories://share";
+        } catch {
+          // Fallback to camera
+          window.location.href = "instagram://camera";
+        }
+      } else {
+        window.open("https://instagram.com", "_blank");
+      }
     }
   } catch (error: unknown) {
     console.error("Error sharing to Instagram:", error);
