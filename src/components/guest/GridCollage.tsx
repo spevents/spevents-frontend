@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { ChevronLeft, LayoutGrid, Share2 } from "lucide-react";
+import { ChevronLeft, LayoutGrid, Plus, Share2 } from "lucide-react";
 import { getSignedPhotoUrl } from "../../lib/aws";
 import { shareToInstagram } from "./utils/collage";
+import { AnimatePresence, motion } from "framer-motion";
 
 const COLORS = {
   backgrounds: ["#000000", "#460b2f", "#9a031e", "#e36414", "#bf9b30"],
-  borders: ["#FFFFFF", "#eae0d5", "#bf9b30", "#e36414", "#460b2f"],
+  borders: ["#000000", "#eae0d5", "#bf9b30", "#e36414", "#460b2f"],
 } as const;
 
 export interface GridCollageProps {
@@ -15,7 +16,7 @@ export interface GridCollageProps {
 
 const GridCollage = ({ selectedPhotos, onClose }: GridCollageProps) => {
   const [backgroundColor, setBackgroundColor] = useState("#000000");
-  const [borderColor, setBorderColor] = useState("#FFFFFF");
+  const [borderColor, setBorderColor] = useState("#000000");
   const [isCreating, setIsCreating] = useState(false);
   const [collageUrl, setCollageUrl] = useState<string | null>(null);
   const [signedUrls, setSignedUrls] = useState<string[]>([]);
@@ -181,7 +182,7 @@ const GridCollage = ({ selectedPhotos, onClose }: GridCollageProps) => {
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="sticky top-0 bg-gray-900/80 backdrop-blur-lg z-10">
+      <div className="flex-none bg-gray-900/80 backdrop-blur-lg z-10">
         <div className="px-4 py-4 flex items-center">
           <button
             onClick={onClose}
@@ -191,46 +192,119 @@ const GridCollage = ({ selectedPhotos, onClose }: GridCollageProps) => {
           </button>
           <h1 className="ml-4 text-lg font-medium text-white">Grid Collage</h1>
         </div>
-
-        {/* Color Selection - Moved to header */}
-        <div className="px-4 pb-4 space-y-4">
-          <div>
-            <h2 className="text-white mb-2 text-sm">Background Color</h2>
-            <div className="flex gap-2">
-              {COLORS.backgrounds.map(color => (
-                <button
-                  key={color}
-                  onClick={() => setBackgroundColor(color)}
-                  className={`w-8 h-8 rounded-full border-2 ${
-                    backgroundColor === color ? 'border-white' : 'border-white/20'
-                  }`}
-                  style={{ backgroundColor: color }}
-                />
-              ))}
+  
+        {/* Color Selection and Action Buttons */}
+        <div className="px-4 pb-4 flex">
+          {/* Color Selection */}
+          <div className="space-y-4 flex-1">
+            <div>
+              <h2 className="text-white mb-2 text-sm">Background Color</h2>
+              <div className="flex gap-2">
+                {COLORS.backgrounds.map(color => (
+                  <button
+                    key={color}
+                    onClick={() => setBackgroundColor(color)}
+                    className={`w-8 h-8 rounded-full border-2 ${
+                      backgroundColor === color ? 'border-white' : 'border-white/20'
+                    }`}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+              </div>
+            </div>
+  
+            <div>
+              <h2 className="text-white mb-2 text-sm">Frame Color</h2>
+              <div className="flex gap-2">
+                {COLORS.borders.map(color => (
+                  <button
+                    key={color}
+                    onClick={() => setBorderColor(color)}
+                    className={`w-8 h-8 rounded-full border-2 ${
+                      borderColor === color ? 'border-white' : 'border-white/20'
+                    }`}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+              </div>
             </div>
           </div>
-
-          <div>
-            <h2 className="text-white mb-2 text-sm">Frame Color</h2>
-            <div className="flex gap-2">
-              {COLORS.borders.map(color => (
-                <button
-                  key={color}
-                  onClick={() => setBorderColor(color)}
-                  className={`w-8 h-8 rounded-full border-2 ${
-                    borderColor === color ? 'border-white' : 'border-white/20'
+  
+          {/* Action Buttons - Stacked */}
+          <div className="flex items-center ml-4 pl-4 border-l border-white/10">
+            <AnimatePresence mode="wait">
+              {collageUrl ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="flex flex-col gap-2 w-32"
+                >
+                  <button
+                    onClick={handleShare}
+                    className="w-full py-3 bg-white text-gray-900 rounded-full font-medium flex items-center justify-center gap-2"
+                  >
+                    <Share2 className="w-5 h-5" />
+                    Share
+                  </button>
+                  <button
+                    onClick={() => setCollageUrl(null)}
+                    className="w-full py-3 bg-white/10 text-white rounded-full font-medium flex items-center justify-center gap-2"
+                  >
+                    <Plus className="w-5 h-5" />
+                    New
+                  </button>
+                </motion.div>
+              ) : (
+                <motion.button
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  onClick={createGridCollage}
+                  disabled={isCreating || selectedPhotos.length === 0 || signedUrls.length === 0}
+                  className={`w-32 h-full rounded-full font-medium flex items-center justify-center gap-2 ${
+                    selectedPhotos.length > 0 && signedUrls.length > 0 && !isCreating
+                      ? 'bg-white text-gray-900'
+                      : 'bg-white/10 text-white/50'
                   }`}
-                  style={{ backgroundColor: color }}
-                />
-              ))}
-            </div>
+                >
+                  <LayoutGrid className="w-5 h-5" />
+                  {isCreating 
+                    ? 'Creating...' 
+                    : selectedPhotos.length === 0
+                      ? 'No photos'
+                      : signedUrls.length === 0
+                        ? 'Loading...'
+                        : 'Create!'
+                  }
+                </motion.button>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>
-
+  
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-auto pb-24">
-        <div className="p-4">
+      <div className="flex-1 overflow-auto">
+        <div className="p-4 pb-36">
+          {/* Collage Preview with Animation */}
+          <AnimatePresence>
+            {collageUrl && (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="mb-6"
+              >
+                <img
+                  src={collageUrl}
+                  alt="Collage preview"
+                  className="w-full rounded-lg"
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+  
           {/* Selected Photos Preview */}
           <div>
             <h2 className="text-white mb-2">Selected Photos ({selectedPhotos.length})</h2>
@@ -240,9 +314,7 @@ const GridCollage = ({ selectedPhotos, onClose }: GridCollageProps) => {
                   key={index} 
                   className="relative bg-white/10 rounded-lg overflow-hidden"
                   style={{ 
-                    // Set aspect ratio to match typical phone photos
                     aspectRatio: '9/16',
-                    // Add a subtle inner shadow
                     boxShadow: 'inset 0 0 0 1px rgba(255, 255, 255, 0.1)'
                   }}
                 >
@@ -261,59 +333,8 @@ const GridCollage = ({ selectedPhotos, onClose }: GridCollageProps) => {
               ))}
             </div>
           </div>
-
-          {/* Collage Preview (if created) */}
-          {collageUrl && (
-            <div className="mt-6">
-              <img
-                src={collageUrl}
-                alt="Collage preview"
-                className="w-full rounded-lg"
-              />
-              <div className="flex gap-2 mt-4">
-                <button
-                  onClick={handleShare}
-                  className="flex-1 bg-white text-gray-900 rounded-full py-3 font-medium flex items-center justify-center gap-2"
-                >
-                  <Share2 className="w-5 h-5" />
-                  Share
-                </button>
-                <button
-                  onClick={() => setCollageUrl(null)}
-                  className="flex-1 bg-white/10 text-white rounded-full py-3 font-medium"
-                >
-                  Create New
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
-
-      {/* Sticky Create Button at Bottom */}
-      {!collageUrl && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-gray-900/80 backdrop-blur-lg border-t border-white/10">
-          <button
-            onClick={createGridCollage}
-            disabled={isCreating || selectedPhotos.length === 0 || signedUrls.length === 0}
-            className={`w-full rounded-full py-3 font-medium flex items-center justify-center gap-2 ${
-              selectedPhotos.length > 0 && signedUrls.length > 0 && !isCreating
-                ? 'bg-white text-gray-900'
-                : 'bg-white/10 text-white/50'
-            }`}
-          >
-            <LayoutGrid className="w-5 h-5" />
-            {isCreating 
-              ? 'Creating...' 
-              : selectedPhotos.length === 0
-                ? 'No photos selected'
-                : signedUrls.length === 0
-                  ? 'Loading photos...'
-                  : 'Create!'
-            }
-          </button>
-        </div>
-      )}
     </div>
   );
 };

@@ -1,43 +1,65 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, LayoutGrid, Clapperboard } from "lucide-react";
+import { ChevronLeft, LayoutGrid, Clapperboard, Camera, Award, Grid, WandSparkles } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
 import GridCollage from "./GridCollage";
 import MockShaadiCollage from "./MockShaadiCollage";
 
-interface Photo {
-  url: string;
-  name: string;
-}
- 
-interface CollageCreatorProps {
-  photos: Photo[];
-  onClose: () => void;
-  initialSelectedPhotos: Set<string>;
-  onSelectPhotos: (photos: Set<string>) => void;
+interface TabConfig {
+  id: string;
+  icon: React.ReactNode;
+  label: string;
 }
 
 type CollageType = "grid" | "mockShaadi" | null;
 
-export function CollageCreator({
-  photos,
-  onClose,
-  initialSelectedPhotos,
-  onSelectPhotos,
-}: CollageCreatorProps) {
-  const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(
-    initialSelectedPhotos
-  );
+export function CollageCreator() {
+  const navigate = useNavigate();
+  const { eventId } = useParams();
+  const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
   const [activeCollage, setActiveCollage] = useState<CollageType>(null);
+  const [photos, setPhotos] = useState<Array<{ url: string; name: string }>>([]);
   const [photoUrls, setPhotoUrls] = useState<{ [key: string]: string }>({});
 
-  // Create a map of photo names to URLs on mount
+  const tabs: TabConfig[] = [
+    { id: 'gallery', icon: <Grid className="w-6 h-6 text-white font-bold" />, label: 'Gallery' },
+    { id: 'camera', icon: <Camera className="w-6 h-6 text-white font-bold" />, label: 'Camera' },
+    { id: 'create', icon: <WandSparkles className="w-6 h-6 text-white font-bold" />, label: 'Create' },
+    { id: 'prize', icon: <Award className="w-6 h-6 text-white font-bold" />, label: 'Prize' },
+  ];
+
   useEffect(() => {
-    const urlMap: { [key: string]: string } = {};
-    photos.forEach((photo) => {
-      urlMap[photo.name] = photo.url;
-    });
-    setPhotoUrls(urlMap);
-  }, [photos]);
+    // Load photos from localStorage
+    try {
+      const storedPhotos = JSON.parse(localStorage.getItem('uploaded-photos') || '[]');
+      setPhotos(storedPhotos);
+      
+      const urlMap: { [key: string]: string } = {};
+      storedPhotos.forEach((photo: { url: string; name: string }) => {
+        urlMap[photo.name] = photo.url;
+      });
+      setPhotoUrls(urlMap);
+    } catch (error) {
+      console.error('Error loading photos:', error);
+    }
+  }, []);
+
+  const handleTabClick = (tabId: string) => {
+    switch (tabId) {
+      case 'camera':
+        navigate(`/${eventId}/guest/camera`);
+        break;
+      case 'create':
+        // Already on create page
+        break;
+      case 'prize':
+        navigate(`/${eventId}/guest/feedback`);
+        break;
+      case 'gallery':
+        navigate(`/${eventId}/guest`);
+        break;
+    }
+  };
 
   const handlePhotoSelect = (photoName: string) => {
     const newSelection = new Set(selectedPhotos);
@@ -47,7 +69,6 @@ export function CollageCreator({
       newSelection.add(photoName);
     }
     setSelectedPhotos(newSelection);
-    onSelectPhotos(newSelection);
   };
 
   const getSelectedUrls = () => {
@@ -57,12 +78,7 @@ export function CollageCreator({
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/95 z-50"
-    >
+    <div className="fixed inset-0 bg-black/95 flex flex-col">
       <AnimatePresence mode="wait">
         {activeCollage ? (
           activeCollage === "grid" ? (
@@ -80,7 +96,7 @@ export function CollageCreator({
           <div className="h-full flex flex-col">
             <div className="p-4 flex items-center justify-between border-b border-white/10">
               <button
-                onClick={onClose}
+                onClick={() => navigate(`/${eventId}/guest`)}
                 className="p-2 hover:bg-white/10 rounded-full transition-colors"
               >
                 <ChevronLeft className="w-6 h-6 text-white" />
@@ -92,7 +108,7 @@ export function CollageCreator({
             </div>
 
             <div className="flex-1 overflow-auto p-4">
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-2 pb-24">
                 {photos.map((photo) => (
                   <motion.button
                     key={photo.name}
@@ -117,38 +133,64 @@ export function CollageCreator({
               </div>
             </div>
 
-            <div className="p-4 space-y-2 border-t border-white/10">
-              <button
-                onClick={() => setActiveCollage("grid")}
-                disabled={selectedPhotos.size === 0}
-                className={`w-full flex items-center justify-center gap-2 rounded-full py-3 px-6 
-                  font-medium transition-colors ${
-                    selectedPhotos.size > 0
-                      ? "bg-white text-gray-900 hover:bg-white/90"
-                      : "bg-white/10 text-white/50"
-                  }`}
-              >
-                <LayoutGrid className="w-5 h-5" />
-                Grid Collage
-              </button>
+            <div className="p-4 border-t border-white/10">
+              <div className="grid grid-cols-2 gap-3 mb-20">
+                <button
+                  onClick={() => setActiveCollage("grid")}
+                  disabled={selectedPhotos.size === 0}
+                  className={`flex items-center justify-center gap-2 rounded-full py-3 px-4 
+                    font-medium transition-colors ${
+                      selectedPhotos.size > 0
+                        ? "bg-white text-gray-900 hover:bg-white/90"
+                        : "bg-white/10 text-white/50"
+                    }`}
+                >
+                  <LayoutGrid className="w-5 h-5" />
+                  Grid
+                </button>
 
-              <button
-                onClick={() => setActiveCollage("mockShaadi")}
-                disabled={selectedPhotos.size === 0}
-                className={`w-full flex items-center justify-center gap-2 rounded-full py-3 px-6 
-                  font-medium transition-colors ${
-                    selectedPhotos.size > 0
-                      ? "bg-[#9a031e] text-yellow-400 hover:bg-white/90"
-                      : "bg-white/10 text-white/50"
-                  }`}
-              >
-                <Clapperboard className="w-5 h-5" />
-                Mock Shaadi Collage
-              </button>
+                <button
+                  onClick={() => setActiveCollage("mockShaadi")}
+                  disabled={selectedPhotos.size === 0}
+                  className={`flex items-center justify-center gap-2 rounded-full py-3 px-4 
+                    font-medium transition-colors ${
+                      selectedPhotos.size > 0
+                        ? "bg-[#9a031e] text-yellow-400 hover:bg-white/90"
+                        : "bg-white/10 text-white/50"
+                    }`}
+                >
+                  <Clapperboard className="w-5 h-5" />
+                  Shaadi
+                </button>
+              </div>
             </div>
           </div>
         )}
       </AnimatePresence>
-    </motion.div>
+
+      {/* Bottom Navigation - Fixed at bottom */}
+      <div className="fixed bottom-0 inset-x-0 bg-gray-900/80 backdrop-blur-lg">
+        <div className="max-w-md mx-auto px-4 py-2">
+          <div className="flex items-center justify-around">
+            {tabs.map((tab) => (
+              <motion.button
+                key={tab.id}
+                onClick={() => handleTabClick(tab.id)}
+                className={`p-4 rounded-full relative ${
+                  tab.id === 'create'
+                    ? 'text-white bg-white/10'
+                    : 'text-white/60 hover:text-white hover:bg-white/5'
+                }`}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {tab.icon}
+                <span className="sr-only">{tab.label}</span>
+              </motion.button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

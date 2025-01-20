@@ -1,9 +1,7 @@
-// src/components/guest/GuestDashboard.tsx
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Camera, Download, Award, Grid, WandSparkles } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { CollageCreator } from './CollageCreator';
+import { motion } from 'framer-motion';
 import { getSignedPhotoUrl } from '../../lib/aws';
 import { shareToInstagram } from './utils/collage';
 
@@ -21,10 +19,9 @@ interface TabConfig {
 
 export function GuestDashboard() {
   const navigate = useNavigate();
-  const { eventId } = useParams(); // Get eventId from URL
+  const { eventId } = useParams();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showCollageCreator, setShowCollageCreator] = useState(false);
   const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState('gallery');
 
@@ -61,43 +58,22 @@ export function GuestDashboard() {
     }
   };
 
-
-
-  /*
-
-  useEffect(() => {
-    const getSignedUrls = async () => {
-      try {
-        const urls = await Promise.all(
-          limitedPhotos.map(async (photoUrl) => {
-            const fileName = photoUrl.split("/").pop();
-            if (!fileName) throw new Error("Invalid photo URL");
-            return await getSignedPhotoUrl(fileName);
-          })
-        );
-        setSignedUrls(urls);
-      } catch (error) {
-        console.error("Error getting signed URLs:", error);
-      }
-    };
-
-    getSignedUrls();
-  }, [limitedPhotos]);
-  */
-
   const handleTabClick = (tabId: string) => {
+    setActiveTab(tabId); // Update active tab state
+    
     switch (tabId) {
       case 'camera':
         navigate(`/${eventId}/guest/camera`);
         break;
       case 'create':
-        setShowCollageCreator(true);
+        navigate(`/${eventId}/guest/create`);
         break;
-      case 'feedback':
+      case 'prize':
         navigate(`/${eventId}/guest/feedback`);
         break;
-      default:
-        setActiveTab(tabId);
+      case 'gallery':
+        navigate(`/${eventId}/guest`);
+        break;
     }
   };
 
@@ -113,19 +89,12 @@ export function GuestDashboard() {
     });
   };
 
-
-
-
-
-
-
-
   const shareSelectedPhotos = async () => {
     const selectedPhotosList = photos.filter(photo => selectedPhotos.has(photo.name));
     
     if (selectedPhotosList.length === 0) return;
     try {
-      const collageUrl = selectedPhotosList[0].url; // Assuming a single photo for simplicity
+      const collageUrl = selectedPhotosList[0].url;
       await shareToInstagram(collageUrl);
     } catch (error) {
       console.error('Error sharing:', error);
@@ -133,21 +102,6 @@ export function GuestDashboard() {
     }
     setSelectedPhotos(new Set());
   };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   return (
     <div className="min-h-screen bg-gray-900">
@@ -197,7 +151,7 @@ export function GuestDashboard() {
         )}
       </div>
 
-      {/* Bottom Navigation */}
+      {/* Bottom Navigation - Now rendered everywhere */}
       <div className="fixed bottom-0 inset-x-0 bg-gray-900/80 backdrop-blur-lg">
         <div className="max-w-md mx-auto px-4 py-2">
           <div className="flex items-center justify-around">
@@ -235,18 +189,6 @@ export function GuestDashboard() {
           </div>
         </div>
       </div>
-
-      {/* Collage Creator Modal */}
-      <AnimatePresence>
-        {showCollageCreator && (
-          <CollageCreator
-            photos={photos}
-            onClose={() => setShowCollageCreator(false)}
-            initialSelectedPhotos={selectedPhotos}
-            onSelectPhotos={setSelectedPhotos}
-          />
-        )}
-      </AnimatePresence>
     </div>
   );
 }

@@ -1,11 +1,11 @@
-// src/pages/guest/GuestRoutes.tsx
 import { Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import { useEffect } from 'react';
 import { GuestLanding } from './GuestLanding';
-import CameraInterface from '../../components/CameraInterface';
+import CameraInterface from '../../components/camera/CameraInterface';
 import PhotoReview from '../../components/PhotoReview/PhotoReview';
 import { GuestDashboard } from '../../components/guest/GuestDashboard';
 import FeedbackPage from '../../components/guest/FeedbackPage';
+import { CollageCreator } from '../../components/guest/CollageCreator';
 import { SessionValidator } from '../../components/session/SessionValidator';
 
 // Mobile detection utility
@@ -21,18 +21,15 @@ export const GuestRoutes = () => {
   useEffect(() => {
     console.log(`GuestRoutes - Path: ${location.pathname}, Event ID: ${eventId}`);
     
-    // Store attempted URL for mobile redirect if needed
     if (!isMobileDevice()) {
       sessionStorage.setItem('attempted-url', location.pathname);
     }
   }, [location, eventId]);
 
-  // If not on mobile, redirect to landing
   if (!isMobileDevice()) {
     return <Navigate to="/" replace />;
   }
 
-  // If no eventId, show landing
   if (!eventId) {
     return (
       <Routes>
@@ -53,12 +50,12 @@ export const GuestRoutes = () => {
               <Route index element={<GuestDashboard />} />
               <Route path="review" element={<PhotoReview />} />
               <Route path="feedback" element={<FeedbackPage />} />
+              <Route path="create" element={<CollageCreator />} />
             </Routes>
           </SessionValidator>
         }
       />
       
-      {/* Default redirect to guest dashboard */}
       <Route path="*" element={<Navigate to={`/${eventId}/guest`} replace />} />
     </Routes>
   );

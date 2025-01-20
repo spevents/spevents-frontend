@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams} from "react-router-dom";
 import { useNgrok } from "../../contexts/NgrokContext";
 import { useZoom } from "./hooks/useZoom";
 import { useOrientation } from "./hooks/useOrientation";
 import { ZoomControl } from "./ZoomControl";
 import { PhotoCounter } from "./PhotoCounter";
 import { CameraControls } from "./CameraControls";
-
+import { X } from "lucide-react";
 // Types
 interface CameraInterfaceProps {
   initialMode: "qr" | "camera";
@@ -187,22 +187,34 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
     navigator.vibrate?.(50);
   }, [photos.length, facingMode, triggerCaptureEffect]);
 
-  const navigateWithBaseUrl = useCallback(
-    (path: string) => {
-      if (window.innerWidth <= 768 && baseUrl) {
-        window.location.href = `${baseUrl}${path}`;
-      } else {
-        navigate(path);
-      }
-    },
-    [navigate, baseUrl]
-  );
+    const { eventId } = useParams();
+  
+
+  const navigateWithBaseUrl = (path: string) => {
+    const fullPath =
+      path === "/" ? `/${eventId}/guest` : `/${eventId}/guest${path}`;
+    if (window.innerWidth <= 768 && baseUrl) {
+      window.location.href = `${baseUrl}${fullPath}`;
+    } else {
+      navigate(fullPath);
+    }
+  };
 
   return (
     <div
       className="relative h-screen bg-black overflow-hidden"
       onClick={handleScreenTap}
     >
+
+<button
+        onClick={() => navigateWithBaseUrl(`/`)}
+        className="absolute top-4 left-4 z-50 p-2 rounded-full bg-black/20 backdrop-blur-sm 
+          text-white hover:bg-black/30 transition-colors"
+      >
+        <X className="w-6 h-6" />
+      </button>
+
+
       <div
         ref={flashRef}
         className="absolute inset-0 bg-black pointer-events-none transition-opacity duration-150 z-20"
