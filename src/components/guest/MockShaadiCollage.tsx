@@ -110,7 +110,7 @@ const MockShaadiCollage = ({ selectedPhotos, onClose }: MockShaadiCollageProps) 
               const img = new Image();
               img.crossOrigin = "anonymous";
               img.onload = () => resolve(img);
-              img.onerror = (err) => reject(new Error(`Failed to load image: ${url}`));
+              img.onerror = (_err) => reject(new Error(`Failed to load image: ${url}`));
               img.src = url;
             })
         )
@@ -287,7 +287,7 @@ const MockShaadiCollage = ({ selectedPhotos, onClose }: MockShaadiCollageProps) 
           <div>
             <h2 className="text-white text-sm mb-2">Theme Color</h2>
             <div className="flex gap-2">
-              {Object.entries(THEME_COLORS).map(([name, color]) => (
+              {Object.entries(THEME_COLORS).map(([_name, color]) => (
                 <button
                   key={color}
                   onClick={() => setSelectedColor(color)}
