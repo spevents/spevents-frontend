@@ -8,6 +8,7 @@ import FunSlideshow from './slideshow_modes/FunSlideshow';
 import PresenterSlideshow from './slideshow_modes/PresenterSlideshow';
 import ModelSlideshow from './slideshow_modes/ModelSlideshow';
 
+
 interface Photo {
   src: string;
   id: string;
