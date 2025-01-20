@@ -1,6 +1,5 @@
-// src/components/PhotoSlideshow.tsx
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, EyeOff, Layout, LayoutTemplate, Presentation, Hotel } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { listPhotos, getPhotoUrl } from '../lib/aws';
@@ -8,20 +7,25 @@ import FunSlideshow from './slideshow_modes/FunSlideshow';
 import PresenterSlideshow from './slideshow_modes/PresenterSlideshow';
 import ModelSlideshow from './slideshow_modes/ModelSlideshow';
 
-
 interface Photo {
+  src: string;
+  id: string;
+  createdAt: number;
+}
+
+interface PhotoWithStringDate {
   src: string;
   id: string;
   createdAt: string;
 }
 
 type ViewMode = 'simple' | 'fun' | 'presenter' | 'model';
-const MAX_PHOTOS = 6;
-const PHOTO_REFRESH_INTERVAL = 750;
+const MAX_PHOTOS = 12;
+const PHOTO_REFRESH_INTERVAL = 1;
 
 export default function PhotoSlideshow() {
   const navigate = useNavigate();
-  const location = useLocation();
+  // const location = useLocation();
   const [viewMode, setViewMode] = useState<ViewMode>('simple');
   const [hideUI, setHideUI] = useState(false);
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -29,8 +33,15 @@ export default function PhotoSlideshow() {
   const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 });
   const [isLoading, setIsLoading] = useState(true);
 
-  const isDemoMode = location.pathname.startsWith('/demo');
-  const basePrefix = isDemoMode ? '/demo' : '';
+  // const isDemoMode = location.pathname.startsWith('/demo');
+
+  // Convert photos array to format expected by slideshow components
+  const convertPhotosForDisplay = (photos: Photo[]): PhotoWithStringDate[] => {
+    return photos.map(photo => ({
+      ...photo,
+      createdAt: new Date(photo.createdAt).toISOString()
+    }));
+  };
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -58,25 +69,59 @@ export default function PhotoSlideshow() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [hideUI]);
 
+  const getTimestampFromFilename = (fileName: string): number => {
+    const match = fileName.match(/photo-(\d+)\.jpg/);
+    if (match && match[1]) {
+      return parseInt(match[1], 10);
+    }
+    return 0;
+  };
+
   const loadPhotosFromStorage = async () => {
     try {
       const fileNames = await listPhotos();
       const photoUrls = fileNames.map(fileName => ({
         src: getPhotoUrl(fileName),
         id: fileName,
-        createdAt: new Date().toISOString()
+        createdAt: getTimestampFromFilename(fileName)
       }));
 
-      const sortedPhotos = photoUrls.sort((a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-
+      // Sort by timestamp, newest first
+      const sortedPhotos = photoUrls.sort((a, b) => b.createdAt - a.createdAt);
       setPhotos(sortedPhotos);
+
+      // Update displayed photos
+      const mostRecent = sortedPhotos.slice(0, MAX_PHOTOS);
       
-      if (displayedPhotos.length === 0) {
-        setDisplayedPhotos(sortedPhotos.slice(0, MAX_PHOTOS));
-      }
-      
+      setDisplayedPhotos(current => {
+        if (current.length === 0) {
+          return mostRecent;
+        }
+
+        // Get the newest timestamp we're currently displaying
+        const currentNewestTimestamp = Math.max(...current.map(p => p.createdAt));
+        
+        // Find any new photos that are newer than our current newest
+        const newPhotos = mostRecent.filter(photo => photo.createdAt > currentNewestTimestamp);
+        
+        if (newPhotos.length > 0) {
+          // Replace oldest photos with new ones
+          const updatedPhotos = [...current];
+          newPhotos.forEach((newPhoto) => {
+            // Find the oldest photo's index
+            const oldestPhotoIndex = updatedPhotos.findIndex(p => 
+              p.createdAt === Math.min(...updatedPhotos.map(up => up.createdAt))
+            );
+            if (oldestPhotoIndex !== -1) {
+              updatedPhotos[oldestPhotoIndex] = newPhoto;
+            }
+          });
+          return updatedPhotos;
+        }
+        
+        return current;
+      });
+
       setIsLoading(false);
     } catch (error) {
       console.error('Error loading photos:', error);
@@ -90,32 +135,6 @@ export default function PhotoSlideshow() {
     return () => clearInterval(pollInterval);
   }, []);
 
-  // Photo rotation logic
-  useEffect(() => {
-    if (photos.length === 0) return;
-
-    const interval = setInterval(() => {
-      if (viewMode === 'simple') {
-        setDisplayedPhotos(current => {
-          const availablePhotos = photos.filter(
-            photo => !current.find(p => p.id === photo.id)
-          );
-
-          if (availablePhotos.length === 0) return current;
-
-          const newPhotos = [...current];
-          const replaceIndex = Math.floor(Math.random() * Math.min(MAX_PHOTOS, current.length));
-          const randomNewPhoto = availablePhotos[Math.floor(Math.random() * availablePhotos.length)];
-          
-          newPhotos[replaceIndex] = randomNewPhoto;
-          return newPhotos;
-        });
-      }
-    }, PHOTO_REFRESH_INTERVAL);
-
-    return () => clearInterval(interval);
-  }, [photos, viewMode]);
-
   if (isLoading) {
     return (
       <div className="fixed inset-0 bg-black flex items-center justify-center">
@@ -124,21 +143,21 @@ export default function PhotoSlideshow() {
     );
   }
 
-  // Render the appropriate slideshow mode
   const renderSlideshow = () => {
+    const photosWithStringDates = convertPhotosForDisplay(photos);
+    
     switch (viewMode) {
       case 'fun':
-        return <FunSlideshow photos={photos} containerDimensions={containerDimensions} />;
+        return <FunSlideshow photos={photosWithStringDates} containerDimensions={containerDimensions} />;
       case 'presenter':
-        return <PresenterSlideshow photos={photos} hideUI={hideUI} />;
+        return <PresenterSlideshow photos={photosWithStringDates} hideUI={hideUI} />;
       case 'model':
-        return <ModelSlideshow photos={photos} hideUI={hideUI} />;
-
+        return <ModelSlideshow photos={photosWithStringDates} hideUI={hideUI} />;
       default:
         return (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-full max-w-7xl px-8">
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 auto-rows-fr">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 auto-rows-fr">
                 <AnimatePresence mode="popLayout">
                   {displayedPhotos.map((photo) => (
                     <motion.div
@@ -179,7 +198,7 @@ export default function PhotoSlideshow() {
       {!hideUI && (
         <div className="absolute top-4 left-4 z-50 flex items-center space-x-4">
           <button
-            onClick={() => navigate(`${basePrefix}/guest`)}
+            onClick={() => navigate(`/host/gallery`)}
             className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-white hover:bg-white/20 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />

@@ -33,7 +33,7 @@ export function QRCodeModal({ isOpen, onClose }: QRCodeModalProps) {
   };
 
   const getNgrokUrl = () => {
-    return baseUrl ? `${baseUrl}/camera` : '';
+    return baseUrl ? `${baseUrl}/guest/camera` : '';
   };
 
   const getLiveUrl = () => {
