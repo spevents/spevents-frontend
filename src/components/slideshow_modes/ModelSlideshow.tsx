@@ -80,7 +80,7 @@ const OpeningSequence = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 2 }}
-          className="text-9xl md:text-[12rem] font-cinzel font-black leading-tight"
+          className="text-9xl md:text-[11rem] font-cinzel font-black leading-tight"
           style={{
             background: "linear-gradient(135deg, #bf9b30 0%, #e36414 50%, #bf9b30 100%)",
             backgroundClip: "text",
@@ -108,7 +108,7 @@ const OpeningSequence = () => {
           transition={{ duration: 2, delay: 3 }}
         >
           <span 
-            className="text-8xl md:text-[10rem] font-monsieur"
+            className="text-8xl md:text-[10rem] font-cinzel"
             style={{
               color: "#e8dcc4",
               textShadow: "0 0 20px rgba(232,220,196,0.3)",
