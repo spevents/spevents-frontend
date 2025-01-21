@@ -7,6 +7,7 @@ import {
   LayoutTemplate,
   Presentation,
   Hotel,
+  AlignHorizontalSpaceAround,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { listPhotos, getPhotoUrl } from "../lib/aws";
@@ -360,7 +361,7 @@ export default function PhotoSlideshow() {
                   : "bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
               }`}
             >
-              <Hotel className="w-5 h-5" />
+              <AlignHorizontalSpaceAround className="w-5 h-5" />
               <span>Marquee</span>
             </button>
 
