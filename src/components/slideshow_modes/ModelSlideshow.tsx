@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useThree, Vector3 } from "@react-three/fiber";
+import * as THREE from "three";
 import Scene from "../Scene";
 import AnimatedBorder from "./AnimatedBorder";
 
@@ -11,6 +13,31 @@ interface ModelSlideshowProps {
   }[];
   hideUI?: boolean;
 }
+
+interface TableProps {
+  photos: {
+    src: string;
+    id: string;
+    createdAt: string;
+  }[];
+  tableIndex: number;
+  position: [number, number, number];
+  side: "bride" | "groom";
+  camera: THREE.Camera;
+}
+
+// Helper component to get camera and convert 3D position to screen coordinates
+const PhotoPositioner = ({ onCameraReady }: { onCameraReady: (camera: THREE.Camera) => void }) => {
+  const { camera } = useThree();
+
+  useEffect(() => {
+    if (camera) {
+      onCameraReady(camera);
+    }
+  }, [camera, onCameraReady]);
+
+  return null;
+};
 
 const OpeningSequence = () => {
   return (
@@ -28,7 +55,6 @@ const OpeningSequence = () => {
       }}
       className="fixed inset-0 flex flex-col items-center justify-center z-40"
     >
-      {/* Background gradients */}
       <motion.div
         className="absolute inset-0"
         initial={{ opacity: 0 }}
@@ -40,7 +66,6 @@ const OpeningSequence = () => {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_70%,_rgba(191,155,48,0.1),_transparent_50%)]" />
       </motion.div>
 
-      {/* Decorative frame */}
       <motion.div
         className="absolute inset-16 border-2 border-[#bf9b30] rounded-lg"
         initial={{ opacity: 0, scale: 0.9 }}
@@ -51,11 +76,7 @@ const OpeningSequence = () => {
         }}
       />
 
-      {/* Main content container */}
-      <motion.div
-        className="text-center z-10 p-12 space-y-8"
-      >
-        {/* Welcome text */}
+      <motion.div className="text-center z-10 p-12 space-y-8">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -75,7 +96,6 @@ const OpeningSequence = () => {
           </span>
         </motion.div>
 
-        {/* Mock Shaadi title */}
         <motion.h1 
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -93,7 +113,6 @@ const OpeningSequence = () => {
           Mock Shaadi
         </motion.h1>
 
-        {/* Decorative line */}
         <motion.div
           className="w-72 h-0.5 mx-auto bg-gradient-to-r from-transparent via-[#bf9b30] to-transparent"
           initial={{ scaleX: 0, opacity: 0 }}
@@ -101,7 +120,6 @@ const OpeningSequence = () => {
           transition={{ duration: 1.2, delay: 2.5 }}
         />
 
-        {/* Year 2025 */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -118,7 +136,6 @@ const OpeningSequence = () => {
           </span>
         </motion.div>
 
-        {/* Venue */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -139,7 +156,6 @@ const OpeningSequence = () => {
           </span>
         </motion.div>
 
-        {/* Decorative flourishes */}
         <motion.div
           className="absolute inset-x-0 bottom-24 flex justify-center items-center gap-12"
           initial={{ opacity: 0, y: 20 }}
@@ -155,20 +171,11 @@ const OpeningSequence = () => {
   );
 };
 
-interface TableProps {
-  photos: {
-    src: string;
-    id: string;
-    createdAt: string;
-  }[];
-  tableIndex: number;
-  position: [number, number, number];
-  side: "bride" | "groom";
-}
-
-const Table: React.FC<TableProps> = ({ photos, tableIndex, position }) => {
+const Table: React.FC<TableProps> = ({ photos, tableIndex, position, side, camera }) => {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
+  const worldPos = new THREE.Vector3(...position);
+  const screenPos = worldPos.clone().project(camera);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -185,17 +192,24 @@ const Table: React.FC<TableProps> = ({ photos, tableIndex, position }) => {
   const photo = photos[currentPhotoIndex];
   if (!photo) return null;
 
+  // Convert normalized device coordinates to pixel values
+  const x = (screenPos.x + 1) / 2 * window.innerWidth;
+  const y = -(screenPos.y - 1) / 2 * window.innerHeight;
+
+  // Scale based on Z distance (further objects appear smaller)
+  const scale = Math.max(0.4, 1 - Math.abs(position[2]) / 50);
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{
-        duration: 0.5,
-        delay: tableIndex * 0.1,
-      }}
-      className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2"
+      transition={{ duration: 0.5, delay: tableIndex * 0.1 }}
       style={{
-        transform: `translate(${position[0] * 15}px, ${position[2] * 15}px)`,
+        position: 'absolute',
+        left: x,
+        top: y,
+        transform: `translate(-50%, -50%) scale(${scale})`,
+        zIndex: Math.round(1000 - position[2])
       }}
     >
       <AnimatePresence mode="wait">
@@ -206,7 +220,7 @@ const Table: React.FC<TableProps> = ({ photos, tableIndex, position }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
-            className="relative w-48 h-32 bg-white/90 rounded-lg overflow-hidden shadow-lg"
+            className="relative w-40 h-32 bg-white/90 rounded-lg overflow-hidden shadow-lg"
           >
             <img
               src={photo.src}
@@ -224,29 +238,27 @@ const Table: React.FC<TableProps> = ({ photos, tableIndex, position }) => {
 const ModelSlideshow: React.FC<ModelSlideshowProps> = ({ photos }) => {
   const [showOpening, setShowOpening] = useState(true);
   const [showContent, setShowContent] = useState(false);
-  const [tables, setTables] = useState<
-    Array<{
-      position: [number, number, number];
-      side: "bride" | "groom";
-    }>
-  >([]);
+  const [tables, setTables] = useState<Array<{
+    position: [number, number, number];
+    side: "bride" | "groom";
+  }>>([]);
+  const [camera, setCamera] = useState<THREE.Camera | null>(null);
+
+  const handleCameraReady = (cam: THREE.Camera) => {
+    setCamera(cam);
+  };
 
   useEffect(() => {
-    // Lock scroll initially
     document.body.style.overflow = "hidden";
 
     const openingTimer = setTimeout(() => {
       setShowOpening(false);
-
-      // Added 2 seconds to the content delay (from 1500 to 3500)
       const contentTimer = setTimeout(() => {
         setShowContent(true);
-        // Unlock scroll after content appears
         document.body.style.overflow = "auto";
       }, 3500);
-
       return () => clearTimeout(contentTimer);
-    }, 6000); // Increased from 4000 to 6000 to give more time to read
+    }, 6000);
 
     return () => {
       clearTimeout(openingTimer);
@@ -256,17 +268,17 @@ const ModelSlideshow: React.FC<ModelSlideshowProps> = ({ photos }) => {
 
   useEffect(() => {
     const groomTables: [number, number, number][] = [
-      [-25, 0, -15],
-      [-28, 0, 5],
-      [-20, 0, -25],
-      [-23, 0, 25],
+      [-18, 0, -12],
+      [-20, 0, 4],
+      [-15, 0, -20],
+      [-17, 0, 18],
     ];
 
     const brideTables: [number, number, number][] = [
-      [25, 0, -15],
-      [28, 0, 5],
-      [20, 0, -25],
-      [23, 0, 25],
+      [18, 0, -12],
+      [20, 0, 4],
+      [15, 0, -20],
+      [17, 0, 18],
     ];
 
     setTables([
@@ -282,9 +294,7 @@ const ModelSlideshow: React.FC<ModelSlideshowProps> = ({ photos }) => {
         isMainContentVisible={showContent}
       >
         <AnimatePresence>
-          {showOpening && (
-            <OpeningSequence />
-          )}
+          {showOpening && <OpeningSequence />}
         </AnimatePresence>
 
         <AnimatePresence>
@@ -295,19 +305,24 @@ const ModelSlideshow: React.FC<ModelSlideshowProps> = ({ photos }) => {
               transition={{ duration: 1.5 }}
               className="relative w-full h-full"
             >
-              <Scene />
+            <Scene>
+                <PhotoPositioner onCameraReady={handleCameraReady} />
+              </Scene>
 
-              <div className="absolute inset-0 pointer-events-none">
-                {tables.map((table, tableIndex) => (
-                  <Table
-                    key={`${table.side}-${tableIndex}`}
-                    photos={photos}
-                    tableIndex={tableIndex}
-                    position={table.position}
-                    side={table.side}
-                  />
-                ))}
-              </div>
+              {camera && (
+                <div className="absolute inset-0 pointer-events-none">
+                  {tables.map((table, tableIndex) => (
+                    <Table
+                      key={`${table.side}-${tableIndex}`}
+                      photos={photos}
+                      tableIndex={tableIndex}
+                      position={table.position}
+                      side={table.side}
+                      camera={camera}
+                    />
+                  ))}
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

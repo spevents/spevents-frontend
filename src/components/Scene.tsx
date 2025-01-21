@@ -2,12 +2,15 @@ import { Suspense, useEffect } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import Tables from "./Tables";
 import * as THREE from "three";
+import React from "react";
+
 
 interface MandalaProps {
   position: [number, number, number];
   scale?: number;
   rotation?: number;
 }
+
 
 function CameraSetup() {
   const { camera } = useThree();
@@ -72,13 +75,13 @@ function FlowerPattern({ position, scale = 1 }: { position: [number, number, num
   );
 }
 
-export default function Scene() {
+export default function Scene({ children }: { children: React.ReactNode }) {
   return (
     <div className="w-full h-screen">
       <Canvas
         shadows
         camera={{ 
-          position: [0, 20, 35], // Adjusted for scaled scene
+          position: [0, 20, 35],
           fov: 60,
           near: 0.1,
           far: 1000
@@ -97,25 +100,26 @@ export default function Scene() {
         <color attach="background" args={["#790015"]} />
         <CameraSetup />
         
-        {/* Lighting adjusted for scaled scene */}
+        {/* Lighting */}
         <ambientLight intensity={1.4} color="#FFF5E6" />
         <directionalLight
           castShadow
-          position={[15, 25, 15]} // Adjusted position
+          position={[15, 25, 15]}
           intensity={2}
           color="#FFE0B2"
           shadow-mapSize-width={2048}
           shadow-mapSize-height={2048}
-          shadow-camera-far={150} // Reduced from 200
-          shadow-camera-left={-35} // Reduced from -50
-          shadow-camera-right={35} // Reduced from 50
-          shadow-camera-top={35} // Reduced from 50
-          shadow-camera-bottom={-35} // Reduced from -50
+          shadow-camera-far={150}
+          shadow-camera-left={-35}
+          shadow-camera-right={35}
+          shadow-camera-top={35}
+          shadow-camera-bottom={-35}
         />
 
         {/* Main content */}
         <Suspense fallback={null}>
           <Tables />
+          {children} {/* Add this line to render children */}
         </Suspense>
 
         {/* Scaled down floor */}

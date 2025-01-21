@@ -221,7 +221,7 @@ export default function Tables() {
         <mesh position={[0, 0.21, 0]} receiveShadow>
           <torusGeometry args={[3.2, 0.1, 16, 64]} /> // Reduced from [4.2, 0.1, 16, 64]
           <meshStandardMaterial
-            color="#C29327"
+            color="#C45BAA"
             metalness={0.7}
             roughness={0.3}
           />
