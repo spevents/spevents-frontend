@@ -43,7 +43,6 @@ interface FontConfig {
   };
 }
 
-
 const NON_ENGLISH_FONTS: FontOption[] = [
   "galada",
   "karlaTamilInclined",
@@ -335,144 +334,130 @@ const MockShaadiCollage = ({
       const startY = 500;
       const stripWidth = 20;
       const sprocketHoleSize = 15;
-      const sprocketOffset = 40;
+      const sprocketOffset = 80;
       const sprocketsPerSide = 10;
 
+      // Calculate columns based on number of photos
+      const numPhotos = loadedImages.length;
+      const columns = numPhotos <= 4 ? 1 : numPhotos <= 8 ? 2 : 3;
+      const stripSpacing = 1;
+      const totalStripWidth =
+        (frameWidth + stripWidth * 2 + sprocketOffset * 2 + stripSpacing) *
+        columns;
+      const startX = (canvas.width - totalStripWidth) / 2 + 15;
 
+      // Process photos by columns
+      for (let col = 0; col < columns; col++) {
+        const columnStartIndex = col * 4;
+        const columnPhotos = loadedImages.slice(
+          columnStartIndex,
+          columnStartIndex + 4
+        );
+        const columnX =
+          startX +
+          (frameWidth + stripWidth * 2 + sprocketOffset * 2 + stripSpacing) *
+            col;
 
+        // Add a slight rotation to the middle column if there are 3 columns
+        if (columns === 3 && col === 1) {
+          ctx.save();
+          // Translate to the column center point for rotation
+          const centerX = columnX + frameWidth / 2;
+          const centerY = startY + (frameHeight + frameSpacing) * 2;
+          ctx.translate(centerX, centerY);
+          ctx.rotate(Math.PI / 36); // 5 degree rotation
+          ctx.translate(-centerX, -centerY);
+        }
 
+        columnPhotos.forEach((img, i) => {
+          const frameY = startY + (frameHeight + frameSpacing) * i;
 
+          // Draw film strip holes
+          ctx.fillStyle = "black";
+          // Left strip
+          ctx.fillRect(
+            columnX + sprocketOffset - stripWidth / 2,
+            frameY - frameSpacing / 2,
+            stripWidth,
+            frameHeight + frameSpacing
+          );
+          // Right strip
+          ctx.fillRect(
+            columnX + frameWidth + sprocketOffset - stripWidth / 2,
+            frameY - frameSpacing / 2,
+            stripWidth,
+            frameHeight + frameSpacing
+          );
 
+          // Draw film sprocket holes
+          ctx.fillStyle = "white";
+          for (let h = 0; h < sprocketsPerSide; h++) {
+            // Left holes
+            ctx.beginPath();
+            ctx.arc(
+              columnX + sprocketOffset - 10,
+              frameY + (frameHeight / (sprocketsPerSide - 1)) * h,
+              sprocketHoleSize,
+              0,
+              Math.PI * 2
+            );
+            ctx.fill();
 
+            // Right holes
+            ctx.beginPath();
+            ctx.arc(
+              columnX + frameWidth + sprocketOffset + 10,
+              frameY + (frameHeight / (sprocketsPerSide - 1)) * h,
+              sprocketHoleSize,
+              0,
+              Math.PI * 2
+            );
+            ctx.fill();
+          }
 
+          // Draw black frame background
+          ctx.fillStyle = "black";
+          ctx.fillRect(
+            columnX + sprocketOffset - 4,
+            frameY - 4,
+            frameWidth + 8,
+            frameHeight + 8
+          );
 
-// Calculate columns based on number of photos
-const numPhotos = loadedImages.length;
-const columns = numPhotos <= 4 ? 1 : numPhotos <= 8 ? 2 : 3;
-const stripSpacing = 1;
-const totalStripWidth =
-  (frameWidth + stripWidth * 2 + sprocketOffset * 2 + stripSpacing) * columns;
-const startX = (canvas.width - totalStripWidth) / 2 + 15;
+          // Calculate image dimensions preserving aspect ratio
+          const imgAspectRatio = img.width / img.height;
+          let drawWidth, drawHeight, drawX, drawY;
 
-// Process photos by columns
-for (let col = 0; col < columns; col++) {
-  const columnStartIndex = col * 4;
-  const columnPhotos = loadedImages.slice(columnStartIndex, columnStartIndex + 4);
-  const columnX =
-    startX +
-    (frameWidth + stripWidth * 2 + sprocketOffset * 2 + stripSpacing) * col;
+          if (imgAspectRatio > 4 / 3) {
+            // Image is wider than frame
+            drawHeight = frameHeight;
+            drawWidth = drawHeight * imgAspectRatio;
+            drawY = frameY;
+            drawX = columnX + sprocketOffset + (frameWidth - drawWidth) / 2;
+          } else {
+            // Image is taller than frame
+            drawWidth = frameWidth;
+            drawHeight = drawWidth / imgAspectRatio;
+            drawX = columnX + sprocketOffset;
+            drawY = frameY + (frameHeight - drawHeight) / 2;
+          }
 
-  // Add a slight rotation to the middle column if there are 3 columns
-  if (columns === 3 && col === 1) {
-    ctx.save();
-    // Translate to the column center point for rotation
-    const centerX = columnX + frameWidth / 2;
-    const centerY = startY + (frameHeight + frameSpacing) * 2;
-    ctx.translate(centerX, centerY);
-    ctx.rotate(Math.PI / 36); // 5 degree rotation
-    ctx.translate(-centerX, -centerY);
-  }
+          // Draw the image with border
+          const borderSize = 4;
+          ctx.drawImage(
+            img,
+            drawX + borderSize,
+            drawY + borderSize,
+            drawWidth - borderSize * 2,
+            drawHeight - borderSize * 2
+          );
+        });
 
-  columnPhotos.forEach((img, i) => {
-    const frameY = startY + (frameHeight + frameSpacing) * i;
-
-    // Draw film strip holes
-    ctx.fillStyle = "black";
-    // Left strip
-    ctx.fillRect(
-      columnX + sprocketOffset - stripWidth / 2,
-      frameY - frameSpacing / 2,
-      stripWidth,
-      frameHeight + frameSpacing
-    );
-    // Right strip
-    ctx.fillRect(
-      columnX + frameWidth + sprocketOffset - stripWidth / 2,
-      frameY - frameSpacing / 2,
-      stripWidth,
-      frameHeight + frameSpacing
-    );
-
-    // Draw film sprocket holes
-    ctx.fillStyle = "white";
-    for (let h = 0; h < sprocketsPerSide; h++) {
-      // Left holes
-      ctx.beginPath();
-      ctx.arc(
-        columnX + sprocketOffset - 10,
-        frameY + (frameHeight / (sprocketsPerSide - 1)) * h,
-        sprocketHoleSize,
-        0,
-        Math.PI * 2
-      );
-      ctx.fill();
-
-      // Right holes
-      ctx.beginPath();
-      ctx.arc(
-        columnX + frameWidth + sprocketOffset + 10,
-        frameY + (frameHeight / (sprocketsPerSide - 1)) * h,
-        sprocketHoleSize,
-        0,
-        Math.PI * 2
-      );
-      ctx.fill();
-    }
-
-    // Draw black frame background
-    ctx.fillStyle = "black";
-    ctx.fillRect(
-      columnX + sprocketOffset - 4,
-      frameY - 4,
-      frameWidth + 8,
-      frameHeight + 8
-    );
-
-    // Calculate image dimensions preserving aspect ratio
-    const imgAspectRatio = img.width / img.height;
-    let drawWidth, drawHeight, drawX, drawY;
-
-    if (imgAspectRatio > 4 / 3) {
-      // Image is wider than frame
-      drawHeight = frameHeight;
-      drawWidth = drawHeight * imgAspectRatio;
-      drawY = frameY;
-      drawX = columnX + sprocketOffset + (frameWidth - drawWidth) / 2;
-    } else {
-      // Image is taller than frame
-      drawWidth = frameWidth;
-      drawHeight = drawWidth / imgAspectRatio;
-      drawX = columnX + sprocketOffset;
-      drawY = frameY + (frameHeight - drawHeight) / 2;
-    }
-
-    // Draw the image with border
-    const borderSize = 4;
-    ctx.drawImage(
-      img,
-      drawX + borderSize,
-      drawY + borderSize,
-      drawWidth - borderSize * 2,
-      drawHeight - borderSize * 2
-    );
-  });
-
-  // Restore the canvas context if we rotated this column
-  if (columns === 3 && col === 1) {
-    ctx.restore();
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
+        // Restore the canvas context if we rotated this column
+        if (columns === 3 && col === 1) {
+          ctx.restore();
+        }
+      }
 
       // Add watermark
       const watermarkSize = 36;
