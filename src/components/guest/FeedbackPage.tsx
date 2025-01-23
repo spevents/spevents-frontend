@@ -1,4 +1,4 @@
-import { ArrowLeft, Camera, Award, Grid, WandSparkles } from "lucide-react";
+import { ArrowLeft, Camera, Award, Grid, WandSparkles, MessageCircleQuestion } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -67,12 +67,7 @@ export default function FeedbackPage() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <img 
-                src="/public/icon.svg" 
-                
-                alt="Spevents icon" 
-                className="w-24 h-24"
-              />
+              <MessageCircleQuestion className="w-10 h-10 text-white" />
             </motion.div>
           </div>
 

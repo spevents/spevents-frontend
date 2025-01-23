@@ -194,6 +194,11 @@ export function GuestDashboard() {
                 initial={{ x: 300, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: -300, opacity: 0 }}
+                transition={{
+                  type: "tween",
+                  duration: 0.3,
+                  ease: "easeOut"
+                }}
                 src={photos[selectedPhotoIndex].url}
                 alt="Selected photo"
                 className="w-full h-full object-contain max-h-96 rounded-lg"
