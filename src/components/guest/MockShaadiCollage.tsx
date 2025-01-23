@@ -397,7 +397,7 @@ const MockShaadiCollage = ({
           
           // Increase the spacing between holes
           const totalFrameHeight = frameHeight + frameSpacing;
-          const spacingMultiplier = 1.8; // Increase this value to space holes further apart
+          const spacingMultiplier = 1; // Increase this value to space holes further apart
           const totalSpacing = totalFrameHeight * spacingMultiplier;
           const startOffsetY = (totalSpacing - totalFrameHeight) / 2;
           
