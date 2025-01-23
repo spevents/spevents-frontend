@@ -69,6 +69,7 @@ export default function FeedbackPage() {
             >
               <img 
                 src="/src/assets/light-icon.svg" 
+                
                 alt="Spevents icon" 
                 className="w-12 h-12"
               />
@@ -80,8 +81,8 @@ export default function FeedbackPage() {
             <h1 className="text-3xl font-bold text-timberwolf">
               Win a $10 Gift Card
             </h1>
-            <p className="text-sage text-lg font-medium">
-              Spevents is breaking event photography.
+            <p className="text-sage text-lg font-black">
+              Spevents is changing event photography.
             </p>
           </div>
 

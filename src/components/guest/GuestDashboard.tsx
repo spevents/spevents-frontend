@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Camera, Download, Award, Grid, WandSparkles } from 'lucide-react';
+import { Camera, Trophy, Grid, WandSparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getSignedPhotoUrl } from '../../lib/aws';
-import { shareToInstagram } from './utils/collage';
 
 interface Photo {
   url: string;
@@ -29,7 +28,7 @@ export function GuestDashboard() {
     { id: 'gallery', icon: <Grid className="w-6 h-6 text-white font-bold" />, label: 'Gallery' },
     { id: 'camera', icon: <Camera className="w-6 h-6 text-white font-bold" />, label: 'Camera' },
     { id: 'create', icon: <WandSparkles className="w-6 h-6 text-white font-bold" />, label: 'Create' },
-    { id: 'prize', icon: <Award className="w-6 h-6 text-white font-bold" />, label: 'Prize' },
+    { id: 'prize', icon: <Trophy className="w-6 h-6 text-white font-bold" />, label: 'Prize' },
   ];
 
   useEffect(() => {
@@ -89,19 +88,7 @@ export function GuestDashboard() {
     });
   };
 
-  const shareSelectedPhotos = async () => {
-    const selectedPhotosList = photos.filter(photo => selectedPhotos.has(photo.name));
-    
-    if (selectedPhotosList.length === 0) return;
-    try {
-      const collageUrl = selectedPhotosList[0].url;
-      await shareToInstagram(collageUrl);
-    } catch (error) {
-      console.error('Error sharing:', error);
-      alert(`Error sharing to Instagram: ${error}`);
-    }
-    setSelectedPhotos(new Set());
-  };
+
 
   return (
     <div className="min-h-screen bg-gray-900">
@@ -171,21 +158,6 @@ export function GuestDashboard() {
                 <span className="sr-only">{tab.label}</span>
               </motion.button>
             ))}
-
-            {selectedPhotos.size > 0 && (
-              <motion.button
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0 }}
-                onClick={shareSelectedPhotos}
-                className="p-4 rounded-full text-white/60 hover:text-white hover:bg-white/5"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Download className="w-6 h-6 text-white font-bold" />
-                <span className="sr-only">Share Selected</span>
-              </motion.button>
-            )}
           </div>
         </div>
       </div>
