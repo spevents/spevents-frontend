@@ -68,10 +68,10 @@ export default function FeedbackPage() {
               whileTap={{ scale: 0.95 }}
             >
               <img 
-                src="/src/assets/light-icon.svg" 
+                src="/public/icon.svg" 
                 
                 alt="Spevents icon" 
-                className="w-12 h-12"
+                className="w-24 h-24"
               />
             </motion.div>
           </div>
