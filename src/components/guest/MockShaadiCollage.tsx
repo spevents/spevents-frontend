@@ -332,10 +332,10 @@ const MockShaadiCollage = ({
       const frameHeight = frameWidth * (3 / 4);
       const frameSpacing = 210;
       const startY = 500;
-      const stripWidth = 20;
+      const stripWidth = 30;
       const sprocketHoleSize = 15;
       const sprocketOffset = 80;
-      const sprocketsPerSide = 10;
+      const sprocketsPerSide = 8;
 
       // Calculate columns based on number of photos
       const numPhotos = loadedImages.length;
