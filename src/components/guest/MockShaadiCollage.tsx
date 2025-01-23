@@ -380,7 +380,7 @@ const MockShaadiCollage = ({
           );
 
           // Draw film sprocket holes
-          ctx.fillStyle = THEME_COLORS.gold;
+          ctx.fillStyle = "white";
           for (let h = 0; h < sprocketsPerSide; h++) {
             // Left holes
             ctx.beginPath();
