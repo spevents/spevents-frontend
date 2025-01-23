@@ -347,11 +347,11 @@ const MockShaadiCollage = ({
       // Calculate columns based on number of photos
       const numPhotos = loadedImages.length;
       const columns = numPhotos <= 4 ? 1 : numPhotos <= 8 ? 2 : 3;
-      const stripSpacing = 0.5;
+      const columnSpacing = 20; // Reduced spacing between columns
+      const columnWidth = frameWidth + stripWidth * 2 + sprocketOffset * 2;
       const totalStripWidth =
-        (frameWidth + stripWidth * 2 + sprocketOffset * 2 + stripSpacing) *
-        columns;
-      const startX = (canvas.width - totalStripWidth) / 2 + 15;
+        columnWidth * columns + columnSpacing * (columns - 1);
+      const startX = (canvas.width - totalStripWidth) / 2;
 
       // Process photos by columns
       for (let col = 0; col < columns; col++) {
@@ -360,10 +360,7 @@ const MockShaadiCollage = ({
           columnStartIndex,
           columnStartIndex + 4
         );
-        const columnX =
-          startX +
-          (frameWidth + stripWidth * 2 + sprocketOffset * 2 + stripSpacing) *
-            col;
+        const columnX = startX + (columnWidth + columnSpacing) * col;
 
         // Add a slight rotation to the middle column if there are 3 columns
         if (columns === 3 && col === 1) {
@@ -381,39 +378,65 @@ const MockShaadiCollage = ({
 
           // Draw film strip holes
           ctx.fillStyle = "black";
-          
+
           // Draw strips with rough edges if enabled
           if (stripEdgeRoughness > 0) {
             // Left strip with rough edges
             const leftStripPath = new Path2D();
-            leftStripPath.moveTo(columnX + sprocketOffset - stripWidth / 2, frameY - frameSpacing / 2);
+            leftStripPath.moveTo(
+              columnX + sprocketOffset - stripWidth / 2,
+              frameY - frameSpacing / 2
+            );
             for (let y = 0; y < frameHeight + frameSpacing; y += 5) {
-              const xOffset = Math.random() * stripEdgeRoughness - stripEdgeRoughness/2;
+              const xOffset =
+                Math.random() * stripEdgeRoughness - stripEdgeRoughness / 2;
               leftStripPath.lineTo(
                 columnX + sprocketOffset - stripWidth / 2 + xOffset,
                 frameY - frameSpacing / 2 + y
               );
             }
-            leftStripPath.lineTo(columnX + sprocketOffset - stripWidth / 2, frameY + frameHeight + frameSpacing/2);
-            leftStripPath.lineTo(columnX + sprocketOffset + stripWidth / 2, frameY + frameHeight + frameSpacing/2);
-            leftStripPath.lineTo(columnX + sprocketOffset + stripWidth / 2, frameY - frameSpacing / 2);
+            leftStripPath.lineTo(
+              columnX + sprocketOffset - stripWidth / 2,
+              frameY + frameHeight + frameSpacing / 2
+            );
+            leftStripPath.lineTo(
+              columnX + sprocketOffset + stripWidth / 2,
+              frameY + frameHeight + frameSpacing / 2
+            );
+            leftStripPath.lineTo(
+              columnX + sprocketOffset + stripWidth / 2,
+              frameY - frameSpacing / 2
+            );
             leftStripPath.closePath();
             ctx.fill(leftStripPath);
 
             // Right strip with rough edges
             const rightStripPath = new Path2D();
             const rightStripX = columnX + frameWidth + sprocketOffset;
-            rightStripPath.moveTo(rightStripX - stripWidth / 2, frameY - frameSpacing / 2);
+            rightStripPath.moveTo(
+              rightStripX - stripWidth / 2,
+              frameY - frameSpacing / 2
+            );
             for (let y = 0; y < frameHeight + frameSpacing; y += 5) {
-              const xOffset = Math.random() * stripEdgeRoughness - stripEdgeRoughness/2;
+              const xOffset =
+                Math.random() * stripEdgeRoughness - stripEdgeRoughness / 2;
               rightStripPath.lineTo(
                 rightStripX - stripWidth / 2 + xOffset,
                 frameY - frameSpacing / 2 + y
               );
             }
-            rightStripPath.lineTo(rightStripX - stripWidth / 2, frameY + frameHeight + frameSpacing/2);
-            rightStripPath.lineTo(rightStripX + stripWidth / 2, frameY + frameHeight + frameSpacing/2);
-            rightStripPath.lineTo(rightStripX + stripWidth / 2, frameY - frameSpacing / 2);
+            rightStripPath.lineTo(
+              rightStripX - stripWidth / 2,
+              frameY + frameHeight + frameSpacing / 2
+            );
+            rightStripPath.lineTo(
+              rightStripX + stripWidth / 2,
+              frameY + frameHeight + frameSpacing / 2
+            );
+            rightStripPath.lineTo(
+              rightStripX + stripWidth / 2,
+              frameY - frameSpacing / 2
+            );
             rightStripPath.closePath();
             ctx.fill(rightStripPath);
           } else {
@@ -436,26 +459,30 @@ const MockShaadiCollage = ({
           ctx.fillStyle = "white";
           const holeWidth = sprocketHoleSize;
           const holeHeight = sprocketHoleSize * holeHeightRatio;
-          
+
           const totalFrameHeight = frameHeight + frameSpacing;
           const totalSpacing = totalFrameHeight * spacingMultiplier;
           const startOffsetY = (totalSpacing - totalFrameHeight) / 2;
-          
+
           for (let h = 0; h < sprocketsPerSide; h++) {
-            const holeY = frameY - startOffsetY + (totalSpacing / (sprocketsPerSide - 1)) * h + sprocketYOffset;
-            
+            const holeY =
+              frameY -
+              startOffsetY +
+              (totalSpacing / (sprocketsPerSide - 1)) * h +
+              sprocketYOffset;
+
             // Left holes
             ctx.fillRect(
-              columnX + sprocketOffset - 10 - holeWidth/2,
-              holeY - holeHeight/2,
+              columnX + sprocketOffset - 10 - holeWidth / 2,
+              holeY - holeHeight / 2,
               holeWidth,
               holeHeight
             );
 
             // Right holes
             ctx.fillRect(
-              columnX + frameWidth + sprocketOffset + 10 - holeWidth/2,
-              holeY - holeHeight/2,
+              columnX + frameWidth + sprocketOffset + 10 - holeWidth / 2,
+              holeY - holeHeight / 2,
               holeWidth,
               holeHeight
             );
@@ -468,15 +495,30 @@ const MockShaadiCollage = ({
             const y = frameY - frameBorderThickness;
             const width = frameWidth + frameBorderThickness * 2;
             const height = frameHeight + frameBorderThickness * 2;
-            
+
             ctx.beginPath();
             ctx.moveTo(x + frameCornerRadius, y);
             ctx.lineTo(x + width - frameCornerRadius, y);
-            ctx.quadraticCurveTo(x + width, y, x + width, y + frameCornerRadius);
+            ctx.quadraticCurveTo(
+              x + width,
+              y,
+              x + width,
+              y + frameCornerRadius
+            );
             ctx.lineTo(x + width, y + height - frameCornerRadius);
-            ctx.quadraticCurveTo(x + width, y + height, x + width - frameCornerRadius, y + height);
+            ctx.quadraticCurveTo(
+              x + width,
+              y + height,
+              x + width - frameCornerRadius,
+              y + height
+            );
             ctx.lineTo(x + frameCornerRadius, y + height);
-            ctx.quadraticCurveTo(x, y + height, x, y + height - frameCornerRadius);
+            ctx.quadraticCurveTo(
+              x,
+              y + height,
+              x,
+              y + height - frameCornerRadius
+            );
             ctx.lineTo(x, y + frameCornerRadius);
             ctx.quadraticCurveTo(x, y, x + frameCornerRadius, y);
             ctx.closePath();
@@ -531,7 +573,7 @@ const MockShaadiCollage = ({
         const data = imageData.data;
         for (let i = 0; i < data.length; i += 4) {
           const noise = (Math.random() - 0.5) * grainIntensity * 50;
-          data[i] += noise;     // R
+          data[i] += noise; // R
           data[i + 1] += noise; // G
           data[i + 2] += noise; // B
         }
