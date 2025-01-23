@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useThree, Vector3 } from "@react-three/fiber";
+import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import Scene from "../Scene";
 import AnimatedBorder from "./AnimatedBorder";
@@ -171,7 +171,7 @@ const OpeningSequence = () => {
   );
 };
 
-const Table: React.FC<TableProps> = ({ photos, tableIndex, position, side, camera }) => {
+const Table: React.FC<TableProps> = ({ photos, tableIndex, position, camera }) => {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const worldPos = new THREE.Vector3(...position);
