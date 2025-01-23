@@ -334,7 +334,7 @@ const MockShaadiCollage = ({
       const startY = 500;
       const stripWidth = 50;
       const sprocketHoleSize = 22;
-      const sprocketOffset = 80;
+      const sprocketOffset = 40;
       const sprocketsPerSide = 12;
       const holeHeightRatio = 0.5;
       const spacingMultiplier = 0.8;
@@ -351,7 +351,7 @@ const MockShaadiCollage = ({
       const columnWidth = frameWidth + stripWidth * 2 + sprocketOffset * 2;
       const totalStripWidth =
         columnWidth * columns + columnSpacing * (columns - 1);
-      const startX = (canvas.width - totalStripWidth) / 2;
+      const startX = (canvas.width - totalStripWidth) / 2 + 15;
 
       // Process photos by columns
       for (let col = 0; col < columns; col++) {
