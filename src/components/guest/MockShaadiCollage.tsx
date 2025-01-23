@@ -355,7 +355,7 @@ const MockShaadiCollage = ({
 
       // Process photos by columns
       for (let col = 0; col < columns; col++) {
-        const columnStartIndex = col * 4;
+        const columnStartIndex = col * 3;
         const columnPhotos = loadedImages.slice(
           columnStartIndex,
           columnStartIndex + 4
