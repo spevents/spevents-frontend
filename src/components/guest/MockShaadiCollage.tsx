@@ -330,14 +330,14 @@ const MockShaadiCollage = ({
       // Film strip configuration
       const frameWidth = 200;
       const frameHeight = 150;
-      const frameSpacing = 100;
+      const frameSpacing = 210;
       const startY = 500;
       const stripWidth = 50;
       const sprocketHoleSize = 22;
       const sprocketOffset = 40;
       const sprocketsPerSide = 12;
       const holeHeightRatio = 0.5;
-      const spacingMultiplier = 0.8;
+      const spacingMultiplier = 0.6;
       const sprocketYOffset = -100;
       const frameBorderThickness = 4;
       const stripEdgeRoughness = 0;
