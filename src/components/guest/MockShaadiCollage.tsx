@@ -347,7 +347,7 @@ const MockShaadiCollage = ({
       // Calculate columns based on number of photos
       const numPhotos = loadedImages.length;
       const columns = numPhotos <= 4 ? 1 : numPhotos <= 8 ? 2 : 3;
-      const columnSpacing = 1; // Reduced spacing between columns
+      const columnSpacing = -10; // Reduced spacing between columns
       const columnWidth = frameWidth + stripWidth * 2 + sprocketOffset * 2;
       const totalStripWidth =
         columnWidth * columns + columnSpacing * (columns - 1);
@@ -355,23 +355,14 @@ const MockShaadiCollage = ({
 
       // Process photos by columns
       for (let col = 0; col < columns; col++) {
-        const columnStartIndex = col * 3;
+        const columnStartIndex = col * 4;
         const columnPhotos = loadedImages.slice(
           columnStartIndex,
           columnStartIndex + 4
         );
         const columnX = startX + (columnWidth + columnSpacing) * col;
 
-        // // Add a slight rotation to the middle column if there are 3 columns
-        // if (columns === 3 && col === 1) {
-        //   ctx.save();
-        //   // Translate to the column center point for rotation
-        //   const centerX = columnX + frameWidth / 2;
-        //   const centerY = startY + (frameHeight + frameSpacing) * 2;
-        //   ctx.translate(centerX, centerY);
-        //   ctx.rotate(Math.PI / 36); // 5 degree rotation
-        //   ctx.translate(-centerX, -centerY);
-        // }
+
 
         columnPhotos.forEach((img, i) => {
           const frameY = startY + (frameHeight + frameSpacing) * i;
@@ -561,10 +552,6 @@ const MockShaadiCollage = ({
           );
         });
 
-        // Restore the canvas context if we rotated this column
-        if (columns === 3 && col === 1) {
-          ctx.restore();
-        }
       }
 
       // Add film grain effect if enabled
