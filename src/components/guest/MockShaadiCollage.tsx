@@ -343,6 +343,7 @@ const MockShaadiCollage = ({
       const stripEdgeRoughness = 0;
       const grainIntensity = 0.1;
       const frameCornerRadius = 0;
+      const startXOffset = 600
 
       // Calculate columns based on number of photos
       const numPhotos = loadedImages.length;
@@ -351,7 +352,7 @@ const MockShaadiCollage = ({
       const columnWidth = frameWidth + stripWidth * 2 + sprocketOffset * 2;
       // const totalStripWidth = columnWidth * columns + columnSpacing * (columns - 1);
       const totalStripWidth = columnWidth * columns * (columns - 1);
-      const startX = (canvas.width - totalStripWidth) / 2 + startY;
+      const startX = (canvas.width - totalStripWidth) / 2 + startXOffset;
 
       // Process photos by columns
       for (let col = 0; col < columns; col++) {
