@@ -351,7 +351,7 @@ const MockShaadiCollage = ({
       const columnWidth = frameWidth + stripWidth * 2 + sprocketOffset * 2;
       const totalStripWidth =
         columnWidth * columns + columnSpacing * (columns - 1);
-      const startX = (canvas.width - totalStripWidth) / 2 + 15;
+      const startX = (canvas.width - totalStripWidth) / 2 + 20;
 
       // Process photos by columns
       for (let col = 0; col < columns; col++) {
@@ -362,16 +362,16 @@ const MockShaadiCollage = ({
         );
         const columnX = startX + (columnWidth + columnSpacing) * col;
 
-        // Add a slight rotation to the middle column if there are 3 columns
-        if (columns === 3 && col === 1) {
-          ctx.save();
-          // Translate to the column center point for rotation
-          const centerX = columnX + frameWidth / 2;
-          const centerY = startY + (frameHeight + frameSpacing) * 2;
-          ctx.translate(centerX, centerY);
-          ctx.rotate(Math.PI / 36); // 5 degree rotation
-          ctx.translate(-centerX, -centerY);
-        }
+        // // Add a slight rotation to the middle column if there are 3 columns
+        // if (columns === 3 && col === 1) {
+        //   ctx.save();
+        //   // Translate to the column center point for rotation
+        //   const centerX = columnX + frameWidth / 2;
+        //   const centerY = startY + (frameHeight + frameSpacing) * 2;
+        //   ctx.translate(centerX, centerY);
+        //   ctx.rotate(Math.PI / 36); // 5 degree rotation
+        //   ctx.translate(-centerX, -centerY);
+        // }
 
         columnPhotos.forEach((img, i) => {
           const frameY = startY + (frameHeight + frameSpacing) * i;
