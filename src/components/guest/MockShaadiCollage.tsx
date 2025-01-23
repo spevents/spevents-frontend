@@ -347,7 +347,7 @@ const MockShaadiCollage = ({
       // Calculate columns based on number of photos
       const numPhotos = loadedImages.length;
       const columns = numPhotos <= 4 ? 1 : numPhotos <= 8 ? 2 : 3;
-      const stripSpacing = 1;
+      const stripSpacing = 0.5;
       const totalStripWidth =
         (frameWidth + stripWidth * 2 + sprocketOffset * 2 + stripSpacing) *
         columns;
