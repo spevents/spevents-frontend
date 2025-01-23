@@ -391,28 +391,28 @@ const MockShaadiCollage = ({
 
           // Draw film sprocket holes
           ctx.fillStyle = "white";
+          // Add padding at top and bottom of frame for better spacing
+          const frameTopPadding = frameSpacing / 2;
+          const totalHeight = frameHeight + frameSpacing;
+          
           for (let h = 0; h < sprocketsPerSide; h++) {
+            const holeY = frameY - frameTopPadding + (totalHeight / (sprocketsPerSide - 1)) * h;
+            
             // Left holes
-            ctx.beginPath();
-            ctx.arc(
-              columnX + sprocketOffset - 10,
-              frameY + (frameHeight / (sprocketsPerSide - 1)) * h,
+            ctx.fillRect(
+              columnX + sprocketOffset - 10 - sprocketHoleSize/2,
+              holeY - sprocketHoleSize/2,
               sprocketHoleSize,
-              0,
-              Math.PI * 2
+              sprocketHoleSize
             );
-            ctx.fill();
 
             // Right holes
-            ctx.beginPath();
-            ctx.arc(
-              columnX + frameWidth + sprocketOffset + 10,
-              frameY + (frameHeight / (sprocketsPerSide - 1)) * h,
+            ctx.fillRect(
+              columnX + frameWidth + sprocketOffset + 10 - sprocketHoleSize/2,
+              holeY - sprocketHoleSize/2,
               sprocketHoleSize,
-              0,
-              Math.PI * 2
+              sprocketHoleSize
             );
-            ctx.fill();
           }
 
           // Draw black frame background
