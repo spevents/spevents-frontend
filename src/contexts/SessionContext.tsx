@@ -33,7 +33,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     const storedCode = localStorage.getItem('spevents-session');
     
     // For mshaadi-2025, always valid
-    if (code === 'mshaadi-2025') {
+    if (code === 'mshaadi-192839012873') {
       return true;
     }
     
