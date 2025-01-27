@@ -30,18 +30,36 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const isValidSession = useCallback(async (code: string): Promise<boolean> => {
-    const storedCode = localStorage.getItem("spevents-session");
-    const eventId = import.meta.env.VITE_EVENT_ID;
+    try {
+      const storedCode = localStorage.getItem("spevents-session");
+      const envEventId = import.meta.env.VITE_EVENT_ID;
+      
+      // Enhanced debugging
+      console.log('Session Validation Check:', {
+        receivedCode: code,
+        storedCode,
+        envEventId,
+        receivedCodeType: typeof code,
+        envEventIdType: typeof envEventId,
+        exactMatch: code === envEventId,
+        trimmedMatch: code.trim() === envEventId.trim(),
+        decodedMatch: decodeURIComponent(code) === envEventId
+      });
 
-    // Debug log
-    console.log('Validating session:', {
-      code,
-      storedCode,
-      eventId,
-      isMatch: code === eventId || code === storedCode
-    });
+      // Try multiple matching strategies
+      const isMatch = 
+        code === envEventId ||
+        code.trim() === envEventId.trim() ||
+        decodeURIComponent(code) === envEventId ||
+        code === storedCode;
 
-    return code === eventId || code === storedCode;
+      console.log('Final match result:', isMatch);
+      
+      return isMatch;
+    } catch (error) {
+      console.error('Error in isValidSession:', error);
+      return false;
+    }
   }, []);
 
   return (
