@@ -1,12 +1,16 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { useNavigate, useLocation, useParams} from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { useNgrok } from "../../contexts/NgrokContext";
 import { useZoom } from "./hooks/useZoom";
 import { useOrientation } from "./hooks/useOrientation";
 import { ZoomControl } from "./ZoomControl";
 import { PhotoCounter } from "./PhotoCounter";
 import { CameraControls } from "./CameraControls";
+import { FlashControls } from "./FlashControls";
 import { X } from "lucide-react";
+import { ExtendedMediaTrackCapabilities, ExtendedMediaTrackConstraintSet } from "./types/media";
+
+
 // Types
 interface CameraInterfaceProps {
   initialMode: "qr" | "camera";
@@ -31,12 +35,14 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
   const isDemoMode = location.pathname.startsWith("/demo");
   const basePrefix = isDemoMode ? "/demo" : "";
   const orientation = useOrientation();
+  const { eventId } = useParams();
 
   // State
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const [isCapturing, setIsCapturing] = useState(false);
   const [lastTapTime, setLastTapTime] = useState(0);
+  const [isFlashEnabled, setIsFlashEnabled] = useState(false);
 
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -84,7 +90,29 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
     };
   }, []);
 
-  // Camera handlers
+  const toggleFlash = useCallback(async () => {
+    if (!streamRef.current) return;
+    
+    const track = streamRef.current.getVideoTracks()[0];
+    if (!track) return;
+
+    try {
+      const capabilities = track.getCapabilities() as ExtendedMediaTrackCapabilities;
+      const newFlashState = !isFlashEnabled;
+      
+      if (facingMode === 'environment' && capabilities.torch) {
+        // Use device flash for rear camera if available
+        await track.applyConstraints({
+          advanced: [{ torch: newFlashState } as ExtendedMediaTrackConstraintSet]
+        });
+      }
+      // For front camera, we'll use screen flash handled in capturePhoto
+      setIsFlashEnabled(newFlashState);
+    } catch (error) {
+      console.warn('Error toggling flash:', error);
+    }
+  }, [isFlashEnabled, facingMode]);
+
   const startCamera = async (facing?: "environment" | "user") => {
     cleanup();
     const currentFacing = facing || facingMode;
@@ -106,6 +134,16 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
 
         const track = stream.getVideoTracks()[0];
         await initializeZoom(track);
+
+        // Reset flash when switching cameras
+        if (isFlashEnabled) {
+          const capabilities = track.getCapabilities() as ExtendedMediaTrackCapabilities;
+          if (currentFacing === 'environment' && capabilities.torch) {
+            await track.applyConstraints({
+              advanced: [{ torch: true } as ExtendedMediaTrackConstraintSet]
+            });
+          }
+        }
       }
     } catch (err) {
       console.error("Error accessing camera:", err);
@@ -130,7 +168,7 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
       target.closest('.flip-button') ||
       target.closest('.navigate-to-review-button')
     ) {
-      return; // Ignore the tap if it was on an interactive element
+      return;
     }
 
     const now = Date.now();
@@ -158,8 +196,18 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
     setTimeout(() => setIsCapturing(false), 150);
   }, []);
 
-  const capturePhoto = useCallback(() => {
+  const capturePhoto = useCallback(async () => {
     if (!videoRef.current || photos.length >= PHOTO_LIMIT) return;
+
+    // Handle screen flash for front camera
+    if (facingMode === "user" && isFlashEnabled) {
+      if (flashRef.current) {
+        flashRef.current.style.opacity = "1";
+        await new Promise(resolve => setTimeout(resolve, 200));
+        flashRef.current.style.opacity = "0";
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+    }
 
     triggerCaptureEffect();
 
@@ -185,10 +233,7 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
     sessionStorage.setItem("temp-photos", JSON.stringify([...sessionPhotos, newPhoto]));
 
     navigator.vibrate?.(50);
-  }, [photos.length, facingMode, triggerCaptureEffect]);
-
-    const { eventId } = useParams();
-  
+  }, [photos.length, facingMode, isFlashEnabled, triggerCaptureEffect]);
 
   const navigateWithBaseUrl = (path: string) => {
     const fullPath =
@@ -205,8 +250,7 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
       className="relative h-screen bg-black overflow-hidden"
       onClick={handleScreenTap}
     >
-
-<button
+      <button
         onClick={() => navigateWithBaseUrl(`/`)}
         className="absolute top-4 left-4 z-50 p-2 rounded-full bg-black/20 backdrop-blur-sm 
           text-white hover:bg-black/30 transition-colors"
@@ -214,10 +258,9 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
         <X className="w-6 h-6" />
       </button>
 
-
       <div
         ref={flashRef}
-        className="absolute inset-0 bg-black pointer-events-none transition-opacity duration-150 z-20"
+        className="absolute inset-0 bg-white pointer-events-none transition-opacity duration-150 z-20"
         style={{ opacity: 0 }}
       />
 
@@ -225,6 +268,13 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
         count={photos.length} 
         limit={PHOTO_LIMIT}
         orientation={orientation}
+      />
+      
+      <FlashControls
+        isEnabled={isFlashEnabled}
+        onToggle={toggleFlash}
+        orientation={orientation}
+        facingMode={facingMode}
       />
 
       <video
@@ -241,7 +291,9 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
         zoomLevel={zoomLevel}
         facingMode={facingMode}
         onToggleVisibility={toggleZoomVisibility}
-        onZoomChange={handleZoomChange} orientation={"portrait"}      />
+        onZoomChange={handleZoomChange}
+        orientation={orientation}
+      />
       
       <CameraControls
         photoCount={photos.length}
