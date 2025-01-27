@@ -31,12 +31,17 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   const isValidSession = useCallback(async (code: string): Promise<boolean> => {
     const storedCode = localStorage.getItem("spevents-session");
+    const eventId = import.meta.env.VITE_EVENT_ID;
 
-    if (code === import.meta.env.EVENT_ID) {
-      return true;
-    }
+    // Debug log
+    console.log('Validating session:', {
+      code,
+      storedCode,
+      eventId,
+      isMatch: code === eventId || code === storedCode
+    });
 
-    return code === storedCode;
+    return code === eventId || code === storedCode;
   }, []);
 
   return (
