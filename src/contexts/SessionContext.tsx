@@ -32,7 +32,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const isValidSession = useCallback(async (code: string): Promise<boolean> => {
     const storedCode = localStorage.getItem('spevents-session');
     
-    // For mshaadi-2025, always valid
     if (code === import.meta.env.EVENT_ID) {
       return true;
     }
