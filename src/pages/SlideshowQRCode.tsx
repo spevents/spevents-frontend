@@ -34,7 +34,7 @@ export default function SlideshowQRCode() {
           <QRCodeSVG
             id="event-qr-code"
             value={getScanUrl()}
-            size={96}
+            size={128}
             level="H"
           />
         </div>
