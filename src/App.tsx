@@ -10,7 +10,7 @@ import { isHostDomain, isGuestDomain } from "./components/config/routes";
 import { GuestLanding } from "./pages/guest/GuestLanding";
 
 export default function App() {
-  // Debug logs
+  // Debug logs check
   console.log("Current domain:", window.location.hostname);
   console.log("Is guest domain?", isGuestDomain());
   console.log("Is host domain?", isHostDomain());
@@ -51,6 +51,7 @@ export default function App() {
   // Landing page for main domain (spevents.live)
   // TODO: Make landing similar to / an improved version of spevents.github.io, and going from 
   // spevents.live > app.spevents.live , etc
+
   return (
     <BrowserRouter>
       <Routes>
