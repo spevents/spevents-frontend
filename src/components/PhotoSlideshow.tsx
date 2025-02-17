@@ -266,9 +266,9 @@ export default function PhotoSlideshow() {
         );
       default:
         return (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-full max-w-7xl px-8">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 auto-rows-fr">
+          <div className="absolute inset-0 flex items-center justify-center pb-16">
+            <div className="w-full max-w-6xl px-8">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 auto-rows-fr">
                 <AnimatePresence mode="popLayout">
                   {displayedPhotos.map((photo) => (
                     <motion.div
