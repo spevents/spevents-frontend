@@ -17,7 +17,7 @@ export default function SlideshowQRCode() {
       if (eventId) {
         const isValid = await isValidSession(eventId);
         if (!isValid) {
-          console.error('Invalid session detected');
+          console.error('Invalid session');
         }
       }
     };
