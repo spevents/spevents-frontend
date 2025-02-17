@@ -2,8 +2,7 @@
   "version": 2,
   "git": {
     "deploymentEnabled": {
-      "testing-live-domain": true,
-      "main": false,
+      "main": true,
       "development": false
     }
   },
