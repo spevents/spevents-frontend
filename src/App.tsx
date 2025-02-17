@@ -48,7 +48,9 @@ export default function App() {
     );
   }
 
-  // Default landing page for main domain (spevents.live)
+  // Landing page for main domain (spevents.live)
+  // TODO: Make landing similar to / an improved version of spevents.github.io, and going from 
+  // spevents.live > app.spevents.live , etc
   return (
     <BrowserRouter>
       <Routes>
