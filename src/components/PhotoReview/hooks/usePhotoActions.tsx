@@ -10,9 +10,11 @@ export const usePhotoActions = (
   photos: Photo[],
   setPhotos: React.Dispatch<React.SetStateAction<Photo[]>>,
   currentPhotoIndex: number,
-  setCurrentPhotoIndex: React.Dispatch<React.SetStateAction<number>>
+  setCurrentPhotoIndex: React.Dispatch<React.SetStateAction<number>>,
 ) => {
-  const [processingPhotos, setProcessingPhotos] = useState<Set<number>>(new Set());
+  const [processingPhotos, setProcessingPhotos] = useState<Set<number>>(
+    new Set(),
+  );
   const [isUploading, setIsUploading] = useState(false);
 
   const handlePhotoAction = async (photo: Photo, isUpward: boolean) => {
@@ -49,7 +51,7 @@ export const usePhotoActions = (
         if (!uploadResponse.ok) throw new Error("Upload failed");
 
         const storedPhotos = JSON.parse(
-          localStorage.getItem("uploaded-photos") || "[]"
+          localStorage.getItem("uploaded-photos") || "[]",
         );
         storedPhotos.push(fileName);
         localStorage.setItem("uploaded-photos", JSON.stringify(storedPhotos));

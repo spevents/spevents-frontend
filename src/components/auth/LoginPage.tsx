@@ -1,12 +1,12 @@
 // src/components/auth/LoginPage.tsx
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { auth } from '../config/firebase';
-import { useNavigate } from 'react-router-dom';
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { auth } from "../config/firebase";
+import { useNavigate } from "react-router-dom";
 
 const ALLOWED_EMAIL = import.meta.env.VITE_ALLOWED_EMAIL;
 
 if (!ALLOWED_EMAIL) {
-  throw new Error('VITE_ALLOWED_EMAIL environment variable is not set');
+  throw new Error("VITE_ALLOWED_EMAIL environment variable is not set");
 }
 
 export const LoginPage = () => {
@@ -16,25 +16,25 @@ export const LoginPage = () => {
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      
+
       if (result.user.email === ALLOWED_EMAIL) {
-        localStorage.setItem('spevents-auth', result.user.email);
-        navigate('/host/gallery');
+        localStorage.setItem("spevents-auth", result.user.email);
+        navigate("/host/gallery");
       } else {
         await auth.signOut();
-        alert('Unauthorized access');
+        alert("Unauthorized access");
       }
     } catch (error: any) {
-      console.error('Firebase Auth Error:', {
+      console.error("Firebase Auth Error:", {
         code: error.code,
         message: error.message,
-        fullError: error
+        fullError: error,
       });
-      
-      if (error.code === 'auth/popup-closed-by-user') {
+
+      if (error.code === "auth/popup-closed-by-user") {
         return; // Don't show error for user-closed popup
       }
-      
+
       alert(`Authentication failed: ${error.message}`);
     }
   };
@@ -73,14 +73,14 @@ export const LoginPage = () => {
         </button>
 
         <div className="space-y-4 pt-4">
-          <a 
-            href="https://join.spevents.live" 
+          <a
+            href="https://join.spevents.live"
             className="block w-full px-6 py-3 bg-white/10 text-white rounded-lg text-center font-medium hover:bg-white/20 transition-colors"
           >
             Guest? Join here
           </a>
-          <a 
-            href="https://spevents.github.io" 
+          <a
+            href="https://spevents.github.io"
             className="block text-white/60 text-sm text-center hover:text-white transition-colors"
           >
             Learn more at spevents.github.io

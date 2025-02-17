@@ -107,12 +107,12 @@ export default function PhotoSlideshow() {
         const oldestPhoto = current.reduce(
           (oldest, photo) =>
             photo.expiryTime < oldest.expiryTime ? photo : oldest,
-          current[0]
+          current[0],
         );
 
         // Get available photos (not currently displayed)
         const availablePhotos = photosRef.current.filter(
-          (photo) => !current.some((p) => p.id === photo.id)
+          (photo) => !current.some((p) => p.id === photo.id),
         );
 
         // If no new photos, reuse older ones
@@ -135,13 +135,13 @@ export default function PhotoSlideshow() {
 
         // Replace the oldest photo with the new one
         return current.map((photo) =>
-          photo.transitionId === oldestPhoto.transitionId ? newPhoto : photo
+          photo.transitionId === oldestPhoto.transitionId ? newPhoto : photo,
         );
       }
 
       // If we're not at max photos yet, add a new one
       const availablePhotos = photosRef.current.filter(
-        (photo) => !current.some((p) => p.id === photo.id)
+        (photo) => !current.some((p) => p.id === photo.id),
       );
 
       if (availablePhotos.length === 0) return current;
@@ -188,20 +188,20 @@ export default function PhotoSlideshow() {
   useEffect(() => {
     // Clear any existing timeouts
     Object.values(timeoutsRef.current).forEach((timeout) =>
-      clearTimeout(timeout)
+      clearTimeout(timeout),
     );
     timeoutsRef.current = {};
 
     loadPhotosFromStorage();
     const pollInterval = setInterval(
       loadPhotosFromStorage,
-      PHOTO_REFRESH_INTERVAL
+      PHOTO_REFRESH_INTERVAL,
     );
 
     return () => {
       clearInterval(pollInterval);
       Object.values(timeoutsRef.current).forEach((timeout) =>
-        clearTimeout(timeout)
+        clearTimeout(timeout),
       );
     };
   }, []);
@@ -210,7 +210,7 @@ export default function PhotoSlideshow() {
     if (!isLoading && photos.length > 0) {
       // Clear any existing timeouts
       Object.values(timeoutsRef.current).forEach((timeout) =>
-        clearTimeout(timeout)
+        clearTimeout(timeout),
       );
       timeoutsRef.current = {};
 

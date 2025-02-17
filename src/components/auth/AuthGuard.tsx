@@ -1,9 +1,9 @@
 // src/components/auth/AuthGuard.tsx
-import { useState, useEffect } from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../config/firebase';
-import { isHostDomain } from '../config/routes';
+import { useState, useEffect } from "react";
+import { Navigate, Outlet } from "react-router-dom";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "../config/firebase";
+import { isHostDomain } from "../config/routes";
 
 const ALLOWED_EMAIL = import.meta.env.VITE_ALLOWED_EMAIL;
 

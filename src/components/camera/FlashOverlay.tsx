@@ -1,4 +1,4 @@
-import { forwardRef } from 'react';
+import { forwardRef } from "react";
 
 export const FlashOverlay = forwardRef<HTMLDivElement>((_, ref) => (
   <div
@@ -8,4 +8,4 @@ export const FlashOverlay = forwardRef<HTMLDivElement>((_, ref) => (
   />
 ));
 
-FlashOverlay.displayName = 'FlashOverlay';
+FlashOverlay.displayName = "FlashOverlay";

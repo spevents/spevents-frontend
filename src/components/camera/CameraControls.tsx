@@ -21,13 +21,15 @@ export const CameraControls: React.FC<CameraControlsProps> = ({
   onFlip,
   onNavigateToReview,
 }) => {
-  const containerClass = orientation === 'landscape' 
-    ? 'absolute right-8 inset-y-0 flex flex-col justify-center items-center gap-8'
-    : 'absolute bottom-24 inset-x-0 p-8';
+  const containerClass =
+    orientation === "landscape"
+      ? "absolute right-8 inset-y-0 flex flex-col justify-center items-center gap-8"
+      : "absolute bottom-24 inset-x-0 p-8";
 
-  const controlsWrapperClass = orientation === 'landscape'
-    ? 'flex flex-col items-center gap-8'
-    : 'flex justify-between items-center max-w-lg mx-auto px-6';
+  const controlsWrapperClass =
+    orientation === "landscape"
+      ? "flex flex-col items-center gap-8"
+      : "flex justify-between items-center max-w-lg mx-auto px-6";
 
   return (
     <div className={containerClass}>

@@ -22,16 +22,24 @@ export const KeyboardHints: React.FC = () => {
         >
           <div className="flex items-center justify-center space-x-8">
             <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 border border-white/30 rounded flex items-center justify-center">←</div>
-              <div className="w-6 h-6 border border-white/30 rounded flex items-center justify-center">→</div>
+              <div className="w-6 h-6 border border-white/30 rounded flex items-center justify-center">
+                ←
+              </div>
+              <div className="w-6 h-6 border border-white/30 rounded flex items-center justify-center">
+                →
+              </div>
               <span>Navigate</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 border border-white/30 rounded flex items-center justify-center">↑</div>
+              <div className="w-6 h-6 border border-white/30 rounded flex items-center justify-center">
+                ↑
+              </div>
               <span>Upload</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 border border-white/30 rounded flex items-center justify-center">↓</div>
+              <div className="w-6 h-6 border border-white/30 rounded flex items-center justify-center">
+                ↓
+              </div>
               <span>Delete</span>
             </div>
           </div>

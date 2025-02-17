@@ -1,8 +1,16 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { Camera, Trophy, Grid, WandSparkles, ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { getSignedPhotoUrl } from '../../lib/aws';
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  Camera,
+  Trophy,
+  Grid,
+  WandSparkles,
+  ChevronLeft,
+  ChevronRight,
+  X,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { getSignedPhotoUrl } from "../../lib/aws";
 
 interface Photo {
   url: string;
@@ -21,16 +29,34 @@ export function GuestDashboard() {
   const { eventId } = useParams();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('gallery');
-  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState("gallery");
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(
+    null,
+  );
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
 
   const tabs: TabConfig[] = [
-    { id: 'gallery', icon: <Grid className="w-6 h-6 text-white font-bold" />, label: 'Gallery' },
-    { id: 'camera', icon: <Camera className="w-6 h-6 text-white font-bold" />, label: 'Camera' },
-    { id: 'create', icon: <WandSparkles className="w-6 h-6 text-white font-bold" />, label: 'Create' },
-    { id: 'prize', icon: <Trophy className="w-6 h-6 text-white font-bold" />, label: 'Prize' },
+    {
+      id: "gallery",
+      icon: <Grid className="w-6 h-6 text-white font-bold" />,
+      label: "Gallery",
+    },
+    {
+      id: "camera",
+      icon: <Camera className="w-6 h-6 text-white font-bold" />,
+      label: "Camera",
+    },
+    {
+      id: "create",
+      icon: <WandSparkles className="w-6 h-6 text-white font-bold" />,
+      label: "Create",
+    },
+    {
+      id: "prize",
+      icon: <Trophy className="w-6 h-6 text-white font-bold" />,
+      label: "Prize",
+    },
   ];
 
   useEffect(() => {
@@ -39,21 +65,23 @@ export function GuestDashboard() {
 
   const loadGuestPhotos = async () => {
     try {
-      const storedPhotos = JSON.parse(localStorage.getItem('uploaded-photos') || '[]');
+      const storedPhotos = JSON.parse(
+        localStorage.getItem("uploaded-photos") || "[]",
+      );
       if (storedPhotos.length > 0) {
-        if (typeof storedPhotos[0] === 'object' && storedPhotos[0].url) {
+        if (typeof storedPhotos[0] === "object" && storedPhotos[0].url) {
           setPhotos(storedPhotos);
         } else {
           const photoUrls = storedPhotos.map((fileName: string) => ({
             url: getSignedPhotoUrl(fileName),
             name: fileName,
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
           }));
           setPhotos(photoUrls);
         }
       }
     } catch (error) {
-      console.error('Error loading photos:', error);
+      console.error("Error loading photos:", error);
     } finally {
       setIsLoading(false);
     }
@@ -61,18 +89,18 @@ export function GuestDashboard() {
 
   const handleTabClick = (tabId: string) => {
     setActiveTab(tabId);
-    
+
     switch (tabId) {
-      case 'camera':
+      case "camera":
         navigate(`/${eventId}/guest/camera`);
         break;
-      case 'create':
+      case "create":
         navigate(`/${eventId}/guest/create`);
         break;
-      case 'prize':
+      case "prize":
         navigate(`/${eventId}/guest/feedback`);
         break;
-      case 'gallery':
+      case "gallery":
         navigate(`/${eventId}/guest`);
         break;
     }
@@ -90,7 +118,9 @@ export function GuestDashboard() {
 
   const handlePrevious = () => {
     if (selectedPhotoIndex !== null) {
-      setSelectedPhotoIndex((selectedPhotoIndex - 1 + photos.length) % photos.length);
+      setSelectedPhotoIndex(
+        (selectedPhotoIndex - 1 + photos.length) % photos.length,
+      );
     }
   };
 
@@ -123,7 +153,7 @@ export function GuestDashboard() {
     <div className="min-h-screen bg-gray-900">
       {/* Main Content */}
       <div className="pb-24">
-        {activeTab === 'gallery' && (
+        {activeTab === "gallery" && (
           <div className="px-4 pt-4">
             {isLoading ? (
               <div className="flex items-center justify-center h-48">
@@ -176,7 +206,7 @@ export function GuestDashboard() {
               }
             }}
           >
-            <div 
+            <div
               className="relative max-w-4xl w-full mx-4"
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
@@ -197,7 +227,7 @@ export function GuestDashboard() {
                 transition={{
                   type: "tween",
                   duration: 0.3,
-                  ease: "easeOut"
+                  ease: "easeOut",
                 }}
                 src={photos[selectedPhotoIndex].url}
                 alt="Selected photo"
@@ -237,8 +267,8 @@ export function GuestDashboard() {
                 onClick={() => handleTabClick(tab.id)}
                 className={`p-4 rounded-full relative ${
                   activeTab === tab.id
-                    ? 'text-white bg-white/10'
-                    : 'text-white/60 hover:text-white hover:bg-white/5'
+                    ? "text-white bg-white/10"
+                    : "text-white/60 hover:text-white hover:bg-white/5"
                 }`}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}

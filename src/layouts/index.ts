@@ -1,2 +1,2 @@
 // src/layouts/index.ts
-export { MainLayout } from './MainLayout';
+export { MainLayout } from "./MainLayout";

@@ -3,6 +3,7 @@ export interface ExtendedMediaTrackCapabilities extends MediaTrackCapabilities {
   torch?: boolean;
 }
 
-export interface ExtendedMediaTrackConstraintSet extends MediaTrackConstraintSet {
+export interface ExtendedMediaTrackConstraintSet
+  extends MediaTrackConstraintSet {
   torch?: boolean;
 }

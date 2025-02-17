@@ -25,10 +25,8 @@ export const ReviewComplete: React.FC = () => {
         transition={springConfig}
         className="w-full max-w-xs space-y-6 text-center"
       >
-        <h2 className="text-white text-xl font-medium">
-          All photos reviewed!
-        </h2>
-        
+        <h2 className="text-white text-xl font-medium">All photos reviewed!</h2>
+
         <div className="space-y-4">
           <motion.button
             whileHover={{ scale: 1.02 }}

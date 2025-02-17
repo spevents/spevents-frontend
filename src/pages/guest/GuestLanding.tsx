@@ -6,13 +6,16 @@ export const GuestLanding = () => {
         <div className="space-y-2">
           <h2 className="text-3xl font-bold text-white">Join an Event</h2>
           <p className="text-white/60">
-            Please scan your host's provided QR code to join an event.
-            Learn more at <a href="https://spevents.github.io" className="underline">spevents.github.io</a>
+            Please scan your host's provided QR code to join an event. Learn
+            more at{" "}
+            <a href="https://spevents.github.io" className="underline">
+              spevents.github.io
+            </a>
           </p>
         </div>
 
-        <a 
-          href="https://app.spevents.live" 
+        <a
+          href="https://app.spevents.live"
           className="block w-full px-6 py-3 bg-white text-gray-900 rounded-lg font-medium hover:bg-white/90 transition-colors"
         >
           Host? Sign in here

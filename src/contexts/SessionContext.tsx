@@ -14,7 +14,7 @@ const SessionContext = createContext<SessionContextType | undefined>(undefined);
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [sessionCode, setSessionCode] = useState<string | null>(() =>
-    localStorage.getItem("spevents-session")
+    localStorage.getItem("spevents-session"),
   );
   const [isHost, setIsHost] = useState(false);
 
@@ -33,9 +33,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     try {
       const storedCode = localStorage.getItem("spevents-session");
       const envEventId = import.meta.env.VITE_EVENT_ID;
-      
+
       // Enhanced debugging
-      console.log('Session Validation Check:', {
+      console.log("Session Validation Check:", {
         receivedCode: code,
         storedCode,
         envEventId,
@@ -43,21 +43,21 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         envEventIdType: typeof envEventId,
         exactMatch: code === envEventId,
         trimmedMatch: code.trim() === envEventId.trim(),
-        decodedMatch: decodeURIComponent(code) === envEventId
+        decodedMatch: decodeURIComponent(code) === envEventId,
       });
 
       // Try multiple matching strategies
-      const isMatch = 
+      const isMatch =
         code === envEventId ||
         code.trim() === envEventId.trim() ||
         decodeURIComponent(code) === envEventId ||
         code === storedCode;
 
-      console.log('Final match result:', isMatch);
-      
+      console.log("Final match result:", isMatch);
+
       return isMatch;
     } catch (error) {
-      console.error('Error in isValidSession:', error);
+      console.error("Error in isValidSession:", error);
       return false;
     }
   }, []);

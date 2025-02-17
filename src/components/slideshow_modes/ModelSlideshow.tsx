@@ -27,7 +27,11 @@ interface TableProps {
 }
 
 // Helper component to get camera and convert 3D position to screen coordinates
-const PhotoPositioner = ({ onCameraReady }: { onCameraReady: (camera: THREE.Camera) => void }) => {
+const PhotoPositioner = ({
+  onCameraReady,
+}: {
+  onCameraReady: (camera: THREE.Camera) => void;
+}) => {
   const { camera } = useThree();
 
   useEffect(() => {
@@ -82,10 +86,11 @@ const OpeningSequence = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.5 }}
         >
-          <span 
+          <span
             className="text-4xl md:text-5xl font-martel font-light tracking-wide"
             style={{
-              background: "linear-gradient(135deg, #e8dcc4 0%, #bf9b30 50%, #e8dcc4 100%)",
+              background:
+                "linear-gradient(135deg, #e8dcc4 0%, #bf9b30 50%, #e8dcc4 100%)",
               backgroundClip: "text",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
@@ -96,18 +101,19 @@ const OpeningSequence = () => {
           </span>
         </motion.div>
 
-        <motion.h1 
+        <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 2 }}
           className="text-9xl md:text-[11rem] font-cinzel font-black leading-tight"
           style={{
-            background: "linear-gradient(135deg, #bf9b30 0%, #e36414 50%, #bf9b30 100%)",
+            background:
+              "linear-gradient(135deg, #bf9b30 0%, #e36414 50%, #bf9b30 100%)",
             backgroundClip: "text",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             textShadow: "0 0 40px rgba(191,155,48,0.3)",
-            letterSpacing: "-0.02em"
+            letterSpacing: "-0.02em",
           }}
         >
           Mock Shaadi
@@ -125,7 +131,7 @@ const OpeningSequence = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 2, delay: 3 }}
         >
-          <span 
+          <span
             className="text-8xl md:text-[10rem] font-cinzel"
             style={{
               color: "#e8dcc4",
@@ -142,10 +148,11 @@ const OpeningSequence = () => {
           transition={{ duration: 1, delay: 3.5 }}
           className="mt-12"
         >
-          <span 
+          <span
             className="text-5xl md:text-7xl font-martel font-light tracking-wide"
             style={{
-              background: "linear-gradient(135deg, #e8dcc4 0%, #bf9b30 50%, #e8dcc4 100%)",
+              background:
+                "linear-gradient(135deg, #e8dcc4 0%, #bf9b30 50%, #e8dcc4 100%)",
               backgroundClip: "text",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
@@ -171,7 +178,12 @@ const OpeningSequence = () => {
   );
 };
 
-const Table: React.FC<TableProps> = ({ photos, tableIndex, position, camera }) => {
+const Table: React.FC<TableProps> = ({
+  photos,
+  tableIndex,
+  position,
+  camera,
+}) => {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const worldPos = new THREE.Vector3(...position);
@@ -193,8 +205,8 @@ const Table: React.FC<TableProps> = ({ photos, tableIndex, position, camera }) =
   if (!photo) return null;
 
   // Convert normalized device coordinates to pixel values
-  const x = (screenPos.x + 1) / 2 * window.innerWidth;
-  const y = -(screenPos.y - 1) / 2 * window.innerHeight;
+  const x = ((screenPos.x + 1) / 2) * window.innerWidth;
+  const y = (-(screenPos.y - 1) / 2) * window.innerHeight;
 
   // Scale based on Z distance (further objects appear smaller)
   const scale = Math.max(0.4, 1 - Math.abs(position[2]) / 50);
@@ -205,11 +217,11 @@ const Table: React.FC<TableProps> = ({ photos, tableIndex, position, camera }) =
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5, delay: tableIndex * 0.1 }}
       style={{
-        position: 'absolute',
+        position: "absolute",
         left: x,
         top: y,
         transform: `translate(-50%, -50%) scale(${scale})`,
-        zIndex: Math.round(1000 - position[2])
+        zIndex: Math.round(1000 - position[2]),
       }}
     >
       <AnimatePresence mode="wait">
@@ -238,10 +250,12 @@ const Table: React.FC<TableProps> = ({ photos, tableIndex, position, camera }) =
 const ModelSlideshow: React.FC<ModelSlideshowProps> = ({ photos }) => {
   const [showOpening, setShowOpening] = useState(true);
   const [showContent, setShowContent] = useState(false);
-  const [tables, setTables] = useState<Array<{
-    position: [number, number, number];
-    side: "bride" | "groom";
-  }>>([]);
+  const [tables, setTables] = useState<
+    Array<{
+      position: [number, number, number];
+      side: "bride" | "groom";
+    }>
+  >([]);
   const [camera, setCamera] = useState<THREE.Camera | null>(null);
 
   const handleCameraReady = (cam: THREE.Camera) => {
@@ -293,9 +307,7 @@ const ModelSlideshow: React.FC<ModelSlideshowProps> = ({ photos }) => {
         className="min-h-screen bg-[#790015] relative overflow-hidden"
         isMainContentVisible={showContent}
       >
-        <AnimatePresence>
-          {showOpening && <OpeningSequence />}
-        </AnimatePresence>
+        <AnimatePresence>{showOpening && <OpeningSequence />}</AnimatePresence>
 
         <AnimatePresence>
           {showContent && (
@@ -305,7 +317,7 @@ const ModelSlideshow: React.FC<ModelSlideshowProps> = ({ photos }) => {
               transition={{ duration: 1.5 }}
               className="relative w-full h-full"
             >
-            <Scene>
+              <Scene>
                 <PhotoPositioner onCameraReady={handleCameraReady} />
               </Scene>
 

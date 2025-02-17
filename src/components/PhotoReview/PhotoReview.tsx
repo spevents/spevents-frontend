@@ -69,20 +69,19 @@ const PhotoProgress: React.FC<{ total: number; current: number }> = ({
 
 // Review Complete Component
 const ReviewComplete: React.FC = () => {
-    const { eventId } = useParams();
-    const { baseUrl } = useNgrok();
-    const navigate = useNavigate();
-  
-  
-    const navigateWithBaseUrl = (path: string) => {
-      const fullPath = path === "/" ? `/${eventId}/guest` : `/${eventId}/guest${path}`;
-      if (window.innerWidth <= 768 && baseUrl) {
-        window.location.href = `${baseUrl}${fullPath}`;
-      } else {
-        navigate(fullPath);
-      }
-    };
+  const { eventId } = useParams();
+  const { baseUrl } = useNgrok();
+  const navigate = useNavigate();
 
+  const navigateWithBaseUrl = (path: string) => {
+    const fullPath =
+      path === "/" ? `/${eventId}/guest` : `/${eventId}/guest${path}`;
+    if (window.innerWidth <= 768 && baseUrl) {
+      window.location.href = `${baseUrl}${fullPath}`;
+    } else {
+      navigate(fullPath);
+    }
+  };
 
   return (
     <motion.div
@@ -130,7 +129,7 @@ const ReviewComplete: React.FC = () => {
 export default function PhotoReview() {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [processingPhotos, setProcessingPhotos] = useState<Set<number>>(
-    new Set()
+    new Set(),
   );
   const [dragPosition, setDragPosition] = useState<number>(0);
   const [screenHeight, setScreenHeight] = useState(0);
@@ -138,15 +137,14 @@ export default function PhotoReview() {
   const [isUploading, setIsUploading] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [exitDirection, setExitDirection] = useState<"up" | "down" | null>(
-    null
+    null,
   );
 
   const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(
-    null
+    null,
   );
   const [horizontalDrag, setHorizontalDrag] = useState(0);
   const [isHorizontalDragging, setIsHorizontalDragging] = useState(false);
-
 
   useEffect(() => {
     const updateScreenHeight = () => setScreenHeight(window.innerHeight);
@@ -241,7 +239,7 @@ export default function PhotoReview() {
 
         // Update session storage for temporary photos
         const tempPhotos = getTempPhotos().filter(
-          (p: Photo) => p.id !== photo.id
+          (p: Photo) => p.id !== photo.id,
         );
         storeTempPhotos(tempPhotos);
       } catch (error) {
@@ -267,7 +265,7 @@ export default function PhotoReview() {
 
       // Update session storage for temporary photos
       const tempPhotos = getTempPhotos().filter(
-        (p: Photo) => p.id !== photo.id
+        (p: Photo) => p.id !== photo.id,
       );
       storeTempPhotos(tempPhotos);
 
@@ -361,31 +359,31 @@ export default function PhotoReview() {
                     swipeDirection === "left"
                       ? -200
                       : swipeDirection === "right"
-                      ? 200
-                      : 0,
+                        ? 200
+                        : 0,
                 }}
                 animate={{
                   scale: isCurrentPhoto
                     ? 1
                     : isPrevPhoto || isNextPhoto
-                    ? 0.95
-                    : 0.9,
+                      ? 0.95
+                      : 0.9,
                   opacity: isCurrentPhoto ? 1 : isActive ? 0.7 : 0,
                   x: isCurrentPhoto
                     ? horizontalDrag
                     : isPrevPhoto
-                    ? -100 + horizontalDrag * 0.5
-                    : isNextPhoto
-                    ? 100 + horizontalDrag * 0.5
-                    : horizontalDrag * 0.1,
+                      ? -100 + horizontalDrag * 0.5
+                      : isNextPhoto
+                        ? 100 + horizontalDrag * 0.5
+                        : horizontalDrag * 0.1,
                   y: isCurrentPhoto ? dragPosition : index * -8,
                   rotateY: isCurrentPhoto
                     ? horizontalDrag * 0.05
                     : isPrevPhoto
-                    ? 5
-                    : isNextPhoto
-                    ? -5
-                    : 0,
+                      ? 5
+                      : isNextPhoto
+                        ? -5
+                        : 0,
                   transition: springConfig,
                 }}
                 exit={{
@@ -395,14 +393,14 @@ export default function PhotoReview() {
                     swipeDirection === "left"
                       ? 200
                       : swipeDirection === "right"
-                      ? -200
-                      : 0,
+                        ? -200
+                        : 0,
                   y:
                     exitDirection === "up"
                       ? -screenHeight
                       : exitDirection === "down"
-                      ? screenHeight
-                      : 0,
+                        ? screenHeight
+                        : 0,
                   transition: bounceTransition,
                 }}
                 drag={isCurrentPhoto}

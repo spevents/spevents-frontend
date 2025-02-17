@@ -25,7 +25,7 @@ export async function createCollage(images: string[]): Promise<string> {
             img.crossOrigin = "anonymous";
             img.onload = () => {
               console.log(
-                `Successfully loaded image: ${url.substring(0, 50)}...`
+                `Successfully loaded image: ${url.substring(0, 50)}...`,
               );
               resolve(img);
             };
@@ -34,8 +34,8 @@ export async function createCollage(images: string[]): Promise<string> {
               reject(new Error(`Failed to load image: ${url}`));
             };
             img.src = url;
-          })
-      )
+          }),
+      ),
     );
 
     // Draw images in a grid with padding
@@ -52,7 +52,7 @@ export async function createCollage(images: string[]): Promise<string> {
         // Calculate aspect ratio preserving dimensions
         const scale = Math.min(
           effectiveSize / img.width,
-          effectiveSize / img.height
+          effectiveSize / img.height,
         );
         const width = img.width * scale;
         const height = img.height * scale;
@@ -69,7 +69,7 @@ export async function createCollage(images: string[]): Promise<string> {
           x + (offsetX - imagePadding),
           y + (offsetY - imagePadding),
           width,
-          height
+          height,
         );
       } catch (err) {
         console.error("Error drawing image:", err);
@@ -93,7 +93,7 @@ export async function createCollage(images: string[]): Promise<string> {
       watermarkX - metrics.width - watermarkPadding,
       watermarkY - watermarkSize,
       metrics.width + watermarkPadding * 2,
-      watermarkSize + watermarkPadding
+      watermarkSize + watermarkPadding,
     );
 
     // Draw watermark text

@@ -1,6 +1,14 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, LayoutGrid, Clapperboard, Camera, Award, Grid, WandSparkles } from "lucide-react";
+import {
+  ChevronLeft,
+  LayoutGrid,
+  Clapperboard,
+  Camera,
+  Award,
+  Grid,
+  WandSparkles,
+} from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import GridCollage from "./GridCollage";
 import MockShaadiCollage from "./MockShaadiCollage";
@@ -18,44 +26,64 @@ export function CollageCreator() {
   const { eventId } = useParams();
   const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
   const [activeCollage, setActiveCollage] = useState<CollageType>(null);
-  const [photos, setPhotos] = useState<Array<{ url: string; name: string }>>([]);
+  const [photos, setPhotos] = useState<Array<{ url: string; name: string }>>(
+    [],
+  );
   const [photoUrls, setPhotoUrls] = useState<{ [key: string]: string }>({});
 
   const tabs: TabConfig[] = [
-    { id: 'gallery', icon: <Grid className="w-6 h-6 text-white font-bold" />, label: 'Gallery' },
-    { id: 'camera', icon: <Camera className="w-6 h-6 text-white font-bold" />, label: 'Camera' },
-    { id: 'create', icon: <WandSparkles className="w-6 h-6 text-white font-bold" />, label: 'Create' },
-    { id: 'prize', icon: <Award className="w-6 h-6 text-white font-bold" />, label: 'Prize' },
+    {
+      id: "gallery",
+      icon: <Grid className="w-6 h-6 text-white font-bold" />,
+      label: "Gallery",
+    },
+    {
+      id: "camera",
+      icon: <Camera className="w-6 h-6 text-white font-bold" />,
+      label: "Camera",
+    },
+    {
+      id: "create",
+      icon: <WandSparkles className="w-6 h-6 text-white font-bold" />,
+      label: "Create",
+    },
+    {
+      id: "prize",
+      icon: <Award className="w-6 h-6 text-white font-bold" />,
+      label: "Prize",
+    },
   ];
 
   useEffect(() => {
     // Load photos from localStorage
     try {
-      const storedPhotos = JSON.parse(localStorage.getItem('uploaded-photos') || '[]');
+      const storedPhotos = JSON.parse(
+        localStorage.getItem("uploaded-photos") || "[]",
+      );
       setPhotos(storedPhotos);
-      
+
       const urlMap: { [key: string]: string } = {};
       storedPhotos.forEach((photo: { url: string; name: string }) => {
         urlMap[photo.name] = photo.url;
       });
       setPhotoUrls(urlMap);
     } catch (error) {
-      console.error('Error loading photos:', error);
+      console.error("Error loading photos:", error);
     }
   }, []);
 
   const handleTabClick = (tabId: string) => {
     switch (tabId) {
-      case 'camera':
+      case "camera":
         navigate(`/${eventId}/guest/camera`);
         break;
-      case 'create':
+      case "create":
         // Already on create page
         break;
-      case 'prize':
+      case "prize":
         navigate(`/${eventId}/guest/feedback`);
         break;
-      case 'gallery':
+      case "gallery":
         navigate(`/${eventId}/guest`);
         break;
     }
@@ -177,9 +205,9 @@ export function CollageCreator() {
                 key={tab.id}
                 onClick={() => handleTabClick(tab.id)}
                 className={`p-4 rounded-full relative ${
-                  tab.id === 'create'
-                    ? 'text-white bg-white/10'
-                    : 'text-white/60 hover:text-white hover:bg-white/5'
+                  tab.id === "create"
+                    ? "text-white bg-white/10"
+                    : "text-white/60 hover:text-white hover:bg-white/5"
                 }`}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}

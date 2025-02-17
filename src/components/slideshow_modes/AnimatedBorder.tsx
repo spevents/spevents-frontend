@@ -1,5 +1,5 @@
-import React, { useEffect, useState, ReactNode } from 'react';
-import { motion, useScroll, useSpring, useTransform } from 'framer-motion';
+import React, { useEffect, useState, ReactNode } from "react";
+import { motion, useScroll, useSpring, useTransform } from "framer-motion";
 
 interface AnimatedBorderProps {
   children: ReactNode;
@@ -7,24 +7,24 @@ interface AnimatedBorderProps {
   isMainContentVisible?: boolean;
 }
 
-const AnimatedBorder: React.FC<AnimatedBorderProps> = ({ 
-  children, 
-  className = '',
-  isMainContentVisible = false 
+const AnimatedBorder: React.FC<AnimatedBorderProps> = ({
+  children,
+  className = "",
+  isMainContentVisible = false,
 }) => {
   const [isClient, setIsClient] = useState(false);
   const { scrollYProgress } = useScroll();
   const pathLength = useSpring(scrollYProgress, {
     stiffness: 400,
-    damping: 90
+    damping: 90,
   });
 
   // Adjust opacity based on both scroll position and main content visibility
   const baseOpacity = isMainContentVisible ? 0.3 : 1;
   const borderOpacity = useTransform(
-    pathLength, 
-    [0, 0.5, 1], 
-    [baseOpacity, baseOpacity * 0.6, baseOpacity * 0.3]
+    pathLength,
+    [0, 0.5, 1],
+    [baseOpacity, baseOpacity * 0.6, baseOpacity * 0.3],
   );
 
   useEffect(() => {
@@ -48,18 +48,18 @@ const AnimatedBorder: React.FC<AnimatedBorderProps> = ({
             [0, 0], // Top-left
             [100, 0], // Top-right
             [0, 100], // Bottom-left
-            [100, 100] // Bottom-right
+            [100, 100], // Bottom-right
           ].map(([x, y], index) => (
             <motion.path
               key={`henna-corner-${index}`}
               d={`
                 M ${x},${y}
-                c ${x === 0 ? '10' : '-10'},0 ${x === 0 ? '15' : '-15'},5 ${x === 0 ? '20' : '-20'},10
-                c ${x === 0 ? '-5' : '5'},-3 ${x === 0 ? '-8' : '8'},-6 ${x === 0 ? '-10' : '10'},-8
-                c ${x === 0 ? '8' : '-8'},4 ${x === 0 ? '12' : '-12'},8 ${x === 0 ? '15' : '-15'},12
-                c ${x === 0 ? '-12' : '12'},-6 ${x === 0 ? '-18' : '18'},-12 ${x === 0 ? '-20' : '20'},-15
-                ${y === 0 ? 'c 0,8 -2,15 -5,20' : 'c 0,-8 -2,-15 -5,-20'}
-                ${y === 0 ? 'c 5,0 10,-2 15,-5' : 'c 5,0 10,2 15,5'}
+                c ${x === 0 ? "10" : "-10"},0 ${x === 0 ? "15" : "-15"},5 ${x === 0 ? "20" : "-20"},10
+                c ${x === 0 ? "-5" : "5"},-3 ${x === 0 ? "-8" : "8"},-6 ${x === 0 ? "-10" : "10"},-8
+                c ${x === 0 ? "8" : "-8"},4 ${x === 0 ? "12" : "-12"},8 ${x === 0 ? "15" : "-15"},12
+                c ${x === 0 ? "-12" : "12"},-6 ${x === 0 ? "-18" : "18"},-12 ${x === 0 ? "-20" : "20"},-15
+                ${y === 0 ? "c 0,8 -2,15 -5,20" : "c 0,-8 -2,-15 -5,-20"}
+                ${y === 0 ? "c 5,0 10,-2 15,-5" : "c 5,0 10,2 15,5"}
               `}
               stroke="url(#borderGradient)"
               strokeWidth="0.3"
@@ -82,14 +82,14 @@ const AnimatedBorder: React.FC<AnimatedBorderProps> = ({
               <motion.path
                 d={`
                   M ${pos},20 
-                  c ${pos === 0 ? '10' : '-10'},5 ${pos === 0 ? '5' : '-5'},15 ${pos === 0 ? '15' : '-15'},20
-                  c ${pos === 0 ? '-10' : '10'},-5 ${pos === 0 ? '-5' : '5'},-15 ${pos === 0 ? '-15' : '15'},-20
+                  c ${pos === 0 ? "10" : "-10"},5 ${pos === 0 ? "5" : "-5"},15 ${pos === 0 ? "15" : "-15"},20
+                  c ${pos === 0 ? "-10" : "10"},-5 ${pos === 0 ? "-5" : "5"},-15 ${pos === 0 ? "-15" : "15"},-20
                   m 0,30
-                  c ${pos === 0 ? '8' : '-8'},3 ${pos === 0 ? '4' : '-4'},9 ${pos === 0 ? '12' : '-12'},12
-                  c ${pos === 0 ? '-8' : '8'},-3 ${pos === 0 ? '-4' : '4'},-9 ${pos === 0 ? '-12' : '12'},-12
+                  c ${pos === 0 ? "8" : "-8"},3 ${pos === 0 ? "4" : "-4"},9 ${pos === 0 ? "12" : "-12"},12
+                  c ${pos === 0 ? "-8" : "8"},-3 ${pos === 0 ? "-4" : "4"},-9 ${pos === 0 ? "-12" : "12"},-12
                   m 0,30
-                  c ${pos === 0 ? '10' : '-10'},5 ${pos === 0 ? '5' : '-5'},15 ${pos === 0 ? '15' : '-15'},20
-                  c ${pos === 0 ? '-10' : '10'},-5 ${pos === 0 ? '-5' : '5'},-15 ${pos === 0 ? '-15' : '15'},-20
+                  c ${pos === 0 ? "10" : "-10"},5 ${pos === 0 ? "5" : "-5"},15 ${pos === 0 ? "15" : "-15"},20
+                  c ${pos === 0 ? "-10" : "10"},-5 ${pos === 0 ? "-5" : "5"},-15 ${pos === 0 ? "-15" : "15"},-20
                 `}
                 stroke="url(#borderGradient)"
                 strokeWidth="0.3"
@@ -139,7 +139,13 @@ const AnimatedBorder: React.FC<AnimatedBorderProps> = ({
 
           {/* Enhanced gradient definition */}
           <defs>
-            <linearGradient id="borderGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <linearGradient
+              id="borderGradient"
+              x1="0%"
+              y1="0%"
+              x2="100%"
+              y2="100%"
+            >
               <stop offset="0%" stopColor="#bf9b30" />
               <stop offset="25%" stopColor="#e36414" />
               <stop offset="50%" stopColor="#bf9b30" />

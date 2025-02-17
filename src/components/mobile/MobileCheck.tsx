@@ -1,6 +1,6 @@
 // src/components/MobileCheck.tsx
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export const isMobileDevice = () => {
   const userAgent = navigator.userAgent || navigator.vendor;
@@ -16,7 +16,7 @@ export function MobileCheck({ children }: MobileCheckProps) {
 
   useEffect(() => {
     if (!isMobileDevice()) {
-      navigate('/');
+      navigate("/");
     }
   }, [navigate]);
 

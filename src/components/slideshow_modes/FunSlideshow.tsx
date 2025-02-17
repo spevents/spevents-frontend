@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { AnimatePresence } from "motion/react";
-import * as motion from "motion/react-client"
+import * as motion from "motion/react-client";
 
 interface FunPhoto {
   src: string;
@@ -26,7 +26,7 @@ interface Props {
 }
 
 const PHOTO_DISPLAY_TIME = 7000 + Math.random() * 2000; // Between 10-15 seconds
-const TRANSITION_DURATION =  3000; // 2 seconds for fade
+const TRANSITION_DURATION = 3000; // 2 seconds for fade
 const MAX_PHOTOS = 20;
 
 function getRandomAspectRatio(): "square" | "portrait" | "landscape" {
@@ -40,7 +40,7 @@ function getRandomAspectRatio(): "square" | "portrait" | "landscape" {
 function getPhotoSize(
   windowWidth: number,
   windowHeight: number,
-  aspect: "square" | "portrait" | "landscape"
+  aspect: "square" | "portrait" | "landscape",
 ): {
   width: number;
   height: number;
@@ -78,7 +78,7 @@ function getRandomPosition(
   containerWidth: number,
   containerHeight: number,
   photoSize: { width: number; height: number },
-  existingPhotos: FunPhoto[]
+  existingPhotos: FunPhoto[],
 ) {
   const margin = 90;
   const maxAttempts = 100;
@@ -112,7 +112,7 @@ function getRandomPosition(
     const hasOverlap = existingPhotos.some((existing) => {
       const distance = Math.sqrt(
         Math.pow(existing.position.x - x, 2) +
-          Math.pow(existing.position.y - y, 2)
+          Math.pow(existing.position.y - y, 2),
       );
       return distance < minDistance;
     });
@@ -138,19 +138,19 @@ function processFunPhoto(
   photo: { src: string; id: string; createdAt: string },
   containerDimensions: { width: number; height: number },
   existingPhotos: FunPhoto[],
-  now: number
+  now: number,
 ): FunPhoto {
   const aspect = getRandomAspectRatio();
   const size = getPhotoSize(
     containerDimensions.width,
     containerDimensions.height,
-    aspect
+    aspect,
   );
   const position = getRandomPosition(
     containerDimensions.width,
     containerDimensions.height,
     size,
-    existingPhotos
+    existingPhotos,
   );
 
   return {
@@ -167,7 +167,6 @@ export default function FunSlideshow({ photos, containerDimensions }: Props) {
   const timeoutsRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
   const photosRef = useRef(photos);
   const dimensionsRef = useRef(containerDimensions);
-
 
   // Update refs when props change
   useEffect(() => {
@@ -186,7 +185,7 @@ export default function FunSlideshow({ photos, containerDimensions }: Props) {
       if (current.length >= MAX_PHOTOS) return current;
 
       const availablePhotos = photosRef.current.filter(
-        (photo) => !current.find((p) => p.id === photo.id)
+        (photo) => !current.find((p) => p.id === photo.id),
       );
 
       if (availablePhotos.length === 0) return current;
@@ -198,15 +197,15 @@ export default function FunSlideshow({ photos, containerDimensions }: Props) {
         randomPhoto,
         dimensionsRef.current,
         current,
-        now
+        now,
       );
 
       // Schedule removal of this photo
       const removalJitter = Math.random() * 1000; // Up to 1 second extra random delay
-      
+
       timeoutsRef.current[newPhoto.transitionId] = setTimeout(() => {
         setDisplayedPhotos((photos) =>
-          photos.filter((p) => p.transitionId !== newPhoto.transitionId)
+          photos.filter((p) => p.transitionId !== newPhoto.transitionId),
         );
         delete timeoutsRef.current[newPhoto.transitionId];
         // Add a new photo with a slight delay to desynchronize
@@ -220,7 +219,7 @@ export default function FunSlideshow({ photos, containerDimensions }: Props) {
   useEffect(() => {
     // Clear any existing timeouts
     Object.values(timeoutsRef.current).forEach((timeout) =>
-      clearTimeout(timeout)
+      clearTimeout(timeout),
     );
     timeoutsRef.current = {};
 
@@ -232,7 +231,7 @@ export default function FunSlideshow({ photos, containerDimensions }: Props) {
 
     return () => {
       Object.values(timeoutsRef.current).forEach((timeout) =>
-        clearTimeout(timeout)
+        clearTimeout(timeout),
       );
     };
   }, []);
@@ -242,12 +241,11 @@ export default function FunSlideshow({ photos, containerDimensions }: Props) {
         {displayedPhotos.map((photo) => (
           <motion.div
             key={photo.transitionId}
-            initial={{ opacity: 0, scale: 0}}
-            animate={{ opacity: 1, scale: 1}}
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0 }} // Exit animation
             transition={{
-              scale: { type: "spring", visualDuration: 0.4, bounce: 0.2},
-
+              scale: { type: "spring", visualDuration: 0.4, bounce: 0.2 },
             }}
             style={{
               position: "absolute",

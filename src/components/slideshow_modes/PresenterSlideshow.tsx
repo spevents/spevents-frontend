@@ -1,6 +1,6 @@
 // src/components/slideshow_modes/PresenterSlideshow.tsx
-import { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Props {
   photos: Array<{ src: string; id: string; createdAt: string }>;
@@ -18,19 +18,23 @@ export default function PresenterSlideshow({ photos, hideUI = false }: Props) {
   const photoSets = useMemo(() => {
     const sets = [];
     let currentSet = [];
-    
+
     // Helper function to get wrapped index
     const getWrappedPhoto = (index: number) => photos[index % photos.length];
-    
-    for (let i = 0; i < Math.ceil(photos.length / PHOTOS_PER_SET) * PHOTOS_PER_SET; i++) {
+
+    for (
+      let i = 0;
+      i < Math.ceil(photos.length / PHOTOS_PER_SET) * PHOTOS_PER_SET;
+      i++
+    ) {
       currentSet.push(getWrappedPhoto(i));
-      
+
       if (currentSet.length === PHOTOS_PER_SET) {
         sets.push(currentSet);
         currentSet = [];
       }
     }
-    
+
     return sets;
   }, [photos]);
 
@@ -41,8 +45,8 @@ export default function PresenterSlideshow({ photos, hideUI = false }: Props) {
 
     const interval = setInterval(() => {
       setIsTransitioning(true);
-      setCurrentSetIndex(prev => (prev + 1) % totalSets);
-      
+      setCurrentSetIndex((prev) => (prev + 1) % totalSets);
+
       // Reset transitioning state after animation completes
       setTimeout(() => setIsTransitioning(false), 1000);
     }, DISPLAY_DURATION);
@@ -53,20 +57,16 @@ export default function PresenterSlideshow({ photos, hideUI = false }: Props) {
   const handleKeyDown = (event: KeyboardEvent) => {
     if (isTransitioning || totalSets <= 1) return;
 
-    if (event.key === 'ArrowLeft') {
-      setCurrentSetIndex(prev => 
-        prev === 0 ? totalSets - 1 : prev - 1
-      );
-    } else if (event.key === 'ArrowRight') {
-      setCurrentSetIndex(prev => 
-        (prev + 1) % totalSets
-      );
+    if (event.key === "ArrowLeft") {
+      setCurrentSetIndex((prev) => (prev === 0 ? totalSets - 1 : prev - 1));
+    } else if (event.key === "ArrowRight") {
+      setCurrentSetIndex((prev) => (prev + 1) % totalSets);
     }
   };
 
   useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [totalSets, isTransitioning]);
 
   if (photos.length === 0) {
@@ -87,7 +87,7 @@ export default function PresenterSlideshow({ photos, hideUI = false }: Props) {
           exit={{ opacity: 0, scale: 1.02 }}
           transition={{
             duration: 0.5,
-            ease: [0.4, 0, 0.2, 1]
+            ease: [0.4, 0, 0.2, 1],
           }}
           className="absolute inset-0 flex items-center justify-center p-8"
         >
@@ -101,7 +101,7 @@ export default function PresenterSlideshow({ photos, hideUI = false }: Props) {
                 transition={{
                   duration: 0.5,
                   delay: index * 0.1,
-                  ease: [0.4, 0, 0.2, 1]
+                  ease: [0.4, 0, 0.2, 1],
                 }}
                 className="relative aspect-[3/4] rounded-xl overflow-hidden"
               >
@@ -113,8 +113,10 @@ export default function PresenterSlideshow({ photos, hideUI = false }: Props) {
                     src={photo.src}
                     alt="Event photo"
                     className="w-full h-full object-cover"
-                    style={{ 
-                      filter: !hideUI ? 'drop-shadow(0 0 20px rgba(0,0,0,0.3))' : 'none'
+                    style={{
+                      filter: !hideUI
+                        ? "drop-shadow(0 0 20px rgba(0,0,0,0.3))"
+                        : "none",
                     }}
                   />
                 </div>
@@ -136,9 +138,9 @@ export default function PresenterSlideshow({ photos, hideUI = false }: Props) {
                   }
                 }}
                 className={`transition-all duration-300 rounded-full ${
-                  index === currentSetIndex 
-                    ? 'w-8 h-2 bg-white' 
-                    : 'w-2 h-2 bg-white/30 hover:bg-white/50'
+                  index === currentSetIndex
+                    ? "w-8 h-2 bg-white"
+                    : "w-2 h-2 bg-white/30 hover:bg-white/50"
                 }`}
               />
             ))}

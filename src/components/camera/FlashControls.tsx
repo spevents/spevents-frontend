@@ -1,7 +1,7 @@
-import React from 'react';
-import { Zap, ZapOff } from 'lucide-react';
-import { motion } from 'framer-motion';
-import type { Orientation } from './hooks/useOrientation';
+import React from "react";
+import { Zap, ZapOff } from "lucide-react";
+import { motion } from "framer-motion";
+import type { Orientation } from "./hooks/useOrientation";
 
 interface FlashControlsProps {
   isEnabled: boolean;
@@ -16,13 +16,12 @@ export const FlashControls: React.FC<FlashControlsProps> = ({
   orientation,
   facingMode,
 }) => {
-  const positionClass = orientation === 'landscape'
-    ? 'top-20 left-4'
-    : 'top-20 left-4';
+  const positionClass =
+    orientation === "landscape" ? "top-20 left-4" : "top-20 left-4";
 
   // Use a different icon for front-facing camera to indicate screen flash
   const Icon = isEnabled ? Zap : ZapOff;
-  const flashLabel = facingMode === 'user' ? 'Screen Flash' : 'Flash';
+  const flashLabel = facingMode === "user" ? "Screen Flash" : "Flash";
 
   return (
     <motion.button

@@ -1,13 +1,13 @@
-import React from 'react';
-import { QRCodeSVG } from 'qrcode.react';
-import { useSession } from '../contexts/SessionContext';
+import React from "react";
+import { QRCodeSVG } from "qrcode.react";
+import { useSession } from "../contexts/SessionContext";
 
 export default function SlideshowQRCode() {
   const eventId = import.meta.env.VITE_EVENT_ID;
   const { isValidSession } = useSession();
 
   const getScanUrl = () => {
-    if (!eventId) return '';
+    if (!eventId) return "";
     const encodedEventId = encodeURIComponent(eventId);
     return `https://join.spevents.live/${encodedEventId}/guest/camera`;
   };
@@ -17,7 +17,7 @@ export default function SlideshowQRCode() {
       if (eventId) {
         const isValid = await isValidSession(eventId);
         if (!isValid) {
-          console.error('Invalid session');
+          console.error("Invalid session");
         }
       }
     };

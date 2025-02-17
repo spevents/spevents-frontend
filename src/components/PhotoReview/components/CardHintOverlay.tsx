@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowDown, ArrowUp, Info } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowDown, ArrowUp, Info } from "lucide-react";
 
 interface CardHintOverlayProps {
   isFirstVisit: boolean;
 }
 
-export const CardHintOverlay: React.FC<CardHintOverlayProps> = ({ isFirstVisit }) => {
+export const CardHintOverlay: React.FC<CardHintOverlayProps> = ({
+  isFirstVisit,
+}) => {
   const [showHint, setShowHint] = useState(isFirstVisit);
   const [hasInteracted, setHasInteracted] = useState(false);
 
@@ -18,12 +20,12 @@ export const CardHintOverlay: React.FC<CardHintOverlayProps> = ({ isFirstVisit }
       }
     };
 
-    window.addEventListener('touchstart', handleInteraction);
-    window.addEventListener('mousedown', handleInteraction);
+    window.addEventListener("touchstart", handleInteraction);
+    window.addEventListener("mousedown", handleInteraction);
 
     return () => {
-      window.removeEventListener('touchstart', handleInteraction);
-      window.removeEventListener('mousedown', handleInteraction);
+      window.removeEventListener("touchstart", handleInteraction);
+      window.removeEventListener("mousedown", handleInteraction);
     };
   }, [hasInteracted]);
 
@@ -59,16 +61,18 @@ export const CardHintOverlay: React.FC<CardHintOverlayProps> = ({ isFirstVisit }
               </motion.div>
             </div>
           </motion.div>
-        ) : hasInteracted && (
-          <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="absolute top-4 right-4 z-30 p-2 rounded-full bg-white/10 backdrop-blur-sm 
+        ) : (
+          hasInteracted && (
+            <motion.button
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="absolute top-4 right-4 z-30 p-2 rounded-full bg-white/10 backdrop-blur-sm 
               hover:bg-white/20 transition-colors"
-            onClick={() => setShowHint(true)}
-          >
-            <Info className="w-5 h-5 text-white" />
-          </motion.button>
+              onClick={() => setShowHint(true)}
+            >
+              <Info className="w-5 h-5 text-white" />
+            </motion.button>
+          )
         )}
       </AnimatePresence>
     </>

@@ -1,4 +1,11 @@
-import { ArrowLeft, Camera, Award, Grid, WandSparkles, MessageCircleQuestion } from "lucide-react";
+import {
+  ArrowLeft,
+  Camera,
+  Award,
+  Grid,
+  WandSparkles,
+  MessageCircleQuestion,
+} from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -13,24 +20,40 @@ export default function FeedbackPage() {
   const navigate = useNavigate();
 
   const tabs: TabConfig[] = [
-    { id: 'gallery', icon: <Grid className="w-6 h-6 text-white font-bold" />, label: 'Gallery' },
-    { id: 'camera', icon: <Camera className="w-6 h-6 text-white font-bold" />, label: 'Camera' },
-    { id: 'create', icon: <WandSparkles className="w-6 h-6 text-white font-bold" />, label: 'Create' },
-    { id: 'prize', icon: <Award className="w-6 h-6 text-white font-bold" />, label: 'Prize' },
+    {
+      id: "gallery",
+      icon: <Grid className="w-6 h-6 text-white font-bold" />,
+      label: "Gallery",
+    },
+    {
+      id: "camera",
+      icon: <Camera className="w-6 h-6 text-white font-bold" />,
+      label: "Camera",
+    },
+    {
+      id: "create",
+      icon: <WandSparkles className="w-6 h-6 text-white font-bold" />,
+      label: "Create",
+    },
+    {
+      id: "prize",
+      icon: <Award className="w-6 h-6 text-white font-bold" />,
+      label: "Prize",
+    },
   ];
 
   const handleTabClick = (tabId: string) => {
     switch (tabId) {
-      case 'camera':
+      case "camera":
         navigate(`/${eventId}/guest/camera`);
         break;
-      case 'create':
+      case "create":
         navigate(`/${eventId}/guest/create`);
         break;
-      case 'prize':
+      case "prize":
         navigate(`/${eventId}/guest/feedback`);
         break;
-      case 'gallery':
+      case "gallery":
         navigate(`/${eventId}/guest`);
         break;
     }
@@ -108,9 +131,9 @@ export default function FeedbackPage() {
                 key={tab.id}
                 onClick={() => handleTabClick(tab.id)}
                 className={`p-4 rounded-full relative ${
-                  tab.id === 'prize'
-                    ? 'text-timberwolf bg-fern-green/30'
-                    : 'text-sage hover:text-timberwolf hover:bg-fern-green/20'
+                  tab.id === "prize"
+                    ? "text-timberwolf bg-fern-green/30"
+                    : "text-sage hover:text-timberwolf hover:bg-fern-green/20"
                 }`}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}

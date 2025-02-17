@@ -1,5 +1,5 @@
 // src/components/Logo.tsx
-import { FC } from 'react';
+import { FC } from "react";
 
 interface LogoProps {
   className?: string;
@@ -7,11 +7,7 @@ interface LogoProps {
 
 export const Logo: FC<LogoProps> = ({ className = "w-auto h-8" }) => {
   return (
-    <svg 
-      viewBox="0 0 1200 200" 
-      className={className}
-      fill="currentColor"
-    >
+    <svg viewBox="0 0 1200 200" className={className} fill="currentColor">
       <text
         x="0"
         y="150"

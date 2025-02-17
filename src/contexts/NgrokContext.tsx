@@ -1,5 +1,5 @@
 // src/contexts/NgrokContext.tsx
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from "react";
 
 interface NgrokContextType {
   baseUrl: string;
@@ -7,12 +7,12 @@ interface NgrokContextType {
 }
 
 const NgrokContext = createContext<NgrokContextType>({
-  baseUrl: '',
-  setBaseUrl: () => {}
+  baseUrl: "",
+  setBaseUrl: () => {},
 });
 
 export const NgrokProvider = ({ children }: { children: React.ReactNode }) => {
-  const [baseUrl, setBaseUrl] = useState('');
+  const [baseUrl, setBaseUrl] = useState("");
 
   // You can set this manually when ngrok starts
   useEffect(() => {

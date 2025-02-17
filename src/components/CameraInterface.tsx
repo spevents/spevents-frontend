@@ -20,7 +20,7 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
   const [_hasPermission, setHasPermission] = useState(false);
   const [photos, setPhotos] = useState<Array<{ id: number; url: string }>>([]);
   const [facingMode, setFacingMode] = useState<"environment" | "user">(
-    "environment"
+    "environment",
   );
   const [isCapturing, setIsCapturing] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -110,7 +110,7 @@ const CameraInterface: React.FC<CameraInterfaceProps> = ({ initialMode }) => {
     setPhotos((prev) => [...prev, newPhoto]);
 
     const sessionPhotos = JSON.parse(
-      sessionStorage.getItem("temp-photos") || "[]"
+      sessionStorage.getItem("temp-photos") || "[]",
     );
     sessionPhotos.push(newPhoto);
     sessionStorage.setItem("temp-photos", JSON.stringify(sessionPhotos));

@@ -62,7 +62,7 @@ export async function listPhotos(): Promise<string[]> {
       .map((item) => item.Key!)
       .filter(
         (key) =>
-          key.endsWith(".jpg") || key.endsWith(".jpeg") || key.endsWith(".png")
+          key.endsWith(".jpg") || key.endsWith(".jpeg") || key.endsWith(".png"),
       );
   } catch (error) {
     console.error("Error listing photos:", error);
@@ -100,7 +100,7 @@ export const LOCAL_STORAGE_KEYS = {
 
 export function storeUploadedPhoto(fileName: string) {
   const storedPhotos = JSON.parse(
-    localStorage.getItem(LOCAL_STORAGE_KEYS.UPLOADED_PHOTOS) || "[]"
+    localStorage.getItem(LOCAL_STORAGE_KEYS.UPLOADED_PHOTOS) || "[]",
   );
   storedPhotos.push({
     name: fileName,
@@ -109,26 +109,26 @@ export function storeUploadedPhoto(fileName: string) {
   });
   localStorage.setItem(
     LOCAL_STORAGE_KEYS.UPLOADED_PHOTOS,
-    JSON.stringify(storedPhotos)
+    JSON.stringify(storedPhotos),
   );
 }
 
 export function getUploadedPhotos() {
   return JSON.parse(
-    localStorage.getItem(LOCAL_STORAGE_KEYS.UPLOADED_PHOTOS) || "[]"
+    localStorage.getItem(LOCAL_STORAGE_KEYS.UPLOADED_PHOTOS) || "[]",
   );
 }
 
 export function storeTempPhotos(photos: any[]) {
   sessionStorage.setItem(
     LOCAL_STORAGE_KEYS.TEMP_PHOTOS,
-    JSON.stringify(photos)
+    JSON.stringify(photos),
   );
 }
 
 export function getTempPhotos() {
   return JSON.parse(
-    sessionStorage.getItem(LOCAL_STORAGE_KEYS.TEMP_PHOTOS) || "[]"
+    sessionStorage.getItem(LOCAL_STORAGE_KEYS.TEMP_PHOTOS) || "[]",
   );
 }
 
@@ -141,7 +141,7 @@ export async function deleteMultipleFiles(fileNames: string[]): Promise<void> {
           Key: fileName,
         });
         return s3Client.send(command);
-      })
+      }),
     );
   } catch (error) {
     console.error("Error deleting multiple files:", error);

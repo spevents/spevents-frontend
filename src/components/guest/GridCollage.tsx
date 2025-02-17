@@ -31,7 +31,7 @@ const GridCollage = ({ selectedPhotos, onClose }: GridCollageProps) => {
             const fileName = photoUrl.split("/").pop();
             if (!fileName) throw new Error("Invalid photo URL");
             return await getSignedPhotoUrl(fileName);
-          })
+          }),
         );
         setSignedUrls(urls);
       } catch (error) {
@@ -76,13 +76,13 @@ const GridCollage = ({ selectedPhotos, onClose }: GridCollageProps) => {
               img.onerror = (err) => {
                 console.error(
                   `Failed to load image: ${url.substring(0, 50)}...`,
-                  err
+                  err,
                 );
                 reject(new Error(`Failed to load image: ${url}`));
               };
               img.src = url;
-            })
-        )
+            }),
+        ),
       );
 
       // Draw images in a grid with padding and borders
@@ -101,7 +101,7 @@ const GridCollage = ({ selectedPhotos, onClose }: GridCollageProps) => {
           // Calculate aspect ratio preserving dimensions
           const scale = Math.min(
             effectiveSize / img.width,
-            effectiveSize / img.height
+            effectiveSize / img.height,
           );
           const width = img.width * scale;
           const height = img.height * scale;
@@ -114,7 +114,7 @@ const GridCollage = ({ selectedPhotos, onClose }: GridCollageProps) => {
             col * baseSize + padding,
             row * baseSize + padding,
             baseSize - padding * 2,
-            baseSize - padding * 2
+            baseSize - padding * 2,
           );
 
           // Draw image
@@ -123,7 +123,7 @@ const GridCollage = ({ selectedPhotos, onClose }: GridCollageProps) => {
             x + (offsetX - padding - borderWidth),
             y + (offsetY - padding - borderWidth),
             width,
-            height
+            height,
           );
         } catch (err) {
           console.error("Error drawing image:", err);
@@ -148,7 +148,7 @@ const GridCollage = ({ selectedPhotos, onClose }: GridCollageProps) => {
         watermarkX - metrics.width - watermarkPadding,
         watermarkY - watermarkSize,
         metrics.width + watermarkPadding * 2,
-        watermarkSize + watermarkPadding
+        watermarkSize + watermarkPadding,
       );
 
       // Watermark text
@@ -175,10 +175,6 @@ const GridCollage = ({ selectedPhotos, onClose }: GridCollageProps) => {
     }
   };
 
-
-
-
-  
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
@@ -192,7 +188,7 @@ const GridCollage = ({ selectedPhotos, onClose }: GridCollageProps) => {
           </button>
           <h1 className="ml-4 text-lg font-medium text-white">Grid Collage</h1>
         </div>
-  
+
         {/* Color Selection and Action Buttons */}
         <div className="px-4 pb-4 flex">
           {/* Color Selection */}
@@ -200,28 +196,30 @@ const GridCollage = ({ selectedPhotos, onClose }: GridCollageProps) => {
             <div>
               <h2 className="text-white mb-2 text-sm">Background Color</h2>
               <div className="flex gap-2">
-                {COLORS.backgrounds.map(color => (
+                {COLORS.backgrounds.map((color) => (
                   <button
                     key={color}
                     onClick={() => setBackgroundColor(color)}
                     className={`w-8 h-8 rounded-full border-2 ${
-                      backgroundColor === color ? 'border-white' : 'border-white/20'
+                      backgroundColor === color
+                        ? "border-white"
+                        : "border-white/20"
                     }`}
                     style={{ backgroundColor: color }}
                   />
                 ))}
               </div>
             </div>
-  
+
             <div>
               <h2 className="text-white mb-2 text-sm">Frame Color</h2>
               <div className="flex gap-2">
-                {COLORS.borders.map(color => (
+                {COLORS.borders.map((color) => (
                   <button
                     key={color}
                     onClick={() => setBorderColor(color)}
                     className={`w-8 h-8 rounded-full border-2 ${
-                      borderColor === color ? 'border-white' : 'border-white/20'
+                      borderColor === color ? "border-white" : "border-white/20"
                     }`}
                     style={{ backgroundColor: color }}
                   />
@@ -229,7 +227,7 @@ const GridCollage = ({ selectedPhotos, onClose }: GridCollageProps) => {
               </div>
             </div>
           </div>
-  
+
           {/* Action Buttons - Stacked */}
           <div className="flex items-center ml-4 pl-4 border-l border-white/10">
             <AnimatePresence mode="wait">
@@ -261,36 +259,41 @@ const GridCollage = ({ selectedPhotos, onClose }: GridCollageProps) => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   onClick={createGridCollage}
-                  disabled={isCreating || selectedPhotos.length === 0 || signedUrls.length === 0}
+                  disabled={
+                    isCreating ||
+                    selectedPhotos.length === 0 ||
+                    signedUrls.length === 0
+                  }
                   className={`w-32 h-full rounded-full font-medium flex items-center justify-center gap-2 ${
-                    selectedPhotos.length > 0 && signedUrls.length > 0 && !isCreating
-                      ? 'bg-white text-gray-900'
-                      : 'bg-white/10 text-white/50'
+                    selectedPhotos.length > 0 &&
+                    signedUrls.length > 0 &&
+                    !isCreating
+                      ? "bg-white text-gray-900"
+                      : "bg-white/10 text-white/50"
                   }`}
                 >
                   <LayoutGrid className="w-5 h-5" />
-                  {isCreating 
-                    ? 'Creating...' 
+                  {isCreating
+                    ? "Creating..."
                     : selectedPhotos.length === 0
-                      ? 'No photos'
+                      ? "No photos"
                       : signedUrls.length === 0
-                        ? 'Loading...'
-                        : 'Create!'
-                  }
+                        ? "Loading..."
+                        : "Create!"}
                 </motion.button>
               )}
             </AnimatePresence>
           </div>
         </div>
       </div>
-  
+
       {/* Scrollable Content */}
       <div className="flex-1 overflow-auto">
         <div className="p-4 pb-36">
           {/* Collage Preview with Animation */}
           <AnimatePresence>
             {collageUrl && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
@@ -304,26 +307,28 @@ const GridCollage = ({ selectedPhotos, onClose }: GridCollageProps) => {
               </motion.div>
             )}
           </AnimatePresence>
-  
+
           {/* Selected Photos Preview */}
           <div>
-            <h2 className="text-white mb-2">Selected Photos ({selectedPhotos.length})</h2>
+            <h2 className="text-white mb-2">
+              Selected Photos ({selectedPhotos.length})
+            </h2>
             <div className="grid grid-cols-2 gap-1">
               {selectedPhotos.map((photo, index) => (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className="relative bg-white/10 rounded-lg overflow-hidden"
-                  style={{ 
-                    aspectRatio: '9/16',
-                    boxShadow: 'inset 0 0 0 1px rgba(255, 255, 255, 0.1)'
+                  style={{
+                    aspectRatio: "9/16",
+                    boxShadow: "inset 0 0 0 1px rgba(255, 255, 255, 0.1)",
                   }}
                 >
-                  <img 
-                    src={photo} 
+                  <img
+                    src={photo}
                     alt={`Selected photo ${index + 1}`}
                     className="w-full h-full object-cover"
                   />
-                  <div 
+                  <div
                     className="absolute top-2 left-2 w-6 h-6 bg-black/50 backdrop-blur-sm rounded-full 
                              flex items-center justify-center text-white text-sm font-medium"
                   >

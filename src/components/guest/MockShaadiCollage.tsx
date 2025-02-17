@@ -170,19 +170,19 @@ const FontModal = ({
                     {key === "galada"
                       ? "মজাদার বিবাহ"
                       : key === "karlaTamilInclined"
-                      ? "ஜோக் திருமணம்"
-                      : key === "martel"
-                      ? "नकली शादी"
-                      : key === "notoNastaliqUrdu"
-                      ? "فرضی شادی"
-                      : "Mock Shaadi"}
+                        ? "ஜோக் திருமணம்"
+                        : key === "martel"
+                          ? "नकली शादी"
+                          : key === "notoNastaliqUrdu"
+                            ? "فرضی شادی"
+                            : "Mock Shaadi"}
                   </div>
                   <div className="text-sm mt-2 text-white/60 font-sans">
                     {font.name}
                   </div>
                 </div>
               </button>
-            )
+            ),
           )}
         </div>
       </motion.div>
@@ -195,7 +195,7 @@ const MockShaadiCollage = ({
   onClose,
 }: MockShaadiCollageProps) => {
   const [selectedColor, setSelectedColor] = useState<string>(
-    THEME_COLORS.tyrian
+    THEME_COLORS.tyrian,
   );
   const [selectedFont, setSelectedFont] = useState<FontOption>("playfair");
   const [isCreating, setIsCreating] = useState(false);
@@ -213,7 +213,7 @@ const MockShaadiCollage = ({
             const fileName = photoUrl.split("/").pop();
             if (!fileName) throw new Error("Invalid photo URL");
             return await getSignedPhotoUrl(fileName);
-          })
+          }),
         );
         setSignedUrls(urls);
       } catch (error) {
@@ -253,10 +253,10 @@ const MockShaadiCollage = ({
             corner === "top-left"
               ? [40, 40]
               : corner === "top-right"
-              ? [canvas.width - 40, 40]
-              : corner === "bottom-left"
-              ? [40, canvas.height - 40]
-              : [canvas.width - 40, canvas.height - 40];
+                ? [canvas.width - 40, 40]
+                : corner === "bottom-left"
+                  ? [40, canvas.height - 40]
+                  : [canvas.width - 40, canvas.height - 40];
 
           ctx.translate(x, y);
           if (corner.includes("right")) ctx.scale(-1, 1);
@@ -270,7 +270,7 @@ const MockShaadiCollage = ({
           ctx.closePath();
           ctx.fill();
           ctx.restore();
-        }
+        },
       );
 
       // Set up text rendering
@@ -293,12 +293,12 @@ const MockShaadiCollage = ({
         selectedFont === "galada"
           ? "মজাদার বিবাহ"
           : selectedFont === "karlaTamilInclined"
-          ? "ஜோக் திருமணம்"
-          : selectedFont === "martel"
-          ? "नकली शादी"
-          : selectedFont === "notoNastaliqUrdu"
-          ? "فرضی شادی"
-          : "Mock Shaadi";
+            ? "ஜோக் திருமணம்"
+            : selectedFont === "martel"
+              ? "नकली शादी"
+              : selectedFont === "notoNastaliqUrdu"
+                ? "فرضی شادی"
+                : "Mock Shaadi";
 
       // Special handling for right-to-left text (Urdu)
       if (selectedFont === "notoNastaliqUrdu") {
@@ -323,8 +323,8 @@ const MockShaadiCollage = ({
               img.onerror = (_err) =>
                 reject(new Error(`Failed to load image: ${url}`));
               img.src = url;
-            })
-        )
+            }),
+        ),
       );
 
       // Film strip configuration
@@ -358,11 +358,9 @@ const MockShaadiCollage = ({
         const columnStartIndex = col * 4;
         const columnPhotos = loadedImages.slice(
           columnStartIndex,
-          columnStartIndex + 4
+          columnStartIndex + 4,
         );
         const columnX = startX + (columnWidth + columnSpacing) * col;
-
-
 
         columnPhotos.forEach((img, i) => {
           const frameY = startY + (frameHeight + frameSpacing) * i;
@@ -376,27 +374,27 @@ const MockShaadiCollage = ({
             const leftStripPath = new Path2D();
             leftStripPath.moveTo(
               columnX + sprocketOffset - stripWidth / 2,
-              frameY - frameSpacing / 2
+              frameY - frameSpacing / 2,
             );
             for (let y = 0; y < frameHeight + frameSpacing; y += 5) {
               const xOffset =
                 Math.random() * stripEdgeRoughness - stripEdgeRoughness / 2;
               leftStripPath.lineTo(
                 columnX + sprocketOffset - stripWidth / 2 + xOffset,
-                frameY - frameSpacing / 2 + y
+                frameY - frameSpacing / 2 + y,
               );
             }
             leftStripPath.lineTo(
               columnX + sprocketOffset - stripWidth / 2,
-              frameY + frameHeight + frameSpacing / 2
+              frameY + frameHeight + frameSpacing / 2,
             );
             leftStripPath.lineTo(
               columnX + sprocketOffset + stripWidth / 2,
-              frameY + frameHeight + frameSpacing / 2
+              frameY + frameHeight + frameSpacing / 2,
             );
             leftStripPath.lineTo(
               columnX + sprocketOffset + stripWidth / 2,
-              frameY - frameSpacing / 2
+              frameY - frameSpacing / 2,
             );
             leftStripPath.closePath();
             ctx.fill(leftStripPath);
@@ -406,27 +404,27 @@ const MockShaadiCollage = ({
             const rightStripX = columnX + frameWidth + sprocketOffset;
             rightStripPath.moveTo(
               rightStripX - stripWidth / 2,
-              frameY - frameSpacing / 2
+              frameY - frameSpacing / 2,
             );
             for (let y = 0; y < frameHeight + frameSpacing; y += 5) {
               const xOffset =
                 Math.random() * stripEdgeRoughness - stripEdgeRoughness / 2;
               rightStripPath.lineTo(
                 rightStripX - stripWidth / 2 + xOffset,
-                frameY - frameSpacing / 2 + y
+                frameY - frameSpacing / 2 + y,
               );
             }
             rightStripPath.lineTo(
               rightStripX - stripWidth / 2,
-              frameY + frameHeight + frameSpacing / 2
+              frameY + frameHeight + frameSpacing / 2,
             );
             rightStripPath.lineTo(
               rightStripX + stripWidth / 2,
-              frameY + frameHeight + frameSpacing / 2
+              frameY + frameHeight + frameSpacing / 2,
             );
             rightStripPath.lineTo(
               rightStripX + stripWidth / 2,
-              frameY - frameSpacing / 2
+              frameY - frameSpacing / 2,
             );
             rightStripPath.closePath();
             ctx.fill(rightStripPath);
@@ -436,13 +434,13 @@ const MockShaadiCollage = ({
               columnX + sprocketOffset - stripWidth / 2,
               frameY - frameSpacing / 2,
               stripWidth,
-              frameHeight + frameSpacing
+              frameHeight + frameSpacing,
             );
             ctx.fillRect(
               columnX + frameWidth + sprocketOffset - stripWidth / 2,
               frameY - frameSpacing / 2,
               stripWidth,
-              frameHeight + frameSpacing
+              frameHeight + frameSpacing,
             );
           }
 
@@ -467,7 +465,7 @@ const MockShaadiCollage = ({
               columnX + sprocketOffset - 10 - holeWidth / 2,
               holeY - holeHeight / 2,
               holeWidth,
-              holeHeight
+              holeHeight,
             );
 
             // Right holes
@@ -475,7 +473,7 @@ const MockShaadiCollage = ({
               columnX + frameWidth + sprocketOffset + 10 - holeWidth / 2,
               holeY - holeHeight / 2,
               holeWidth,
-              holeHeight
+              holeHeight,
             );
           }
 
@@ -494,21 +492,21 @@ const MockShaadiCollage = ({
               x + width,
               y,
               x + width,
-              y + frameCornerRadius
+              y + frameCornerRadius,
             );
             ctx.lineTo(x + width, y + height - frameCornerRadius);
             ctx.quadraticCurveTo(
               x + width,
               y + height,
               x + width - frameCornerRadius,
-              y + height
+              y + height,
             );
             ctx.lineTo(x + frameCornerRadius, y + height);
             ctx.quadraticCurveTo(
               x,
               y + height,
               x,
-              y + height - frameCornerRadius
+              y + height - frameCornerRadius,
             );
             ctx.lineTo(x, y + frameCornerRadius);
             ctx.quadraticCurveTo(x, y, x + frameCornerRadius, y);
@@ -519,7 +517,7 @@ const MockShaadiCollage = ({
               columnX + sprocketOffset - frameBorderThickness,
               frameY - frameBorderThickness,
               frameWidth + frameBorderThickness * 2,
-              frameHeight + frameBorderThickness * 2
+              frameHeight + frameBorderThickness * 2,
             );
           }
 
@@ -548,10 +546,9 @@ const MockShaadiCollage = ({
             drawX + borderSize,
             drawY + borderSize,
             drawWidth - borderSize * 2,
-            drawHeight - borderSize * 2
+            drawHeight - borderSize * 2,
           );
         });
-
       }
 
       // Add film grain effect if enabled
@@ -584,7 +581,7 @@ const MockShaadiCollage = ({
         x - metrics.width - padding,
         y - watermarkSize,
         metrics.width + padding * 2,
-        watermarkSize + padding
+        watermarkSize + padding,
       );
 
       ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
@@ -644,7 +641,7 @@ const MockShaadiCollage = ({
                         }`}
                         style={{ backgroundColor: color }}
                       />
-                    )
+                    ),
                 )}
               </div>
             </div>
@@ -668,12 +665,12 @@ const MockShaadiCollage = ({
                       {selectedFont === "galada"
                         ? "মজাদার বিবাহ"
                         : selectedFont === "karlaTamilInclined"
-                        ? "ஜோக் திருமணம்"
-                        : selectedFont === "martel"
-                        ? "नकली शादी"
-                        : selectedFont === "notoNastaliqUrdu"
-                        ? "فرضی شادی"
-                        : "Mock Shaadi"}
+                          ? "ஜோக் திருமணம்"
+                          : selectedFont === "martel"
+                            ? "नकली शादी"
+                            : selectedFont === "notoNastaliqUrdu"
+                              ? "فرضی شادی"
+                              : "Mock Shaadi"}
                     </div>
                   </div>
                 </div>
@@ -729,10 +726,10 @@ const MockShaadiCollage = ({
                   {isCreating
                     ? "Creating..."
                     : limitedPhotos.length === 0
-                    ? "No photos"
-                    : signedUrls.length === 0
-                    ? "Loading..."
-                    : "Create!"}
+                      ? "No photos"
+                      : signedUrls.length === 0
+                        ? "Loading..."
+                        : "Create!"}
                 </motion.button>
               )}
             </AnimatePresence>

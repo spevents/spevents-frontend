@@ -16,13 +16,13 @@ const PhotoGallery: React.FC = () => {
   const navigate = useNavigate();
   const [photos, setPhotos] = useState<StoragePhoto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [_selectedPhoto, setSelectedPhoto] = useState<StoragePhoto | null>(null);
+  const [_selectedPhoto, setSelectedPhoto] = useState<StoragePhoto | null>(
+    null,
+  );
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [isDeletingPhotos, setIsDeletingPhotos] = useState(false);
-
-
 
   const loadPhotosFromStorage = async () => {
     try {
@@ -35,7 +35,7 @@ const PhotoGallery: React.FC = () => {
 
       const sortedPhotos = photoUrls.sort(
         (a: StoragePhoto, b: StoragePhoto) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       );
 
       setPhotos(sortedPhotos);
@@ -46,9 +46,8 @@ const PhotoGallery: React.FC = () => {
     }
   };
 
-
   const togglePhotoSelection = (photo: StoragePhoto) => {
-    setSelectedPhotos(prev => {
+    setSelectedPhotos((prev) => {
       const newSelection = new Set(prev);
       if (newSelection.has(photo.name)) {
         newSelection.delete(photo.name);
@@ -59,26 +58,25 @@ const PhotoGallery: React.FC = () => {
     });
   };
 
-
   const selectAllPhotos = () => {
     if (selectedPhotos.size === photos.length) {
       setSelectedPhotos(new Set());
     } else {
-      setSelectedPhotos(new Set(photos.map(photo => photo.name)));
+      setSelectedPhotos(new Set(photos.map((photo) => photo.name)));
     }
   };
 
   const deleteSelectedPhotos = async () => {
     if (selectedPhotos.size === 0) return;
-    
+
     setIsDeletingPhotos(true);
     try {
       // Convert Set to Array and delete all selected photos at once
       await deleteMultipleFiles(Array.from(selectedPhotos));
-      
+
       // Refresh the gallery
       await loadPhotosFromStorage();
-      
+
       // Clear selection and exit delete mode
       setSelectedPhotos(new Set());
       setIsDeleteMode(false);
@@ -87,10 +85,8 @@ const PhotoGallery: React.FC = () => {
       // Optionally show an error message to the user
     } finally {
       setIsDeletingPhotos(false);
-    } 
+    }
   };
-
-
 
   useEffect(() => {
     sessionStorage.removeItem("temp-photos");
@@ -124,7 +120,9 @@ const PhotoGallery: React.FC = () => {
                 <button
                   onClick={() => setIsDeleteMode(!isDeleteMode)}
                   className={`p-2 rounded-full transition-colors ${
-                    isDeleteMode ? 'bg-red-500 hover:bg-red-600' : 'bg-white/10 hover:bg-white/20'
+                    isDeleteMode
+                      ? "bg-red-500 hover:bg-red-600"
+                      : "bg-white/10 hover:bg-white/20"
                   }`}
                 >
                   <Trash2 className="w-5 h-5 text-white" />
@@ -139,7 +137,7 @@ const PhotoGallery: React.FC = () => {
           {isDeleteMode && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
+              animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               className="border-t border-white/10"
             >
@@ -149,7 +147,9 @@ const PhotoGallery: React.FC = () => {
                     onClick={selectAllPhotos}
                     className="px-4 py-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors"
                   >
-                    {selectedPhotos.size === photos.length ? 'Deselect All' : 'Select All'}
+                    {selectedPhotos.size === photos.length
+                      ? "Deselect All"
+                      : "Select All"}
                   </button>
                   <span className="text-white/70">
                     {selectedPhotos.size} selected
@@ -170,14 +170,14 @@ const PhotoGallery: React.FC = () => {
                     disabled={selectedPhotos.size === 0 || isDeletingPhotos}
                     className={`px-4 py-2 rounded-full text-white transition-colors ${
                       selectedPhotos.size > 0 && !isDeletingPhotos
-                        ? 'bg-red-500 hover:bg-red-600'
-                        : 'bg-white/10 cursor-not-allowed'
+                        ? "bg-red-500 hover:bg-red-600"
+                        : "bg-white/10 cursor-not-allowed"
                     }`}
                   >
                     {isDeletingPhotos ? (
                       <RefreshCw className="w-5 h-5 animate-spin" />
                     ) : (
-                      `Delete ${selectedPhotos.size ? `(${selectedPhotos.size})` : ''}`
+                      `Delete ${selectedPhotos.size ? `(${selectedPhotos.size})` : ""}`
                     )}
                   </button>
                 </div>
@@ -198,7 +198,11 @@ const PhotoGallery: React.FC = () => {
             {photos.map((photo) => (
               <motion.button
                 key={photo.name}
-                onClick={() => isDeleteMode ? togglePhotoSelection(photo) : setSelectedPhoto(photo)}
+                onClick={() =>
+                  isDeleteMode
+                    ? togglePhotoSelection(photo)
+                    : setSelectedPhoto(photo)
+                }
                 className="relative aspect-square group focus:outline-none"
               >
                 <img
@@ -207,14 +211,16 @@ const PhotoGallery: React.FC = () => {
                   className="w-full h-full object-cover"
                   loading="lazy"
                 />
-                <div className={`absolute inset-0 transition-colors ${
-                  isDeleteMode 
-                    ? selectedPhotos.has(photo.name)
-                      ? 'bg-red-500/30'
-                      : 'bg-black/20 hover:bg-black/30'
-                    : 'bg-black/0 group-hover:bg-black/20'
-                }`} />
-                
+                <div
+                  className={`absolute inset-0 transition-colors ${
+                    isDeleteMode
+                      ? selectedPhotos.has(photo.name)
+                        ? "bg-red-500/30"
+                        : "bg-black/20 hover:bg-black/30"
+                      : "bg-black/0 group-hover:bg-black/20"
+                  }`}
+                />
+
                 {isDeleteMode && selectedPhotos.has(photo.name) && (
                   <div className="absolute top-2 right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
                     <CheckCircle className="w-4 h-4 text-white" />
@@ -225,12 +231,12 @@ const PhotoGallery: React.FC = () => {
           </div>
         )}
       </div>
-      <QRCodeModal 
+      <QRCodeModal
         isOpen={isQRModalOpen}
         onClose={() => setIsQRModalOpen(false)}
       />
     </div>
   );
-}
+};
 
 export default PhotoGallery;

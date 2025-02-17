@@ -30,7 +30,7 @@ export const ZoomControl: React.FC<ZoomControlProps> = ({
     (level: number) => {
       onZoomChange(level);
     },
-    [onZoomChange]
+    [onZoomChange],
   );
 
   const controlsPosition =

@@ -8,8 +8,10 @@ import { PhotoCounter } from "./PhotoCounter";
 import { CameraControls } from "./CameraControls";
 import { FlashControls } from "./FlashControls";
 import { X } from "lucide-react";
-import { ExtendedMediaTrackCapabilities, ExtendedMediaTrackConstraintSet } from "./types/media";
-
+import {
+  ExtendedMediaTrackCapabilities,
+  ExtendedMediaTrackConstraintSet,
+} from "./types/media";
 
 // Types
 interface CameraInterfaceProps {
@@ -39,7 +41,9 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
 
   // State
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
+  const [facingMode, setFacingMode] = useState<"environment" | "user">(
+    "environment",
+  );
   const [isCapturing, setIsCapturing] = useState(false);
   const [lastTapTime, setLastTapTime] = useState(0);
   const [isFlashEnabled, setIsFlashEnabled] = useState(false);
@@ -92,24 +96,27 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
 
   const toggleFlash = useCallback(async () => {
     if (!streamRef.current) return;
-    
+
     const track = streamRef.current.getVideoTracks()[0];
     if (!track) return;
 
     try {
-      const capabilities = track.getCapabilities() as ExtendedMediaTrackCapabilities;
+      const capabilities =
+        track.getCapabilities() as ExtendedMediaTrackCapabilities;
       const newFlashState = !isFlashEnabled;
-      
-      if (facingMode === 'environment' && capabilities.torch) {
+
+      if (facingMode === "environment" && capabilities.torch) {
         // Use device flash for rear camera if available
         await track.applyConstraints({
-          advanced: [{ torch: newFlashState } as ExtendedMediaTrackConstraintSet]
+          advanced: [
+            { torch: newFlashState } as ExtendedMediaTrackConstraintSet,
+          ],
         });
       }
       // For front camera, we'll use screen flash handled in capturePhoto
       setIsFlashEnabled(newFlashState);
     } catch (error) {
-      console.warn('Error toggling flash:', error);
+      console.warn("Error toggling flash:", error);
     }
   }, [isFlashEnabled, facingMode]);
 
@@ -137,10 +144,11 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
 
         // Reset flash when switching cameras
         if (isFlashEnabled) {
-          const capabilities = track.getCapabilities() as ExtendedMediaTrackCapabilities;
-          if (currentFacing === 'environment' && capabilities.torch) {
+          const capabilities =
+            track.getCapabilities() as ExtendedMediaTrackCapabilities;
+          if (currentFacing === "environment" && capabilities.torch) {
             await track.applyConstraints({
-              advanced: [{ torch: true } as ExtendedMediaTrackConstraintSet]
+              advanced: [{ torch: true } as ExtendedMediaTrackConstraintSet],
             });
           }
         }
@@ -158,25 +166,28 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
       const track = streamRef.current.getVideoTracks()[0];
       applyZoom(track, newZoom);
     },
-    [handleZoom, applyZoom]
+    [handleZoom, applyZoom],
   );
 
-  const handleScreenTap = useCallback((event: { target: any; }) => {
-    const target = event.target;
-    if (
-      target.closest('.capture-button') ||
-      target.closest('.flip-button') ||
-      target.closest('.navigate-to-review-button')
-    ) {
-      return;
-    }
+  const handleScreenTap = useCallback(
+    (event: { target: any }) => {
+      const target = event.target;
+      if (
+        target.closest(".capture-button") ||
+        target.closest(".flip-button") ||
+        target.closest(".navigate-to-review-button")
+      ) {
+        return;
+      }
 
-    const now = Date.now();
-    if (now - lastTapTime < DOUBLE_TAP_DELAY) {
-      flipCamera();
-    }
-    setLastTapTime(now);
-  }, [lastTapTime]);
+      const now = Date.now();
+      if (now - lastTapTime < DOUBLE_TAP_DELAY) {
+        flipCamera();
+      }
+      setLastTapTime(now);
+    },
+    [lastTapTime],
+  );
 
   const flipCamera = useCallback(() => {
     startCamera(facingMode === "environment" ? "user" : "environment");
@@ -203,9 +214,9 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
     if (facingMode === "user" && isFlashEnabled) {
       if (flashRef.current) {
         flashRef.current.style.opacity = "1";
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise((resolve) => setTimeout(resolve, 200));
         flashRef.current.style.opacity = "0";
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise((resolve) => setTimeout(resolve, 50));
       }
     }
 
@@ -229,8 +240,13 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
     const newPhoto = { id: Date.now(), url: photoUrl };
 
     setPhotos((prev) => [...prev, newPhoto]);
-    const sessionPhotos = JSON.parse(sessionStorage.getItem("temp-photos") || "[]");
-    sessionStorage.setItem("temp-photos", JSON.stringify([...sessionPhotos, newPhoto]));
+    const sessionPhotos = JSON.parse(
+      sessionStorage.getItem("temp-photos") || "[]",
+    );
+    sessionStorage.setItem(
+      "temp-photos",
+      JSON.stringify([...sessionPhotos, newPhoto]),
+    );
 
     navigator.vibrate?.(50);
   }, [photos.length, facingMode, isFlashEnabled, triggerCaptureEffect]);
@@ -264,12 +280,12 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
         style={{ opacity: 0 }}
       />
 
-      <PhotoCounter 
-        count={photos.length} 
+      <PhotoCounter
+        count={photos.length}
         limit={PHOTO_LIMIT}
         orientation={orientation}
       />
-      
+
       <FlashControls
         isEnabled={isFlashEnabled}
         onToggle={toggleFlash}
@@ -294,7 +310,7 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
         onZoomChange={handleZoomChange}
         orientation={orientation}
       />
-      
+
       <CameraControls
         photoCount={photos.length}
         isCapturing={isCapturing}

@@ -1,4 +1,4 @@
-import { Phone } from 'lucide-react';
+import { Phone } from "lucide-react";
 
 export function MobileLanding() {
   return (
@@ -9,27 +9,25 @@ export function MobileLanding() {
             <Phone className="w-10 h-10 text-white" />
           </div>
         </div>
-        
+
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-white">
-            Mobile Access Only
-          </h1>
+          <h1 className="text-2xl font-bold text-white">Mobile Access Only</h1>
           <p className="text-white/60">
-            Spevents is designed for mobile devices. Please scan your event's QR code
-            with your phone to access the platform.
+            Spevents is designed for mobile devices. Please scan your event's QR
+            code with your phone to access the platform.
           </p>
         </div>
-        
+
         <div className="bg-white/10 rounded-xl p-6">
           <p className="text-white/80">
-            If you're an event host, please visit{' '}
-            <a 
-              href="https://app.spevents.live" 
+            If you're an event host, please visit{" "}
+            <a
+              href="https://app.spevents.live"
               className="text-white underline hover:text-white/90"
             >
               app.spevents.live
-            </a>
-            {' '}to manage your event.
+            </a>{" "}
+            to manage your event.
           </p>
         </div>
       </div>

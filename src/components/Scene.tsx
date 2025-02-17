@@ -4,23 +4,21 @@ import Tables from "./Tables";
 import * as THREE from "three";
 import React from "react";
 
-
 interface MandalaProps {
   position: [number, number, number];
   scale?: number;
   rotation?: number;
 }
 
-
 function CameraSetup() {
   const { camera } = useThree();
-  
+
   useEffect(() => {
     // Adjusted camera position for better view of scaled objects
     camera.position.set(0, 20, 35);
     camera.lookAt(new THREE.Vector3(0, 0, -5));
   }, [camera]);
-  
+
   return null;
 }
 
@@ -32,10 +30,10 @@ function Mandala({ position, scale = 1, rotation = 0 }: MandalaProps) {
       scale={scale * 0.7} // Scaled down by 30%
     >
       <ringGeometry args={[4, 4.2, 32]} />
-      <meshStandardMaterial 
-        color="#FCA205" 
-        metalness={0.6} 
-        roughness={0.2} 
+      <meshStandardMaterial
+        color="#FCA205"
+        metalness={0.6}
+        roughness={0.2}
         emissive="#FCA205"
         emissiveIntensity={0.2}
       />
@@ -43,19 +41,27 @@ function Mandala({ position, scale = 1, rotation = 0 }: MandalaProps) {
   );
 }
 
-function FlowerPattern({ position, scale = 1 }: { position: [number, number, number], scale?: number }) {
+function FlowerPattern({
+  position,
+  scale = 1,
+}: {
+  position: [number, number, number];
+  scale?: number;
+}) {
   const petalCount = 8;
   const petalAngle = (2 * Math.PI) / petalCount;
 
   return (
-    <group position={new THREE.Vector3(...position)} scale={scale * 0.7}> // Scaled down by 30%
+    <group position={new THREE.Vector3(...position)} scale={scale * 0.7}>
+      {" "}
+      // Scaled down by 30%
       {Array.from({ length: petalCount }).map((_, index) => (
         <mesh
           key={index}
           position={[
             Math.cos(index * petalAngle) * 1.5, // Reduced from 2
             0,
-            Math.sin(index * petalAngle) * 1.5  // Reduced from 2
+            Math.sin(index * petalAngle) * 1.5, // Reduced from 2
           ]}
           rotation={[-Math.PI / 2, 0, index * petalAngle]}
         >
@@ -80,26 +86,26 @@ export default function Scene({ children }: { children: React.ReactNode }) {
     <div className="w-full h-screen">
       <Canvas
         shadows
-        camera={{ 
+        camera={{
           position: [0, 20, 35],
           fov: 60,
           near: 0.1,
-          far: 1000
+          far: 1000,
         }}
         gl={{ antialias: true }}
         dpr={[1, 2]}
         style={{
-          height: '100vh',
-          width: '100%',
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)'
+          height: "100vh",
+          width: "100%",
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
         }}
       >
         <color attach="background" args={["#790015"]} />
         <CameraSetup />
-        
+
         {/* Lighting */}
         <ambientLight intensity={1.4} color="#FFF5E6" />
         <directionalLight
@@ -129,7 +135,7 @@ export default function Scene({ children }: { children: React.ReactNode }) {
           position={[0, -0.5, 0]}
         >
           <planeGeometry args={[150, 150]} /> // Reduced from 200x200
-          <meshStandardMaterial 
+          <meshStandardMaterial
             color="#9D0000"
             metalness={0.3}
             roughness={0.7}
@@ -140,29 +146,31 @@ export default function Scene({ children }: { children: React.ReactNode }) {
 
         {/* Decorative elements scaled down */}
         <group position={[0, -0.45, 0]}>
-          <Mandala position={[0, 0, -20]} scale={1.6} /> // Reduced from -25 and 2
-          
-          {[-15, -7.5, 0, 7.5, 15].map((x, i) => ( // Reduced spacing
-            <Mandala 
-              key={`mandala-${i}`} 
-              position={[x, 0, -8]} // Reduced from -10
-              scale={0.6} // Reduced from 0.8
-              rotation={i * Math.PI / 4}
-            />
-          ))}
-
-          <FlowerPattern position={[-12, 0, -15]} scale={0.4} /> // Adjusted positions and scale
+          <Mandala position={[0, 0, -20]} scale={1.6} /> // Reduced from -25 and
+          2
+          {[-15, -7.5, 0, 7.5, 15].map(
+            (
+              x,
+              i, // Reduced spacing
+            ) => (
+              <Mandala
+                key={`mandala-${i}`}
+                position={[x, 0, -8]} // Reduced from -10
+                scale={0.6} // Reduced from 0.8
+                rotation={(i * Math.PI) / 4}
+              />
+            ),
+          )}
+          <FlowerPattern position={[-12, 0, -15]} scale={0.4} /> // Adjusted
+          positions and scale
           <FlowerPattern position={[12, 0, -15]} scale={0.4} />
           <FlowerPattern position={[0, 0, -22]} scale={0.5} />
         </group>
 
         {/* Scaled down aisle */}
-        <mesh
-          rotation={[-Math.PI / 2, 0, 0]}
-          position={[0, -0.48, -10]}
-        >
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.48, -10]}>
           <planeGeometry args={[4.5, 25]} /> // Reduced from 6x30
-          <meshStandardMaterial 
+          <meshStandardMaterial
             color="#C29327"
             metalness={0.4}
             roughness={0.3}

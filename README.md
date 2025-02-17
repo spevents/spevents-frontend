@@ -23,12 +23,15 @@
 <br>
 
 ## What is Spevents?
+
 Spevents (special + events) is a real-time photo sharing platform that turns guests' phones into a live photo gallery without an app - just scan the host’s QR code and swipe up to share.
 
 ### Problem
+
 At weddings or conferences, guests are constantly switching between enjoying moments and trying to capture them. Traditional solutions like hashtags scatter photos across platforms and "upload your photos" services get low engagement.
 
 ### Solution
+
 - **"It just works"**: Just scan a QR code - no apps, no accounts
 - **Real-time Sharing**: Photos appear instantly in the venue visualization
 - **Fun Displays**: Animated gallery displays create a beautiful, engaging experience
@@ -98,17 +101,20 @@ VITE_CLOUDFRONT_URL=your_cloudfront_url
 ## Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/yourusername/spevents.git
 cd spevents
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Setup SSL certificate for local development:
+
 ```bash
 npm install -g mkcert
 mkcert create-ca
@@ -116,6 +122,7 @@ mkcert create-cert
 ```
 
 4. Start the development server:
+
 ```bash
 npm run dev
 ```

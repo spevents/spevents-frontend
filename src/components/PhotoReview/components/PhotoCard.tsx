@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { CheckCircle2, Trash2 } from "lucide-react";
 
-
 interface SpringConfig {
   type: "spring";
   stiffness: number;
@@ -24,7 +23,6 @@ interface DragTransitionConfig {
   mass: number;
   restDelta: number;
 }
-
 
 // Improved animation configs
 const cardSpringConfig = {
@@ -70,9 +68,6 @@ interface PhotoCardProps {
   dragTransitionConfig: DragTransitionConfig;
 }
 
-
-
-
 export const PhotoCard: React.FC<PhotoCardProps> = ({
   photo,
   isCurrentPhoto,
@@ -90,7 +85,7 @@ export const PhotoCard: React.FC<PhotoCardProps> = ({
   screenHeight,
   isNearThreshold,
   isOverThreshold,
-  dragHandlers
+  dragHandlers,
 }) => {
   const isActive = isPrevPhoto || isCurrentPhoto || isNextPhoto;
 
@@ -99,18 +94,16 @@ export const PhotoCard: React.FC<PhotoCardProps> = ({
   const clampedProgress = Math.min(1, dragProgress);
 
   // Calculate dynamic scale based on drag progress
-  const currentScale = isDragging 
-    ? 1 - (clampedProgress * 0.1) 
-    : 1;
+  const currentScale = isDragging ? 1 - clampedProgress * 0.1 : 1;
 
   // Calculate rotation based on horizontal position
-  const rotation = isCurrentPhoto 
-    ? (horizontalDrag * 0.05)
+  const rotation = isCurrentPhoto
+    ? horizontalDrag * 0.05
     : isPrevPhoto
-    ? 3
-    : isNextPhoto
-    ? -3
-    : 0;
+      ? 3
+      : isNextPhoto
+        ? -3
+        : 0;
 
   return (
     <motion.div
@@ -125,26 +118,26 @@ export const PhotoCard: React.FC<PhotoCardProps> = ({
       }}
       initial={{ scale: 0.8, opacity: 0, y: 100 }}
       animate={{
-        scale: isCurrentPhoto 
-          ? currentScale 
-          : isPrevPhoto || isNextPhoto 
-          ? 0.95 
-          : 0.9,
+        scale: isCurrentPhoto
+          ? currentScale
+          : isPrevPhoto || isNextPhoto
+            ? 0.95
+            : 0.9,
         opacity: isCurrentPhoto ? 1 : isActive ? 0.7 : 0,
         x: isCurrentPhoto
           ? horizontalDrag
           : isPrevPhoto
-          ? -100 + horizontalDrag * 0.5
-          : isNextPhoto
-          ? 100 + horizontalDrag * 0.5
-          : horizontalDrag * 0.1,
-        y: isCurrentPhoto 
-          ? dragPosition 
-          : isPrevPhoto 
-          ? -20 
-          : isNextPhoto 
-          ? 20 
-          : 0,
+            ? -100 + horizontalDrag * 0.5
+            : isNextPhoto
+              ? 100 + horizontalDrag * 0.5
+              : horizontalDrag * 0.1,
+        y: isCurrentPhoto
+          ? dragPosition
+          : isPrevPhoto
+            ? -20
+            : isNextPhoto
+              ? 20
+              : 0,
         rotateY: rotation,
         transition: {
           ...cardSpringConfig,
@@ -154,8 +147,18 @@ export const PhotoCard: React.FC<PhotoCardProps> = ({
       exit={{
         scale: exitDirection === "up" ? 1.1 : 0.8,
         opacity: 0,
-        x: swipeDirection === "left" ? 200 : swipeDirection === "right" ? -200 : 0,
-        y: exitDirection === "up" ? -screenHeight : exitDirection === "down" ? screenHeight : 0,
+        x:
+          swipeDirection === "left"
+            ? 200
+            : swipeDirection === "right"
+              ? -200
+              : 0,
+        y:
+          exitDirection === "up"
+            ? -screenHeight
+            : exitDirection === "down"
+              ? screenHeight
+              : 0,
       }}
       drag={isCurrentPhoto}
       dragDirectionLock={false}
@@ -171,7 +174,7 @@ export const PhotoCard: React.FC<PhotoCardProps> = ({
       <motion.div
         className="relative rounded-2xl overflow-hidden shadow-2xl bg-black"
         animate={{
-          scale: isDragging ? 1 + (clampedProgress * 0.05) : 1,
+          scale: isDragging ? 1 + clampedProgress * 0.05 : 1,
         }}
         transition={cardSpringConfig}
       >
