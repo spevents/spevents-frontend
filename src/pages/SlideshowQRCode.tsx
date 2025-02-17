@@ -7,7 +7,9 @@ export default function SlideshowQRCode() {
   const { isValidSession } = useSession();
 
   const getScanUrl = () => {
-    return eventId ? `https://join.spevents.live/${eventId}/guest/camera` : '';
+    if (!eventId) return '';
+    const encodedEventId = encodeURIComponent(eventId);
+    return `https://join.spevents.live/${encodedEventId}/guest/camera`;
   };
 
   React.useEffect(() => {
