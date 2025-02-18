@@ -31,8 +31,8 @@ export default function App() {
     );
   }
 
-  // Host domain handling (app.spevents.live or localhost without /guest/)
-  if (isHostDomain()) {
+  // Host domain handling (app.spevents.live)
+  if (isHostDomain() && window.location.hostname !== "localhost") {
     return (
       <SessionProvider>
         <BrowserRouter>
@@ -48,14 +48,15 @@ export default function App() {
     );
   }
 
-  // Landing page for main domain (spevents.live)
-  // TODO: Make landing similar to / an improved version of spevents.github.io, and going from
-  // spevents.live > app.spevents.live , etc
-
+  // Landing page for main domain (spevents.live) and localhost
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route element={<AuthGuard />}>
+          <Route path="/host/*" element={<HostRoutes />} />
+        </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

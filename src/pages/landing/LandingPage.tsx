@@ -1,6 +1,8 @@
 // src/pages/landing/LandingPage.tsx
 import { motion } from "framer-motion";
-import { CalendarCheck, Github, Users, Camera, LineChart } from "lucide-react";
+import { CalendarCheck, Users, Camera, LineChart } from "lucide-react";
+import githubLogo from "../../assets/github-mark.svg";
+import lightIcon from "../../assets/light-icon.svg";
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -15,8 +17,11 @@ export const LandingPage = () => {
       <nav className="fixed top-0 inset-x-0 bg-timberwolf/80 backdrop-blur-sm z-50 border-b border-sage/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="text-2xl font-bold text-brunswick-green">
-              spevents
+            <div className="flex items-center gap-2">
+              <img src={lightIcon} alt="Spevents Logo" className="w-8 h-8" />
+              <div className="text-2xl font-bold text-brunswick-green">
+                spevents
+              </div>
             </div>
             <div className="flex items-center gap-4">
               <a
@@ -25,7 +30,7 @@ export const LandingPage = () => {
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 px-4 py-2 text-hunter-green hover:text-brunswick-green transition-colors"
               >
-                <Github className="w-5 h-5" />
+                <img src={githubLogo} alt="GitHub" className="w-5 h-5" />
                 <span className="hidden sm:inline">Star on GitHub</span>
               </a>
               <a
