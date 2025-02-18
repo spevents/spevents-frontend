@@ -1,8 +1,9 @@
 <h1 align="center">
   <img src="./src/assets/dark-icon.svg" alt="Icon" width="100"/>
   <br>
-  <a href="https://spevents.github.io/">Spevents</a> – Fast & Easy Photo Sharing and Projecting
+  <a href="https://spevents.github.io/">Spevents</a> – Real-time Event Photo Sharing
 </h1>
+
 <p align="center">
   <a href="https://reactjs.org/" target="_blank"><img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React"></a>
   <a href="https://www.typescriptlang.org/" target="_blank"><img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript"></a>
@@ -18,165 +19,143 @@
 </p>
 
 <div align="center">
-  A QR-based photo sharing platform that lets event guests contribute to a real-time 3D photo gallery without downloading an app.
+  A web-based photo sharing platform that lets event guests contribute to a real-time photo gallery - no app download needed.
 </div>
-<br>
 
 ## What is Spevents?
 
-Spevents (special + events) is a real-time photo sharing platform that turns guests' phones into a live photo gallery without an app - just scan the host’s QR code and swipe up to share.
+Spevents makes it easy to collect and display guest photos at live events. Guests simply:
+1. Scan a QR code (no app download needed)
+2. Take photos through their phone's browser
+3. See their photos instantly appear on the venue's big screen
 
-### Problem
+Both hosts and guests keep their photos - hosts get a complete event album, while guests keep digital mementos similar to photo booth strips.
 
-At weddings or conferences, guests are constantly switching between enjoying moments and trying to capture them. Traditional solutions like hashtags scatter photos across platforms and "upload your photos" services get low engagement.
+### The Problem
 
-### Solution
+Events have a "photo problem" - guests take lots of photos but sharing them is fragmented and happens after the event, when excitement has faded. Traditional solutions ask guests to upload photos to shared albums or cloud storage, which creates friction and delays sharing.
 
-- **"It just works"**: Just scan a QR code - no apps, no accounts
-- **Real-time Sharing**: Photos appear instantly in the venue visualization
-- **Fun Displays**: Animated gallery displays create a beautiful, engaging experience
-- **Frictionless Experience**: Designed for maximum guest participation
+### Our Solution
 
-## Market & Traction
+- **Instant Sharing**: Photos appear on the venue screen moments after being taken
+- **No Downloads**: Works entirely through the web browser
+- **Simple Access**: Just scan a QR code to start
+- **Multiple Display Modes**: Dynamic presentation options for different event types
+- **Automatic Organization**: Photos are instantly stored and organized for hosts
 
-- Targeting the $70B wedding industry in the US (2.2M weddings annually)
-- Initial focus on Vanderbilt University's 350+ reservable venues and Nashville's wedding market
-- Launching at Mock Shaadi wedding event with 300 guests in partnership with 3 cultural organizations
+## Market Size
 
-## Business Model
+- Weddings: $3.4B market in US (2024), with 2.2M weddings annually
+- Corporate Events/Conferences: $1.1T market globally, 1.8M events annually in US
+- University Events: 4,000 colleges hosting ~50 major events each annually
+- Social Events: 18-35 age demographic, estimated 500K events annually
 
-- **Free Tier**: Small events (up to 100 guests)
-- **Premium Tier**: $29 base + usage-based storage costs
-- **Enterprise Plans**: Custom solutions for venues and event planners
-- Infrastructure costs tied directly to AWS usage
-- 70% margins after cloud storage and processing costs
+## Progress & Traction
 
-## Technical Features
+In three months (Nov 2024 - Jan 2025), I've:
+- Built and launched complete MVP
+- Successfully demoed at 3 events:
+  - Roth n Roll (Dec 2024)
+  - Holud Night (Jan 2025)
+  - Mock Shaadi (Jan 2025)
+  - ... more upcoming
 
-- **Real-time Photo Capture**: Take photos directly through the web interface
-- **Interactive Photo Review**: Swipe-based review system for quick photo management
-- **Multiple Display Modes**:
+## Features
+
+- **Camera Interface**: Mobile-optimized browser-based camera
+- **Photo Review**: Intuitive swipe-based photo management
+- **Display Modes**:
   - Grid Gallery View
-  - Fun Slideshow with dynamic photo arrangements
-  - Presenter Mode for organized photo displays
-  - 3D Model View with interactive scene
-- **QR Code Integration**: Easy sharing and access via QR codes
-- **Responsive Design**: Works seamlessly on both mobile and desktop devices
-- **AWS Integration**: Secure photo storage using S3
-- **Guest Management**: Dedicated guest interface for photo contributions
+  - Dynamic Slideshow
+  - Presenter Mode
+  - 3D Model View
+- **Real-time Updates**: Instant photo synchronization
+- **QR Integration**: Easy access and sharing
+- **Collage Creation**: Built-in photo collage tools
+- **Secure Storage**: AWS-powered photo management
 
 ## Tech Stack
 
-- **Frontend**: React with TypeScript
+- **Frontend**: React (TypeScript)
 - **Styling**: Tailwind CSS
-- **Animation**: Framer Motion
-- **3D Rendering**: Three.js with React Three Fiber
+- **3D Graphics**: Three.js with React Three Fiber
 - **Storage**: AWS S3
+- **CDN**: CloudFront
 - **Build Tool**: Vite
-- **Additional Libraries**:
-  - `@react-three/drei` for 3D scene management
-  - `lucide-react` for icons
-  - `qrcode` for QR code generation
-  - `react-swipeable` for touch interactions
 
-## Prerequisites
+## Setup Requirements
 
-- Node.js (v16 or higher)
-- npm or yarn
-- AWS account with S3 bucket configured
-- SSL certificate for local development (using mkcert)
+- Node.js (v16+)
+- AWS account with S3 bucket
+- SSL certificate for local development
 
 ## Environment Variables
 
-Create a `.env` file in the root directory with the following variables:
-
 ```env
-VITE_AWS_REGION=your_aws_region
-VITE_S3_BUCKET_NAME=your_bucket_name
-VITE_AWS_ACCESS_KEY_ID=your_access_key
-VITE_AWS_SECRET_ACCESS_KEY=your_secret_key
-VITE_CLOUDFRONT_URL=your_cloudfront_url
+VITE_AWS_REGION=
+VITE_S3_BUCKET_NAME=
+VITE_CLOUDFRONT_URL=
+VITE_AWS_ACCESS_KEY_ID=
+VITE_AWS_SECRET_ACCESS_KEY=
+VITE_EVENT_ID=
 ```
 
 ## Installation
 
-1. Clone the repository:
-
+1. Clone repository:
 ```bash
 git clone https://github.com/yourusername/spevents.git
 cd spevents
 ```
 
 2. Install dependencies:
-
 ```bash
 npm install
 ```
 
-3. Setup SSL certificate for local development:
-
-```bash
-npm install -g mkcert
-mkcert create-ca
-mkcert create-cert
-```
-
-4. Start the development server:
-
+3. Start development server:
 ```bash
 npm run dev
 ```
 
-## Build
+## Project Structure
+
+```
+/src
+  /components    # React components
+  /contexts      # Context providers
+  /lib           # AWS integration & utilities
+  /pages         # Route components
+```
+
+## Development
 
 To create a production build:
-
 ```bash
 npm run build
 ```
 
-The built files will be in the `dist` directory.
-
-## Deployment
-
-The application is configured for static hosting. Deploy the contents of the `dist` directory to your preferred hosting service.
-
-### Routing
-
-The application uses client-side routing. Ensure your hosting service is configured to redirect all requests to `index.html`. A `static.json` configuration is included for platforms like Heroku.
-
-## Project Structure
-
-- `/src`
-  - `/components` - Reusable React components
-  - `/contexts` - React context providers
-  - `/lib` - Utility functions and AWS integration
-  - `/pages` - Main route components
-  - `/layouts` - Page layout components
-  - `/utils` - Helper functions
-
-## Development
-
-### Code Style
-
-The project uses ESLint and TypeScript for code quality. Run the linter with:
-
-```bash
-npm run lint
-```
-
-### Testing
-
-To add tests, create files with `.test.tsx` extension alongside your components.
-
 ## Contributing
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+2. Create feature branch (`git checkout -b feature/NewFeature`)
+3. Commit changes (`git commit -m 'Add NewFeature'`)
+4. Push branch (`git push origin feature/NewFeature`)
+5. Open Pull Request
 
 ## Team
 
-Solo founder with CS/Math background + event planning experience. Built venue management systems and organized multiple cultural events.
+Solo technical founder:
+- CS + MATH at Vanderbilt University
+- Managing all aspects: development, marketing, and customer relations
+
+## License
+
+This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0) - see the [LICENSE](LICENSE) file for details.
+
+This means:
+- You can view and use the code
+- You must disclose source code of any modifications
+- You must state any significant changes made
+- You must preserve original copyright and license notices
+- If you distribute or provide network access to modified versions, you must share your modifications under the same license
