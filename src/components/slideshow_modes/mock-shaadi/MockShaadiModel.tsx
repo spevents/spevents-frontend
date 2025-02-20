@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import Scene from "../Scene";
-import AnimatedBorder from "./AnimatedBorder";
+import MockShaadiScene from "./MockShaadiScene";
+import AnimatedBorder from "../AnimatedBorder";
 
 interface ModelSlideshowProps {
   photos: {
@@ -317,9 +317,9 @@ const ModelSlideshow: React.FC<ModelSlideshowProps> = ({ photos }) => {
               transition={{ duration: 1.5 }}
               className="relative w-full h-full"
             >
-              <Scene>
+              <MockShaadiScene>
                 <PhotoPositioner onCameraReady={handleCameraReady} />
-              </Scene>
+              </MockShaadiScene>
 
               {camera && (
                 <div className="absolute inset-0 pointer-events-none">

@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { listPhotos, getPhotoUrl } from "../lib/aws";
 import FunSlideshow from "./slideshow_modes/FunSlideshow";
 import PresenterSlideshow from "./slideshow_modes/PresenterSlideshow";
-import ModelSlideshow from "./slideshow_modes/ModelSlideshow";
+import MockShaadiModel from "./slideshow_modes/mock-shaadi/MockShaadiModel";
 import MarqueeSlideshow from "./slideshow_modes/MarqueeSlideshow";
 
 interface Photo {
@@ -258,7 +258,7 @@ export default function PhotoSlideshow() {
         );
       case "model":
         return (
-          <ModelSlideshow photos={photosWithStringDates} hideUI={hideUI} />
+          <MockShaadiModel photos={photosWithStringDates} hideUI={hideUI} />
         );
       case "marquee":
         return (

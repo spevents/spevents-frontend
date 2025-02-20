@@ -145,7 +145,7 @@ function TableBase({
   );
 }
 
-export default function Tables() {
+export default function MockShaadiTables() {
   const [tableLayouts, setTableLayouts] = useState<TableLayout[]>([]);
 
   useEffect(() => {

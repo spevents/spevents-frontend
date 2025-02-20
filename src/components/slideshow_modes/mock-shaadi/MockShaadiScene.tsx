@@ -1,6 +1,6 @@
 import { Suspense, useEffect } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
-import Tables from "./Tables";
+import MockShaadiTables from "./MockShaadiTables";
 import * as THREE from "three";
 import React from "react";
 
@@ -81,7 +81,7 @@ function FlowerPattern({
   );
 }
 
-export default function Scene({ children }: { children: React.ReactNode }) {
+export default function MockShaadiScene({ children }: { children: React.ReactNode }) {
   return (
     <div className="w-full h-screen">
       <Canvas
@@ -124,7 +124,7 @@ export default function Scene({ children }: { children: React.ReactNode }) {
 
         {/* Main content */}
         <Suspense fallback={null}>
-          <Tables />
+          <MockShaadiTables />
           {children} {/* Add this line to render children */}
         </Suspense>
 
