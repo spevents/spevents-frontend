@@ -25,6 +25,7 @@
 ## What is Spevents?
 
 Spevents makes it easy to collect and display guest photos at live events. Guests simply:
+
 1. Scan a QR code (no app download needed)
 2. Take photos through their phone's browser
 3. See their photos instantly appear on the venue's big screen
@@ -53,6 +54,7 @@ Events have a "photo problem" - guests take lots of photos but sharing them is f
 ## Progress & Traction
 
 In three months (Nov 2024 - Jan 2025), I've:
+
 - Built and launched complete MVP
 - Successfully demoed at 3 events:
   - Roth n Roll (Dec 2024)
@@ -103,17 +105,20 @@ VITE_EVENT_ID=
 ## Installation
 
 1. Clone repository:
+
 ```bash
 git clone https://github.com/yourusername/spevents.git
 cd spevents
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Start development server:
+
 ```bash
 npm run dev
 ```
@@ -131,6 +136,7 @@ npm run dev
 ## Development
 
 To create a production build:
+
 ```bash
 npm run build
 ```
@@ -146,6 +152,7 @@ npm run build
 ## Team
 
 Solo technical founder:
+
 - CS + MATH at Vanderbilt University
 - Managing all aspects: development, marketing, and customer relations
 
@@ -154,6 +161,7 @@ Solo technical founder:
 This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0) - see the [LICENSE](LICENSE) file for details.
 
 This means:
+
 - You can view and use the code
 - You must disclose source code of any modifications
 - You must state any significant changes made
