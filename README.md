@@ -1,7 +1,7 @@
 <h1 align="center">
   <img src="./src/assets/dark-icon.svg" alt="Icon" width="100"/>
   <br>
-  <a href="https://spevents.github.io/">Spevents</a> – Real-time Event Photo Sharing
+  <a href="https://spevents.live/">Spevents</a> – Real-time Event Photo Sharing
 </h1>
 
 <p align="center">

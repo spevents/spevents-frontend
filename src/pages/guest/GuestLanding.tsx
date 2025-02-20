@@ -8,8 +8,8 @@ export const GuestLanding = () => {
           <p className="text-white/60">
             Please scan your host's provided QR code to join an event. Learn
             more at{" "}
-            <a href="https://spevents.github.io" className="underline">
-              spevents.github.io
+            <a href="https://spevents.live" className="underline">
+              spevents.live
             </a>
           </p>
         </div>
