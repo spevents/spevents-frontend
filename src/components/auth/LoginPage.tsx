@@ -80,10 +80,10 @@ export const LoginPage = () => {
             Guest? Join here
           </a>
           <a
-            href="https://spevents.github.io"
+            href="https://spevents.live"
             className="block text-white/60 text-sm text-center hover:text-white transition-colors"
           >
-            Learn more at spevents.github.io
+            Learn more at spevents.live
           </a>
         </div>
       </div>

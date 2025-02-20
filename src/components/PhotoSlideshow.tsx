@@ -13,7 +13,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { listPhotos, getPhotoUrl } from "../lib/aws";
 import FunSlideshow from "./slideshow_modes/FunSlideshow";
 import PresenterSlideshow from "./slideshow_modes/PresenterSlideshow";
-import MockShaadiModel from "./slideshow_modes/mock-shaadi/MockShaadiModel";
+import MockShaadiModel from "./slideshow_modes/models/mock-shaadi/MockShaadiModel";
+// import PohelaFalgunModel from "./slideshow_modes/models/pohela-falgun/PohelaFalgunModel.tsx";
+
 import MarqueeSlideshow from "./slideshow_modes/MarqueeSlideshow";
 
 interface Photo {
