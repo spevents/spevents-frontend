@@ -12,6 +12,7 @@ import { GuestLanding } from "./pages/guest/GuestLanding";
 export default function App() {
   // Debug logs check
   console.log("Current domain:", window.location.hostname);
+  console.log("Current port:", window.location.port);
   console.log("Is guest domain?", isGuestDomain());
   console.log("Is host domain?", isHostDomain());
   console.log("Current path:", window.location.pathname);
@@ -31,8 +32,8 @@ export default function App() {
     );
   }
 
-  // Host domain handling (app.spevents.live)
-  if (isHostDomain() && window.location.hostname !== "localhost") {
+  // Host domain handling (app.spevents.live or localhost:5174)
+  if (isHostDomain()) {
     return (
       <SessionProvider>
         <BrowserRouter>
@@ -48,15 +49,11 @@ export default function App() {
     );
   }
 
-  // Landing page for main domain (spevents.live) and localhost
+  // Landing page for main domain (spevents.live) and localhost:5173
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route element={<AuthGuard />}>
-          <Route path="/host/*" element={<HostRoutes />} />
-        </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

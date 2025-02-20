@@ -8,12 +8,18 @@ export const ROUTES = {
 export const getDomain = () => {
   const hostname = window.location.hostname;
   const pathname = window.location.pathname;
+  const port = window.location.port;
 
   // Debug logs
-  console.log("Checking domain for:", { hostname, pathname });
+  console.log("Checking domain for:", { hostname, pathname, port});
 
   // Local development - includes both localhost and ngrok
   if (hostname === "localhost" || hostname.includes("ngrok")) {
+    if (port == "5174") {
+      return "host";
+    }
+
+    
     const isGuestPath = pathname.includes("/guest/");
     console.log("Development environment:", { isGuestPath });
     return isGuestPath ? "guest" : "local";
