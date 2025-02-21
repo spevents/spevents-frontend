@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft } from "lucide-react";
 import GridCollage from "./GridCollage";
-import MockShaadiCollage from "./MockShaadiCollage";
+// import MockShaadiCollage from "./MockShaadiCollage";
 
 interface LocationState {
   selectedPhotos: string[];
@@ -84,7 +84,7 @@ const CollageOptionsPage = () => {
           </motion.div>
         )}
 
-        {activeModal === "mockShaadi" && (
+        {/* {activeModal === "mockShaadi" && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -96,7 +96,7 @@ const CollageOptionsPage = () => {
               onClose={() => setActiveModal(null)}
             />
           </motion.div>
-        )}
+        )} */}
       </AnimatePresence>
     </div>
   );
