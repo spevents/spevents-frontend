@@ -6,8 +6,8 @@ export default function SlideshowPage() {
     <div className="relative h-screen">
       <PhotoSlideshow />
 
-      {/* Bottom Navigation Bar */}
-      <div className="fixed bottom-0 inset-x-5 bg-black/2 z-50">
+      {/* Top Navigation Bar */}
+      <div className="absolute top-5 right-5 z-50">
         <SlideshowQRCode />
       </div>
     </div>
