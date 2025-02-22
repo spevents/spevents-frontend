@@ -7,7 +7,7 @@ export default function SlideshowPage() {
       <PhotoSlideshow />
 
       {/* Top Navigation Bar */}
-      <div className="absolute top-5 right-1 z-50">
+      <div className="absolute top-5 right-16 z-50">
         <SlideshowQRCode />
       </div>
     </div>
