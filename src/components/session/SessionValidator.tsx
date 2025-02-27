@@ -22,7 +22,7 @@ export function SessionValidator({ children }: SessionValidatorProps) {
       // Store debug info
       const debug = {
         eventId,
-        envEventId,
+        // envEventId,
         eventIdType: typeof eventId,
         // envEventIdType: typeof envEventId,
         // eventIdLength: eventId?.length,
