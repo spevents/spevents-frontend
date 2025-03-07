@@ -45,3 +45,8 @@ certificates/
 .certificates/
 aws/
 .aws
+
+# tests
+.babelrc
+__mocks__/
+coverage/
