@@ -36,20 +36,13 @@ Both hosts and guests keep their photos - hosts get a complete event album, whil
 
 Events have a "photo problem" - guests take lots of photos but sharing them is fragmented and happens after the event, when excitement has faded. Traditional solutions ask guests to upload photos to shared albums or cloud storage, which creates friction and delays sharing.
 
-### Our Solution
+### Solution
 
 - **Instant Sharing**: Photos appear on the venue screen moments after being taken
 - **No Downloads**: Works entirely through the web browser
 - **Simple Access**: Just scan a QR code to start
 - **Multiple Display Modes**: Dynamic presentation options for different event types
 - **Automatic Organization**: Photos are instantly stored and organized for hosts
-
-## Market Size
-
-- Weddings: $3.4B market in US (2024), with 2.2M weddings annually
-- Corporate Events/Conferences: $1.1T market globally, 1.8M events annually in US
-- University Events: 4,000 colleges hosting ~50 major events each annually
-- Social Events: 18-35 age demographic, estimated 500K events annually
 
 ## Progress & Traction
 
