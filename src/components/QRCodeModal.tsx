@@ -28,9 +28,7 @@ export function QRCodeModal({ isOpen, onClose }: QRCodeModalProps) {
   };
 
   const handleUpdateSessionCode = () => {
-    const newCode = prompt(
-      "Enter your custom session code",
-    );
+    const newCode = prompt("Enter your custom session code");
     if (newCode) {
       setCustomSessionCode(newCode);
     }
