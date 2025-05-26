@@ -12,6 +12,13 @@ export const AuthGuard = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // For localhost development, bypass auth temporarily
+    if (window.location.hostname === "localhost") {
+      setIsAuthorized(true);
+      setIsLoading(false);
+      return;
+    }
+
     if (!isHostDomain()) {
       return;
     }
@@ -37,7 +44,7 @@ export const AuthGuard = () => {
   }
 
   if (!isAuthorized) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/signin" replace />;
   }
 
   return <Outlet />;
