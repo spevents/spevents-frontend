@@ -1,5 +1,6 @@
 // Navigation.tsx
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import darkIcon from "../../assets/dark-icon.svg";
 import lightIcon from "../../assets/light-icon.svg";
@@ -72,18 +73,18 @@ export function Navigation() {
               <img src={githubLogo} alt="GitHub" className="w-5 h-5" />
               <span>Star on GitHub</span>
             </a>
-            <a
-              href="https://app.spevents.live"
+            <Link
+              to="/signin"
               className="px-4 py-2 bg-brunswick-green text-white rounded-lg hover:bg-hunter-green transition-colors"
             >
               Host Sign In
-            </a>
-            <a
-              href="https://join.spevents.live"
+            </Link>
+            <Link
+              to="/join"
               className="px-4 py-2 bg-sage text-brunswick-green rounded-lg hover:bg-fern-green hover:text-white transition-colors"
             >
               Join Event
-            </a>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -118,20 +119,20 @@ export function Navigation() {
                 <img src={githubLogo} alt="GitHub" className="w-5 h-5" />
                 <span>Star on GitHub</span>
               </a>
-              <a
-                href="https://app.spevents.live"
+              <Link
+                to="/signin"
                 className="block p-3 bg-brunswick-green text-white rounded-lg hover:bg-hunter-green transition-colors text-center"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Host Sign In
-              </a>
-              <a
-                href="https://join.spevents.live"
+              </Link>
+              <Link
+                to="/join"
                 className="block p-3 bg-sage text-brunswick-green rounded-lg hover:bg-fern-green hover:text-white transition-colors text-center"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Join Event
-              </a>
+              </Link>
             </div>
           </motion.div>
         )}

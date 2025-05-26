@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { CalendarCheck, Users, Camera, LineChart, Menu, X } from "lucide-react";
 import { ProductPage } from "./minis/ProductPage";
@@ -39,18 +40,18 @@ export const LandingPage = () => {
                 <span>Star on GitHub</span>
               </a>
 
-              <a
-                href="https://app.spevents.live"
+              <Link
+                to="/signin"
                 className="px-4 py-2 bg-brunswick-green text-white rounded-lg hover:bg-hunter-green transition-colors"
               >
                 Host Sign In
-              </a>
-              <a
-                href="https://join.spevents.live"
+              </Link>
+              <Link
+                to="/join"
                 className="px-4 py-2 bg-sage text-brunswick-green rounded-lg hover:bg-fern-green hover:text-white transition-colors"
               >
                 Join Event
-              </a>
+              </Link>
             </div>
 
             {/* Mobile Menu Button */}
@@ -86,20 +87,20 @@ export const LandingPage = () => {
                   <span>Star on GitHub</span>
                 </a>
 
-                <a
-                  href="https://app.spevents.live"
+                <Link
+                  to="/signin"
                   className="block p-3 bg-brunswick-green text-white rounded-lg hover:bg-hunter-green transition-colors text-center"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Host Sign In
-                </a>
-                <a
-                  href="https://join.spevents.live"
+                </Link>
+                <Link
+                  to="/join"
                   className="block p-3 bg-sage text-brunswick-green rounded-lg hover:bg-fern-green hover:text-white transition-colors text-center"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Join Event
-                </a>
+                </Link>
               </div>
             </motion.div>
           )}

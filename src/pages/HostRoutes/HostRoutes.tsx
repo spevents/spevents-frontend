@@ -15,7 +15,7 @@ export const HostRoutes = () => {
       <Route path="host/slideshow" element={<SlideshowPage />} />
 
       {/* New dashboard routes */}
-      <Route path="dashboard" element={<DashboardPage />} />
+      <Route index element={<DashboardPage />} />
       <Route path="dashboard/create-event" element={<CreateEventPage />} />
       <Route path="dashboard/setup-gallery" element={<SetupGalleryPage />} />
       <Route path="dashboard/3d-builder" element={<ThreeDBuilderPage />} />
