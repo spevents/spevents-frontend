@@ -162,3 +162,17 @@ This means:
 - You must preserve original copyright and license notices
 - If you distribute or provide network access to modified versions, you must share your modifications under the same license
 - This is a commit
+
+"BeReal meets big screens—authentic moments, instant gratification"
+"Event Photo booths without the booth. Your whole venue becomes the frame." << This one sounds good fr>>
+
+"Instagram Stories for live events—guests swipe up photos to instantly appear on venue screens."
+
+For Wedding Planners:
+"Your venue becomes a living photo album. Guests feel like they're feeding a digital fireplace with memories."
+
+For Corporate Events:
+"Turn dead networking time into photo competitions. Watch productivity conferences become surprisingly social."z
+
+For Venue Managers:
+"Every blank wall becomes interactive revenue. Charge $300+ for 'digital photo experiences' using just a projector."
