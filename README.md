@@ -172,7 +172,7 @@ For Wedding Planners:
 "Your venue becomes a living photo album. Guests feel like they're feeding a digital fireplace with memories."
 
 For Corporate Events:
-"Turn dead networking time into photo competitions. Watch productivity conferences become surprisingly social."z
+"Turn dead networking time into photo competitions. Watch productivity conferences become surprisingly social."
 
 For Venue Managers:
 "Every blank wall becomes interactive revenue. Charge $300+ for 'digital photo experiences' using just a projector."
