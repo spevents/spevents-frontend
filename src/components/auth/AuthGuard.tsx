@@ -11,7 +11,16 @@ export const AuthGuard = () => {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Bypass auth in development
+  const BYPASS_AUTH = import.meta.env.DEV;
+
   useEffect(() => {
+    if (BYPASS_AUTH) {
+      setIsAuthorized(true);
+      setIsLoading(false);
+      return;
+    }
+
     if (!isHostDomain()) {
       return;
     }
@@ -26,7 +35,7 @@ export const AuthGuard = () => {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [BYPASS_AUTH]);
 
   if (isLoading) {
     return (
@@ -37,7 +46,7 @@ export const AuthGuard = () => {
   }
 
   if (!isAuthorized) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return <Outlet />;

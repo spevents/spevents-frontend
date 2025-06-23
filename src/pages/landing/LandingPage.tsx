@@ -1,9 +1,11 @@
+// src/pages/landing/LandingPage.tsx
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { CalendarCheck, Users, Camera, LineChart, Menu, X } from "lucide-react";
 import { ProductPage } from "./minis/ProductPage";
 import githubLogo from "../../assets/github-mark.svg";
 import lightIcon from "../../assets/light-icon.svg";
+import { getDomain } from "../../components/config/routes";
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -11,8 +13,29 @@ const fadeIn = {
   transition: { duration: 0.8 },
 };
 
+// Helper function to get the appropriate URLs based on environment
+const getUrls = () => {
+  const domain = getDomain();
+  const currentOrigin = window.location.origin;
+
+  if (domain === "local") {
+    // During development, use localhost paths
+    return {
+      host: `${currentOrigin}/host/gallery`,
+      guest: `${currentOrigin}/${import.meta.env.VITE_EVENT_ID || "demo"}/guest`,
+    };
+  }
+
+  // Production URLs
+  return {
+    host: "https://app.spevents.live",
+    guest: "https://join.spevents.live",
+  };
+};
+
 export const LandingPage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const urls = getUrls();
 
   return (
     <div className="min-h-screen bg-timberwolf">
@@ -40,14 +63,13 @@ export const LandingPage = () => {
               </a>
 
               <a
-                
-                href="https://app.spevents.live"
+                href={urls.host}
                 className="px-4 py-2 bg-brunswick-green text-white rounded-lg hover:bg-hunter-green transition-colors"
               >
                 Host Sign In
               </a>
               <a
-                href="https://join.spevents.live"
+                href={urls.guest}
                 className="px-4 py-2 bg-sage text-brunswick-green rounded-lg hover:bg-fern-green hover:text-white transition-colors"
               >
                 Join Event
@@ -88,14 +110,14 @@ export const LandingPage = () => {
                 </a>
 
                 <a
-                  href="https://app.spevents.live"
+                  href={urls.host}
                   className="block p-3 bg-brunswick-green text-white rounded-lg hover:bg-hunter-green transition-colors text-center"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Host Sign In
                 </a>
                 <a
-                  href="https://join.spevents.live"
+                  href={urls.guest}
                   className="block p-3 bg-sage text-brunswick-green rounded-lg hover:bg-fern-green hover:text-white transition-colors text-center"
                   onClick={() => setIsMenuOpen(false)}
                 >

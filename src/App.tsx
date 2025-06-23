@@ -31,7 +31,7 @@ export default function App() {
     );
   }
 
-  // Host domain handling (app.spevents.live)
+  // Host domain handling (app.spevents.live) - excluding localhost
   if (isHostDomain() && window.location.hostname !== "localhost") {
     return (
       <SessionProvider>
@@ -48,17 +48,21 @@ export default function App() {
     );
   }
 
-  // Landing page for main domain (spevents.live) and localhost
+  // Localhost handling - support both host and guest routes for development
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route element={<AuthGuard />}>
-          <Route path="/host/*" element={<HostRoutes />} />
-        </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <SessionProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route element={<AuthGuard />}>
+            <Route path="/host/*" element={<HostRoutes />} />
+          </Route>
+          {/* Guest routes for localhost development */}
+          <Route path="/:eventId/guest/*" element={<GuestRoutes />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </SessionProvider>
   );
 }
