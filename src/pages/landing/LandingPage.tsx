@@ -40,6 +40,7 @@ export const LandingPage = () => {
               </a>
 
               <a
+                
                 href="https://app.spevents.live"
                 className="px-4 py-2 bg-brunswick-green text-white rounded-lg hover:bg-hunter-green transition-colors"
               >
