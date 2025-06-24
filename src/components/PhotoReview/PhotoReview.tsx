@@ -102,7 +102,6 @@ const ReviewComplete: React.FC = () => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => navigateWithBaseUrl("/")}
-            // onClick={() => navigate("/guest")}
             className="w-full px-6 py-3 bg-white text-gray-900 rounded-full font-medium 
               transition-colors hover:bg-white/90"
           >
@@ -127,6 +126,7 @@ const ReviewComplete: React.FC = () => {
 };
 
 export default function PhotoReview() {
+  const { eventId } = useParams();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [processingPhotos, setProcessingPhotos] = useState<Set<number>>(
     new Set(),
@@ -151,11 +151,13 @@ export default function PhotoReview() {
     updateScreenHeight();
     window.addEventListener("resize", updateScreenHeight);
 
-    const tempPhotos = getTempPhotos();
-    setPhotos(tempPhotos);
+    if (eventId) {
+      const tempPhotos = getTempPhotos(eventId);
+      setPhotos(tempPhotos);
+    }
 
     return () => window.removeEventListener("resize", updateScreenHeight);
-  }, []);
+  }, [eventId]);
 
   const handleStackNavigation = (direction: 1 | -1) => {
     setCurrentPhotoIndex((prev) => {
@@ -199,6 +201,8 @@ export default function PhotoReview() {
   };
 
   const handlePhotoAction = async (photo: Photo, isUpward: boolean) => {
+    if (!eventId) return;
+
     const currentIndex = currentPhotoIndex;
     const totalPhotos = photos.length;
 
@@ -220,6 +224,7 @@ export default function PhotoReview() {
 
         // Get presigned URL for upload
         const presignedUrl = await getPresignedUrl({
+          eventId,
           fileName,
           contentType: "image/jpeg",
         });
@@ -235,13 +240,13 @@ export default function PhotoReview() {
         if (!uploadResponse.ok) throw new Error("Upload failed");
 
         // Store the uploaded photo info in localStorage
-        storeUploadedPhoto(fileName);
+        storeUploadedPhoto(eventId, fileName);
 
         // Update session storage for temporary photos
-        const tempPhotos = getTempPhotos().filter(
+        const tempPhotos = getTempPhotos(eventId).filter(
           (p: Photo) => p.id !== photo.id,
         );
-        storeTempPhotos(tempPhotos);
+        storeTempPhotos(eventId, tempPhotos);
       } catch (error) {
         console.error("Upload failed:", error);
         if (processingPhotos.has(photo.id)) {
@@ -264,10 +269,10 @@ export default function PhotoReview() {
       }
 
       // Update session storage for temporary photos
-      const tempPhotos = getTempPhotos().filter(
+      const tempPhotos = getTempPhotos(eventId).filter(
         (p: Photo) => p.id !== photo.id,
       );
-      storeTempPhotos(tempPhotos);
+      storeTempPhotos(eventId, tempPhotos);
 
       setDragPosition(0);
     }
