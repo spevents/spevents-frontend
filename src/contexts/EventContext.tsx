@@ -29,13 +29,36 @@ interface EventContextType {
 
 const EventContext = createContext<EventContextType | undefined>(undefined);
 
+// Mock data for bypass mode
+const mockEvents: Event[] = [
+  {
+    id: "mock-event-1",
+    name: "Mock Event 1",
+    description: "Test event for development",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    hostEmail: "dev@spevents.local",
+    status: "active",
+    photoCount: 0,
+    sessionCode: "MOCK01",
+  },
+];
+
 export function EventProvider({ children }: { children: React.ReactNode }) {
   const [events, setEvents] = useState<Event[]>([]);
   const [currentEvent, setCurrentEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const BYPASS_AUTH = import.meta.env.VITE_BYPASS_AUTH === "true";
+
   const loadEvents = useCallback(async () => {
+    if (BYPASS_AUTH) {
+      setEvents(mockEvents);
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     try {
@@ -46,10 +69,26 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [BYPASS_AUTH]);
 
   const createEvent = useCallback(
     async (data: CreateEventData): Promise<Event> => {
+      if (BYPASS_AUTH) {
+        const newEvent: Event = {
+          id: `mock-${Date.now()}`,
+          name: data.name,
+          description: data.description,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          hostEmail: "dev@spevents.local",
+          status: "draft",
+          photoCount: 0,
+          sessionCode: Math.random().toString(36).substring(2, 8).toUpperCase(),
+        };
+        setEvents((prev) => [newEvent, ...prev]);
+        return newEvent;
+      }
+
       setIsLoading(true);
       setError(null);
       try {
@@ -63,7 +102,7 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false);
       }
     },
-    [],
+    [BYPASS_AUTH],
   );
 
   const selectEvent = useCallback(
@@ -79,6 +118,16 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
 
   const updateEvent = useCallback(
     async (eventId: string, updates: Partial<Event>) => {
+      if (BYPASS_AUTH) {
+        setEvents((prev) =>
+          prev.map((e) => (e.id === eventId ? { ...e, ...updates } : e)),
+        );
+        if (currentEvent?.id === eventId) {
+          setCurrentEvent({ ...currentEvent, ...updates });
+        }
+        return;
+      }
+
       try {
         const updatedEvent = await eventService.updateEvent(eventId, updates);
         setEvents((prev) =>
@@ -92,11 +141,20 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
         throw err;
       }
     },
-    [currentEvent],
+    [currentEvent, BYPASS_AUTH],
   );
 
   const deleteEvent = useCallback(
     async (eventId: string) => {
+      if (BYPASS_AUTH) {
+        setEvents((prev) => prev.filter((e) => e.id !== eventId));
+        if (currentEvent?.id === eventId) {
+          setCurrentEvent(null);
+          localStorage.removeItem("spevents-current-event");
+        }
+        return;
+      }
+
       try {
         await eventService.deleteEvent(eventId);
         setEvents((prev) => prev.filter((e) => e.id !== eventId));
@@ -109,7 +167,7 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
         throw err;
       }
     },
-    [currentEvent],
+    [currentEvent, BYPASS_AUTH],
   );
 
   const startEvent = useCallback(

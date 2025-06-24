@@ -1,7 +1,6 @@
 // src/lib/eventService.ts
 import {
   collection,
-  doc,
   addDoc,
   updateDoc,
   deleteDoc,
@@ -17,12 +16,29 @@ import { auth } from "../components/config/firebase";
 class EventService {
   private collection = "events";
 
-  private getCurrentUserEmail(): string {
-    const user = auth.currentUser;
-    if (!user?.email) {
-      throw new Error("User not authenticated");
+  private async getCurrentUserEmail(): Promise<string> {
+    // Bypass auth in development when flag is set
+    if (import.meta.env.DEV && import.meta.env.VITE_BYPASS_AUTH === "true") {
+      return import.meta.env.VITE_ALLOWED_EMAIL || "dev@spevents.local";
     }
-    return user.email;
+
+    // Wait for auth state to be ready
+    return new Promise((resolve, reject) => {
+      const unsubscribe = auth.onAuthStateChanged((user) => {
+        unsubscribe();
+        if (user?.email) {
+          resolve(user.email);
+        } else {
+          reject(new Error("User not authenticated"));
+        }
+      });
+
+      // If auth state is already available
+      if (auth.currentUser?.email) {
+        unsubscribe();
+        resolve(auth.currentUser.email);
+      }
+    });
   }
 
   private generateEventId(): string {
@@ -34,7 +50,7 @@ class EventService {
   }
 
   async createEvent(data: CreateEventData): Promise<Event> {
-    const userEmail = this.getCurrentUserEmail();
+    const userEmail = await this.getCurrentUserEmail();
     const now = new Date().toISOString();
 
     const event: Event = {
@@ -50,7 +66,20 @@ class EventService {
     };
 
     try {
-      await addDoc(collection(db, this.collection), event);
+      // Convert Event to plain object for Firestore
+      const eventData = {
+        id: event.id,
+        name: event.name,
+        description: event.description,
+        createdAt: event.createdAt,
+        updatedAt: event.updatedAt,
+        hostEmail: event.hostEmail,
+        status: event.status,
+        photoCount: event.photoCount,
+        sessionCode: event.sessionCode,
+      };
+
+      await addDoc(collection(db, this.collection), eventData);
       return event;
     } catch (error) {
       console.error("Error creating event:", error);
@@ -59,7 +88,7 @@ class EventService {
   }
 
   async getUserEvents(): Promise<Event[]> {
-    const userEmail = this.getCurrentUserEmail();
+    const userEmail = await this.getCurrentUserEmail();
 
     try {
       const q = query(
@@ -83,7 +112,7 @@ class EventService {
   }
 
   async updateEvent(eventId: string, updates: Partial<Event>): Promise<Event> {
-    const userEmail = this.getCurrentUserEmail();
+    const userEmail = await this.getCurrentUserEmail();
 
     try {
       // Find the document with matching eventId and userEmail
@@ -108,7 +137,13 @@ class EventService {
         updatedAt: new Date().toISOString(),
       };
 
-      await updateDoc(docRef, updatedEvent);
+      // Convert to plain object for Firestore
+      const updateData = {
+        ...updates,
+        updatedAt: updatedEvent.updatedAt,
+      };
+
+      await updateDoc(docRef, updateData);
       return updatedEvent;
     } catch (error) {
       console.error("Error updating event:", error);
@@ -117,7 +152,7 @@ class EventService {
   }
 
   async deleteEvent(eventId: string): Promise<void> {
-    const userEmail = this.getCurrentUserEmail();
+    const userEmail = await this.getCurrentUserEmail();
 
     try {
       // Find the document with matching eventId and userEmail
