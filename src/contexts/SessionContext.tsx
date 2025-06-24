@@ -31,15 +31,19 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const isValidSession = useCallback(
-    async (eventId: string): Promise<boolean> => {
+    async (sessionCode: string): Promise<boolean> => {
       try {
-        console.log("Validating session for eventId:", eventId);
+        console.log("Validating session for sessionCode:", sessionCode);
 
-        // Check if this event ID exists in Firestore
-        const event = await eventService.getEventBySessionCode(eventId);
+        // Check if this session code exists in Firestore
+        const event = await eventService.getEventBySessionCode(sessionCode);
         const isValid = event !== null;
 
-        console.log("Session validation result:", { eventId, isValid, event });
+        console.log("Session validation result:", {
+          sessionCode,
+          isValid,
+          event,
+        });
         return isValid;
       } catch (error) {
         console.error("Error in isValidSession:", error);

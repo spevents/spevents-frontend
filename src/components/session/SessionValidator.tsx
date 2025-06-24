@@ -1,55 +1,55 @@
 // src/components/session/SessionValidator.tsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, createContext, useContext } from "react";
 import { useParams } from "react-router-dom";
 import { useSession } from "../../contexts/SessionContext";
+import { eventService } from "../../lib/eventService";
 
 interface SessionValidatorProps {
   children: React.ReactNode;
 }
 
+// Create context to provide actual eventId to child components
+const EventIdContext = createContext<string | null>(null);
+
+export const useActualEventId = () => {
+  return useContext(EventIdContext);
+};
+
 export function SessionValidator({ children }: SessionValidatorProps) {
-  const { eventId } = useParams();
+  const { eventId: sessionCode } = useParams(); // This is actually sessionCode from URL
   const { isValidSession } = useSession();
   const [isChecking, setIsChecking] = useState(true);
   const [isValid, setIsValid] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [actualEventId, setActualEventId] = useState<string | null>(null);
 
   useEffect(() => {
     const checkSession = async () => {
-      // Get environment variable
-      const envEventId = import.meta.env.VITE_EVENT_ID;
-
-      // Store debug info
-      const debug = {
-        eventId,
-        // envEventId,
-        eventIdType: typeof eventId,
-        // envEventIdType: typeof envEventId,
-        // eventIdLength: eventId?.length,
-        // envEventIdLength: envEventId?.length,
-        exact: eventId === envEventId,
-      };
-
-      setDebugInfo(debug);
-      console.log("Session Debug Info:", debug);
-
-      if (!eventId) {
-        console.log("No eventId provided");
+      if (!sessionCode) {
+        console.log("No sessionCode provided");
         setIsValid(false);
         setIsChecking(false);
         return;
       }
 
       try {
-        // Decode URI component in case of special characters
-        const decodedEventId = decodeURIComponent(eventId);
-        const valid = await isValidSession(decodedEventId);
-        console.log("Session validation result:", {
-          decodedEventId,
-          valid,
-          envMatch: decodedEventId === envEventId,
-        });
-        setIsValid(valid);
+        console.log("Checking session for sessionCode:", sessionCode);
+
+        // Get the actual event using sessionCode
+        const event = await eventService.getEventBySessionCode(sessionCode);
+
+        if (event) {
+          console.log(
+            "Found event:",
+            event.id,
+            "for sessionCode:",
+            sessionCode,
+          );
+          setActualEventId(event.id);
+          setIsValid(true);
+        } else {
+          console.log("No event found for sessionCode:", sessionCode);
+          setIsValid(false);
+        }
       } catch (error) {
         console.error("Session validation error:", error);
         setIsValid(false);
@@ -59,7 +59,7 @@ export function SessionValidator({ children }: SessionValidatorProps) {
     };
 
     checkSession();
-  }, [eventId, isValidSession]);
+  }, [sessionCode, isValidSession]);
 
   if (isChecking) {
     return (
@@ -69,7 +69,7 @@ export function SessionValidator({ children }: SessionValidatorProps) {
     );
   }
 
-  if (!isValid) {
+  if (!isValid || !actualEventId) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center p-6">
         <div className="text-center space-y-4">
@@ -78,27 +78,6 @@ export function SessionValidator({ children }: SessionValidatorProps) {
             This session code is not valid or has expired. Please scan a valid
             QR code to join an event.
           </p>
-          <button
-            onClick={() => {
-              // Show both the typical debug info and our enhanced debug info
-              console.log("Enhanced Debug Info:", debugInfo);
-              alert(
-                JSON.stringify(
-                  {
-                    eventId,
-                    isValid,
-                    isChecking,
-                    ...debugInfo,
-                  },
-                  null,
-                  2,
-                ),
-              );
-            }}
-            className="px-6 py-3 bg-white/10 text-white rounded-full hover:bg-white/20"
-          >
-            Debug Info
-          </button>
           <a
             href="/"
             className="block px-6 py-3 bg-white/10 text-white rounded-full hover:bg-white/20"
@@ -110,5 +89,9 @@ export function SessionValidator({ children }: SessionValidatorProps) {
     );
   }
 
-  return <>{children}</>;
+  return (
+    <EventIdContext.Provider value={actualEventId}>
+      {children}
+    </EventIdContext.Provider>
+  );
 }

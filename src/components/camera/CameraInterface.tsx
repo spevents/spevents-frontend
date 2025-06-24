@@ -13,6 +13,7 @@ import {
   ExtendedMediaTrackConstraintSet,
 } from "./types/media";
 import { storeTempPhotos, getTempPhotos } from "../../lib/aws";
+import { useActualEventId } from "../session/SessionValidator";
 
 // Types
 interface CameraInterfaceProps {
@@ -38,7 +39,8 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
   const isDemoMode = location.pathname.startsWith("/demo");
   const basePrefix = isDemoMode ? "/demo" : "";
   const orientation = useOrientation();
-  const { eventId } = useParams();
+  useParams();
+  const actualEventId = useActualEventId();
 
   // State
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -211,7 +213,7 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
   const capturePhoto = useCallback(async () => {
     if (!videoRef.current || photos.length >= PHOTO_LIMIT) return;
 
-    console.log("Capturing photo for eventId:", eventId);
+    console.log("Capturing photo for eventId:", actualEventId);
     console.log("Current photos:", photos.length);
 
     // Handle screen flash for front camera
@@ -245,12 +247,12 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
 
     setPhotos((prev) => [...prev, newPhoto]);
 
-    if (eventId) {
-      const sessionPhotos = getTempPhotos(eventId);
-      storeTempPhotos(eventId, [...sessionPhotos, newPhoto]);
+    if (actualEventId) {
+      const sessionPhotos = getTempPhotos(actualEventId);
+      storeTempPhotos(actualEventId, [...sessionPhotos, newPhoto]);
       console.log(
         "Stored photo for eventId:",
-        eventId,
+        actualEventId,
         "Total photos:",
         sessionPhotos.length + 1,
       );
@@ -261,7 +263,9 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
 
   const navigateWithBaseUrl = (path: string) => {
     const fullPath =
-      path === "/" ? `/${eventId}/guest` : `/${eventId}/guest${path}`;
+      path === "/"
+        ? `/${actualEventId}/guest`
+        : `/${actualEventId}/guest${path}`;
     if (window.innerWidth <= 768 && baseUrl) {
       window.location.href = `${baseUrl}${fullPath}`;
     } else {
