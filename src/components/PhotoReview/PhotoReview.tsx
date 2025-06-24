@@ -153,6 +153,9 @@ export default function PhotoReview() {
 
     if (eventId) {
       const tempPhotos = getTempPhotos(eventId);
+      console.log("Loading photos for eventId:", eventId);
+      console.log("Found temp photos:", tempPhotos);
+      console.log("Session storage key:", `temp-photos-${eventId}`);
       setPhotos(tempPhotos);
     }
 
