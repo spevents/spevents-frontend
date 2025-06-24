@@ -12,6 +12,7 @@ interface ModelSlideshowProps {
     createdAt: string;
   }[];
   hideUI?: boolean;
+  containerDimensions: { width: number; height: number };
 }
 
 interface TableProps {

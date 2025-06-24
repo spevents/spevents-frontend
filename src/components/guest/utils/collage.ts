@@ -120,7 +120,7 @@ const dataUrlToFile = async (dataUrl: string): Promise<File> => {
 /**
  * Share image and optionally open Instagram
  */
-export async function shareToInstagram(imageDataUrl: string) {
+export async function shareToInstagram(imageDataUrl: string, _p0: string) {
   try {
     const file = await dataUrlToFile(imageDataUrl);
 

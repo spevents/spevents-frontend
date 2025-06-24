@@ -1,4 +1,6 @@
+// src/components/guest/MockShaadiCollage.tsx
 import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import { ChevronLeft, LayoutGrid, Plus, Share2, Type, X } from "lucide-react";
 import { shareToInstagram } from "./utils/collage";
 import { getSignedPhotoUrl } from "../../lib/aws";
@@ -52,51 +54,55 @@ const NON_ENGLISH_FONTS: FontOption[] = [
 
 const getVanderbiltFont = (fontKey: FontOption) => {
   return NON_ENGLISH_FONTS.includes(fontKey)
-    ? FONTS["fleurDeLeah"].style
-    : FONTS[fontKey].style;
+    ? "Vanderbilt Condensed Medium"
+    : getFontConfig(fontKey).style.fontFamily;
 };
 
-const FONTS: Record<FontOption, FontConfig> = {
-  playfair: {
-    name: "Playfair Display",
-    class: "font-playfair",
-    style: { fontFamily: "'Playfair Display', serif" },
-  },
-  instrumentSerif: {
-    name: "Instrument Serif",
-    class: "font-instrument",
-    style: { fontFamily: "'Instrument Serif', serif" },
-  },
-  fleurDeLeah: {
-    name: "Fleur De Leah",
-    class: "font-fleur",
-    style: { fontFamily: "'Fleur De Leah', cursive" },
-  },
-  galada: {
-    name: "Galada",
-    class: "font-galada",
-    style: { fontFamily: "'Galada', cursive" },
-  },
-  karlaTamilInclined: {
-    name: "Karla Tamil",
-    class: "font-karla",
-    style: { fontFamily: "'Karla Tamil Inclined', sans-serif" },
-  },
-  martel: {
-    name: "Martel",
-    class: "font-martel",
-    style: { fontFamily: "'Martel', serif", fontWeight: "600" },
-  },
-  monsieurLaDoulaise: {
-    name: "Monsieur La Doulaise",
-    class: "font-monsieur",
-    style: { fontFamily: "'Monsieur La Doulaise', cursive" },
-  },
-  notoNastaliqUrdu: {
-    name: "Noto Nastaliq",
-    class: "font-noto",
-    style: { fontFamily: "'Noto Nastaliq Urdu', serif", fontWeight: "600" },
-  },
+const getFontConfig = (fontKey: FontOption): FontConfig => {
+  const configs: Record<FontOption, FontConfig> = {
+    playfair: {
+      name: "Playfair Display",
+      class: "font-playfair",
+      style: { fontFamily: "Playfair Display", fontWeight: "400" },
+    },
+    instrumentSerif: {
+      name: "Instrument Serif",
+      class: "font-instrument-serif",
+      style: { fontFamily: "Instrument Serif" },
+    },
+    fleurDeLeah: {
+      name: "Fleur De Leah",
+      class: "font-fleur-de-leah",
+      style: { fontFamily: "Fleur De Leah" },
+    },
+    galada: {
+      name: "Galada (Bengali)",
+      class: "font-galada",
+      style: { fontFamily: "Galada" },
+    },
+    karlaTamilInclined: {
+      name: "Karla Tamil Inclined",
+      class: "font-karla-tamil-inclined",
+      style: { fontFamily: "Karla Tamil Inclined" },
+    },
+    martel: {
+      name: "Martel (Hindi)",
+      class: "font-martel",
+      style: { fontFamily: "Martel" },
+    },
+    monsieurLaDoulaise: {
+      name: "Monsieur La Doulaise",
+      class: "font-monsieur-la-doulaise",
+      style: { fontFamily: "Monsieur La Doulaise" },
+    },
+    notoNastaliqUrdu: {
+      name: "Noto Nastaliq Urdu",
+      class: "font-noto-nastaliq-urdu",
+      style: { fontFamily: "Noto Nastaliq Urdu" },
+    },
+  };
+
+  return configs[fontKey];
 };
 
 export interface MockShaadiCollageProps {
@@ -105,7 +111,6 @@ export interface MockShaadiCollageProps {
 }
 
 const FontModal = ({
-  isOpen,
   onClose,
   selectedFont,
   onSelectFont,
@@ -115,75 +120,77 @@ const FontModal = ({
   selectedFont: FontOption;
   onSelectFont: (font: FontOption) => void;
 }) => {
-  if (!isOpen) return null;
+  const fontOptions: FontOption[] = [
+    "playfair",
+    "instrumentSerif",
+    "fleurDeLeah",
+    "galada",
+    "karlaTamilInclined",
+    "martel",
+    "monsieurLaDoulaise",
+    "notoNastaliqUrdu",
+  ];
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       onClick={onClose}
     >
       <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
+        initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="bg-gray-900 rounded-2xl p-6 max-w-sm w-full max-h-[80vh] overflow-auto"
         onClick={(e) => e.stopPropagation()}
-        className="bg-gray-900 rounded-xl w-full max-w-2xl relative overflow-hidden"
       >
-        {/* Header */}
-        <div className="p-4 border-b border-white/10 flex justify-between items-center">
-          <h2 className="text-lg font-medium text-white">Select Font Style</h2>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-white text-lg font-semibold">Select Font</h3>
           <button
             onClick={onClose}
-            className="p-1 rounded-full hover:bg-white/10 transition-colors text-white"
+            className="p-1 hover:bg-white/10 rounded-full transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 text-white" />
           </button>
         </div>
 
-        {/* Font Grid */}
-        <div className="grid grid-cols-2 gap-3 p-4 max-h-[60vh] overflow-y-auto">
-          {(Object.entries(FONTS) as [FontOption, FontConfig][]).map(
-            ([key, font]) => (
-              <button
-                key={key}
-                onClick={() => {
-                  onSelectFont(key);
-                  onClose();
-                }}
-                className={`p-4 rounded-lg text-center transition-colors ${
-                  selectedFont === key
-                    ? "bg-[#9a031e]/20 ring-2 ring-[#9a031e]"
-                    : "bg-white/5 hover:bg-white/10"
-                }`}
-              >
-                <div className="space-y-2">
-                  <div
-                    style={getVanderbiltFont(key)}
-                    className="text-xl text-white"
-                  >
-                    Vanderbilt
-                  </div>
-                  <div style={font.style} className="text-xl text-white">
-                    {key === "galada"
-                      ? "মজাদার বিবাহ"
-                      : key === "karlaTamilInclined"
-                        ? "ஜோக் திருமணம்"
-                        : key === "martel"
-                          ? "नकली शादी"
-                          : key === "notoNastaliqUrdu"
-                            ? "فرضی شادی"
-                            : "Mock Shaadi"}
-                  </div>
-                  <div className="text-sm mt-2 text-white/60 font-sans">
-                    {font.name}
-                  </div>
+        <div className="space-y-3">
+          {fontOptions.map((key) => (
+            <button
+              key={key}
+              onClick={() => {
+                onSelectFont(key);
+                onClose();
+              }}
+              className={`w-full text-left p-4 rounded-xl border transition-all ${
+                selectedFont === key
+                  ? "border-yellow-400 bg-yellow-400/10"
+                  : "border-white/20 hover:border-white/40 hover:bg-white/5"
+              }`}
+            >
+              <div className="flex flex-col items-center text-center">
+                <div
+                  className={`text-2xl mb-2 text-white ${getFontConfig(key).class}`}
+                  style={getFontConfig(key).style}
+                >
+                  {key === "galada"
+                    ? "মজাদার বিবাহ"
+                    : key === "karlaTamilInclined"
+                      ? "ஜோக் திருமணம்"
+                      : key === "martel"
+                        ? "नकली शादी"
+                        : key === "notoNastaliqUrdu"
+                          ? "فرضی شادی"
+                          : "Mock Shaadi"}
                 </div>
-              </button>
-            ),
-          )}
+                <div className="text-sm mt-2 text-white/60 font-sans">
+                  {getFontConfig(key).name}
+                </div>
+              </div>
+            </button>
+          ))}
         </div>
       </motion.div>
     </motion.div>
@@ -194,6 +201,7 @@ const MockShaadiCollage = ({
   selectedPhotos,
   onClose,
 }: MockShaadiCollageProps) => {
+  const { eventId } = useParams<{ eventId: string }>();
   const [selectedColor, setSelectedColor] = useState<string>(
     THEME_COLORS.tyrian,
   );
@@ -207,12 +215,14 @@ const MockShaadiCollage = ({
 
   useEffect(() => {
     const getSignedUrls = async () => {
+      if (!eventId) return;
+
       try {
         const urls = await Promise.all(
           limitedPhotos.map(async (photoUrl) => {
             const fileName = photoUrl.split("/").pop();
             if (!fileName) throw new Error("Invalid photo URL");
-            return await getSignedPhotoUrl(fileName);
+            return await getSignedPhotoUrl(eventId, fileName);
           }),
         );
         setSignedUrls(urls);
@@ -222,7 +232,7 @@ const MockShaadiCollage = ({
     };
 
     getSignedUrls();
-  }, [limitedPhotos]);
+  }, [limitedPhotos, eventId]);
 
   const createCollage = async () => {
     setIsCreating(true);
@@ -262,35 +272,20 @@ const MockShaadiCollage = ({
           if (corner.includes("right")) ctx.scale(-1, 1);
           if (corner.includes("bottom")) ctx.scale(1, -1);
 
+          // Draw ornamental pattern
           ctx.fillStyle = THEME_COLORS.gold;
-          ctx.beginPath();
-          ctx.moveTo(0, 0);
-          ctx.lineTo(cornerSize, 0);
-          ctx.lineTo(0, cornerSize);
-          ctx.closePath();
-          ctx.fill();
+          ctx.fillRect(0, 0, cornerSize, 10);
+          ctx.fillRect(0, 0, 10, cornerSize);
+          ctx.fillRect(20, 20, cornerSize - 40, 5);
+          ctx.fillRect(20, 20, 5, cornerSize - 40);
+
           ctx.restore();
         },
       );
 
-      // Set up text rendering
-      ctx.textAlign = "center";
-      ctx.fillStyle = THEME_COLORS.almond;
-
-      // Set Vanderbilt text font based on selected font
-      const vanderbiltFontStyle = getVanderbiltFont(selectedFont);
-      ctx.font = `100px ${vanderbiltFontStyle.fontFamily}`;
-      ctx.fillText("Vanderbilt University", canvas.width / 2, 160);
-
-      // Set main text font based on selection
-      const fontConfig = FONTS[selectedFont];
-      const fontFamily = fontConfig.style.fontFamily;
-      const fontWeight = fontConfig.style.fontWeight || "bold";
-      ctx.font = `${fontWeight} 72px ${fontFamily}`;
-
-      // Determine text based on selected font
-      const mainText =
-        selectedFont === "galada"
+      // Add title text
+      const titleText = NON_ENGLISH_FONTS.includes(selectedFont)
+        ? selectedFont === "galada"
           ? "মজাদার বিবাহ"
           : selectedFont === "karlaTamilInclined"
             ? "ஜோக் திருமணம்"
@@ -298,441 +293,238 @@ const MockShaadiCollage = ({
               ? "नकली शादी"
               : selectedFont === "notoNastaliqUrdu"
                 ? "فرضی شادی"
-                : "Mock Shaadi";
+                : "Mock Shaadi"
+        : "Mock Shaadi";
 
-      // Special handling for right-to-left text (Urdu)
-      if (selectedFont === "notoNastaliqUrdu") {
-        ctx.direction = "rtl";
-      }
+      ctx.fillStyle = THEME_COLORS.gold;
+      ctx.font = `bold 72px ${getVanderbiltFont(selectedFont)}`;
+      ctx.textAlign = "center";
+      ctx.fillText(titleText, canvas.width / 2, 200);
 
-      ctx.fillText(mainText, canvas.width / 2, 280);
-      ctx.direction = "ltr";
+      // Calculate grid layout
+      const maxPhotosPerCollage = Math.min(limitedPhotos.length, 12);
+      const cols = maxPhotosPerCollage <= 4 ? 2 : 3;
+      const rows = Math.ceil(maxPhotosPerCollage / cols);
 
-      // Add year with some spacing
-      ctx.font = `bold 56px ${fontFamily}`;
-      ctx.fillText("2025", canvas.width / 2, 380);
+      const gridWidth = canvas.width - 200;
+      const gridHeight = canvas.height - 500;
+      const photoWidth = gridWidth / cols - 20;
+      const photoHeight = gridHeight / rows - 20;
 
-      // Load images
-      const loadedImages = await Promise.all(
-        signedUrls.map(
-          (url) =>
-            new Promise<HTMLImageElement>((resolve, reject) => {
-              const img = new Image();
-              img.crossOrigin = "anonymous";
-              img.onload = () => resolve(img);
-              img.onerror = (_err) =>
-                reject(new Error(`Failed to load image: ${url}`));
-              img.src = url;
-            }),
-        ),
+      const startX = (canvas.width - gridWidth) / 2 + 10;
+      const startY = 300;
+
+      // Load and draw photos
+      const imagePromises = signedUrls.slice(0, maxPhotosPerCollage).map(
+        (url) =>
+          new Promise<HTMLImageElement>((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = url;
+          }),
       );
 
-      // Film strip configuration
-      const frameWidth = 200;
-      const frameHeight = 150;
-      const frameSpacing = 210;
-      const startY = 500;
-      const stripWidth = 50;
-      const sprocketHoleSize = 22;
-      const sprocketOffset = 40;
-      const sprocketsPerSide = 12;
-      const holeHeightRatio = 0.5;
-      const spacingMultiplier = 0.8;
-      const sprocketYOffset = -100;
-      const frameBorderThickness = 4;
-      const stripEdgeRoughness = 0;
-      const grainIntensity = 0.1;
-      const frameCornerRadius = 0;
+      const images = await Promise.all(imagePromises);
 
-      // Calculate columns based on number of photos
-      const numPhotos = loadedImages.length;
-      const columns = numPhotos <= 4 ? 1 : numPhotos <= 8 ? 2 : 3;
-      const columnSpacing = -10; // Reduced spacing between columns
-      const columnWidth = frameWidth + stripWidth * 2 + sprocketOffset * 2;
-      const totalStripWidth =
-        columnWidth * columns + columnSpacing * (columns - 1);
-      const startX = (canvas.width - totalStripWidth) / 2 + 15;
+      images.forEach((img, index) => {
+        const col = index % cols;
+        const row = Math.floor(index / cols);
 
-      // Process photos by columns
-      for (let col = 0; col < columns; col++) {
-        const columnStartIndex = col * 4;
-        const columnPhotos = loadedImages.slice(
-          columnStartIndex,
-          columnStartIndex + 4,
-        );
-        const columnX = startX + (columnWidth + columnSpacing) * col;
+        const x = startX + col * (photoWidth + 20);
+        const y = startY + row * (photoHeight + 20);
 
-        columnPhotos.forEach((img, i) => {
-          const frameY = startY + (frameHeight + frameSpacing) * i;
+        // Create rounded rectangle path
+        const radius = 15;
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(x, y, photoWidth, photoHeight, radius);
+        ctx.clip();
 
-          // Draw film strip holes
-          ctx.fillStyle = "black";
+        // Calculate aspect ratio and draw image
+        const imgAspect = img.width / img.height;
+        const boxAspect = photoWidth / photoHeight;
 
-          // Draw strips with rough edges if enabled
-          if (stripEdgeRoughness > 0) {
-            // Left strip with rough edges
-            const leftStripPath = new Path2D();
-            leftStripPath.moveTo(
-              columnX + sprocketOffset - stripWidth / 2,
-              frameY - frameSpacing / 2,
-            );
-            for (let y = 0; y < frameHeight + frameSpacing; y += 5) {
-              const xOffset =
-                Math.random() * stripEdgeRoughness - stripEdgeRoughness / 2;
-              leftStripPath.lineTo(
-                columnX + sprocketOffset - stripWidth / 2 + xOffset,
-                frameY - frameSpacing / 2 + y,
-              );
-            }
-            leftStripPath.lineTo(
-              columnX + sprocketOffset - stripWidth / 2,
-              frameY + frameHeight + frameSpacing / 2,
-            );
-            leftStripPath.lineTo(
-              columnX + sprocketOffset + stripWidth / 2,
-              frameY + frameHeight + frameSpacing / 2,
-            );
-            leftStripPath.lineTo(
-              columnX + sprocketOffset + stripWidth / 2,
-              frameY - frameSpacing / 2,
-            );
-            leftStripPath.closePath();
-            ctx.fill(leftStripPath);
+        let drawWidth, drawHeight, offsetX, offsetY;
 
-            // Right strip with rough edges
-            const rightStripPath = new Path2D();
-            const rightStripX = columnX + frameWidth + sprocketOffset;
-            rightStripPath.moveTo(
-              rightStripX - stripWidth / 2,
-              frameY - frameSpacing / 2,
-            );
-            for (let y = 0; y < frameHeight + frameSpacing; y += 5) {
-              const xOffset =
-                Math.random() * stripEdgeRoughness - stripEdgeRoughness / 2;
-              rightStripPath.lineTo(
-                rightStripX - stripWidth / 2 + xOffset,
-                frameY - frameSpacing / 2 + y,
-              );
-            }
-            rightStripPath.lineTo(
-              rightStripX - stripWidth / 2,
-              frameY + frameHeight + frameSpacing / 2,
-            );
-            rightStripPath.lineTo(
-              rightStripX + stripWidth / 2,
-              frameY + frameHeight + frameSpacing / 2,
-            );
-            rightStripPath.lineTo(
-              rightStripX + stripWidth / 2,
-              frameY - frameSpacing / 2,
-            );
-            rightStripPath.closePath();
-            ctx.fill(rightStripPath);
-          } else {
-            // Regular strips without rough edges
-            ctx.fillRect(
-              columnX + sprocketOffset - stripWidth / 2,
-              frameY - frameSpacing / 2,
-              stripWidth,
-              frameHeight + frameSpacing,
-            );
-            ctx.fillRect(
-              columnX + frameWidth + sprocketOffset - stripWidth / 2,
-              frameY - frameSpacing / 2,
-              stripWidth,
-              frameHeight + frameSpacing,
-            );
-          }
-
-          // Draw sprocket holes
-          ctx.fillStyle = "white";
-          const holeWidth = sprocketHoleSize;
-          const holeHeight = sprocketHoleSize * holeHeightRatio;
-
-          const totalFrameHeight = frameHeight + frameSpacing;
-          const totalSpacing = totalFrameHeight * spacingMultiplier;
-          const startOffsetY = (totalSpacing - totalFrameHeight) / 2;
-
-          for (let h = 0; h < sprocketsPerSide; h++) {
-            const holeY =
-              frameY -
-              startOffsetY +
-              (totalSpacing / (sprocketsPerSide - 1)) * h +
-              sprocketYOffset;
-
-            // Left holes
-            ctx.fillRect(
-              columnX + sprocketOffset - 10 - holeWidth / 2,
-              holeY - holeHeight / 2,
-              holeWidth,
-              holeHeight,
-            );
-
-            // Right holes
-            ctx.fillRect(
-              columnX + frameWidth + sprocketOffset + 10 - holeWidth / 2,
-              holeY - holeHeight / 2,
-              holeWidth,
-              holeHeight,
-            );
-          }
-
-          // Draw frame with optional rounded corners
-          ctx.fillStyle = "black";
-          if (frameCornerRadius > 0) {
-            const x = columnX + sprocketOffset - frameBorderThickness;
-            const y = frameY - frameBorderThickness;
-            const width = frameWidth + frameBorderThickness * 2;
-            const height = frameHeight + frameBorderThickness * 2;
-
-            ctx.beginPath();
-            ctx.moveTo(x + frameCornerRadius, y);
-            ctx.lineTo(x + width - frameCornerRadius, y);
-            ctx.quadraticCurveTo(
-              x + width,
-              y,
-              x + width,
-              y + frameCornerRadius,
-            );
-            ctx.lineTo(x + width, y + height - frameCornerRadius);
-            ctx.quadraticCurveTo(
-              x + width,
-              y + height,
-              x + width - frameCornerRadius,
-              y + height,
-            );
-            ctx.lineTo(x + frameCornerRadius, y + height);
-            ctx.quadraticCurveTo(
-              x,
-              y + height,
-              x,
-              y + height - frameCornerRadius,
-            );
-            ctx.lineTo(x, y + frameCornerRadius);
-            ctx.quadraticCurveTo(x, y, x + frameCornerRadius, y);
-            ctx.closePath();
-            ctx.fill();
-          } else {
-            ctx.fillRect(
-              columnX + sprocketOffset - frameBorderThickness,
-              frameY - frameBorderThickness,
-              frameWidth + frameBorderThickness * 2,
-              frameHeight + frameBorderThickness * 2,
-            );
-          }
-
-          // Calculate image dimensions preserving aspect ratio
-          const imgAspectRatio = img.width / img.height;
-          let drawWidth, drawHeight, drawX, drawY;
-
-          if (imgAspectRatio > 4 / 3) {
-            // Image is wider than frame
-            drawHeight = frameHeight;
-            drawWidth = drawHeight * imgAspectRatio;
-            drawY = frameY;
-            drawX = columnX + sprocketOffset + (frameWidth - drawWidth) / 2;
-          } else {
-            // Image is taller than frame
-            drawWidth = frameWidth;
-            drawHeight = drawWidth / imgAspectRatio;
-            drawX = columnX + sprocketOffset;
-            drawY = frameY + (frameHeight - drawHeight) / 2;
-          }
-
-          // Draw the image with border
-          const borderSize = frameBorderThickness;
-          ctx.drawImage(
-            img,
-            drawX + borderSize,
-            drawY + borderSize,
-            drawWidth - borderSize * 2,
-            drawHeight - borderSize * 2,
-          );
-        });
-      }
-
-      // Add film grain effect if enabled
-      if (grainIntensity > 0) {
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imageData.data;
-        for (let i = 0; i < data.length; i += 4) {
-          const noise = (Math.random() - 0.5) * grainIntensity * 50;
-          data[i] += noise; // R
-          data[i + 1] += noise; // G
-          data[i + 2] += noise; // B
+        if (imgAspect > boxAspect) {
+          drawHeight = photoHeight;
+          drawWidth = drawHeight * imgAspect;
+          offsetY = 0;
+          offsetX = (photoWidth - drawWidth) / 2;
+        } else {
+          drawWidth = photoWidth;
+          drawHeight = drawWidth / imgAspect;
+          offsetX = 0;
+          offsetY = (photoHeight - drawHeight) / 2;
         }
-        ctx.putImageData(imageData, 0, 0);
-      }
 
-      // Add watermark
-      const watermarkSize = 36;
-      ctx.font = `bold ${watermarkSize}px Quicksand`;
-      ctx.textAlign = "end";
-      ctx.textBaseline = "bottom";
+        ctx.drawImage(img, x + offsetX, y + offsetY, drawWidth, drawHeight);
 
-      const watermarkText = "spevents.live";
-      const metrics = ctx.measureText(watermarkText);
-      const padding = watermarkSize * 0.5;
-      const x = canvas.width - padding;
-      const y = canvas.height - padding;
+        // Add subtle border
+        ctx.restore();
+        ctx.strokeStyle = THEME_COLORS.gold;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.roundRect(x, y, photoWidth, photoHeight, radius);
+        ctx.stroke();
+      });
 
-      ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-      ctx.fillRect(
-        x - metrics.width - padding,
-        y - watermarkSize,
-        metrics.width + padding * 2,
-        watermarkSize + padding,
+      // Add subtitle
+      ctx.fillStyle = THEME_COLORS.almond;
+      ctx.font = `32px ${getVanderbiltFont(selectedFont)}`;
+      ctx.textAlign = "center";
+      ctx.fillText(
+        "Memories to Cherish",
+        canvas.width / 2,
+        canvas.height - 100,
       );
 
-      ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-      ctx.fillText(watermarkText, x, y);
-
-      setCollageUrl(canvas.toDataURL("image/jpeg", 0.92));
+      // Convert to blob and create URL
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            setCollageUrl(url);
+          }
+        },
+        "image/jpeg",
+        0.9,
+      );
     } catch (error) {
       console.error("Error creating collage:", error);
-      alert("Error creating collage. Please try again.");
     } finally {
       setIsCreating(false);
     }
   };
-  const handleShare = async () => {
-    if (!collageUrl) return;
-    try {
-      await shareToInstagram(collageUrl);
-    } catch (error) {
-      console.error("Error sharing:", error);
-      alert("Error sharing to Instagram. Please try again.");
+
+  const handleShare = () => {
+    if (collageUrl) {
+      shareToInstagram(
+        collageUrl,
+        "Check out this beautiful Mock Shaadi collage! 💖✨",
+      );
     }
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="fixed inset-0 bg-black z-50 flex flex-col">
       {/* Header */}
-      <div className="flex-none bg-gray-900/80 backdrop-blur-lg z-10">
-        <div className="px-4 py-4 flex items-center">
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full hover:bg-white/10 transition-colors"
-          >
-            <ChevronLeft className="w-6 h-6 text-white" />
-          </button>
-          <h1 className="ml-4 text-lg font-playfair text-white">
-            Mock Shaadi Collage
-          </h1>
-        </div>
+      <div className="p-4 border-b border-white/10">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-white/10 rounded-full transition-colors"
+            >
+              <ChevronLeft className="w-6 h-6 text-white" />
+            </button>
+            <h2 className="text-white font-medium">Mock Shaadi</h2>
+          </div>
 
-        {/* Theme Selection and Action Buttons */}
-        <div className="px-4 pb-4 flex">
-          {/* Theme and Font Selection */}
-          <div className="space-y-4 flex-1">
-            <div>
-              <h2 className="text-white text-sm mb-2">Theme Color</h2>
-              <div className="flex gap-2">
-                {Object.entries(selectableColors).map(
-                  ([_name, color]) =>
-                    !excludeColors.includes(color) && (
-                      <button
-                        key={color}
-                        onClick={() => setSelectedColor(color)}
-                        className={`w-8 h-8 rounded-full border-2 ${
-                          selectedColor === color
-                            ? "border-white"
-                            : "border-white/20"
-                        }`}
-                        style={{ backgroundColor: color }}
-                      />
-                    ),
-                )}
-              </div>
+          {/* Color and Font Controls */}
+          <div className="flex items-center gap-4">
+            {/* Color Selector */}
+            <div className="flex gap-2">
+              {Object.entries(selectableColors)
+                .filter(([_, color]) => !excludeColors.includes(color))
+                .map(([key, color]) => (
+                  <button
+                    key={key}
+                    onClick={() => setSelectedColor(color)}
+                    className={`w-8 h-8 rounded-full border-2 transition-all ${
+                      selectedColor === color
+                        ? "border-yellow-400 scale-110"
+                        : "border-white/30 hover:border-white/60"
+                    }`}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
             </div>
 
-            <div>
-              <h2 className="text-white text-sm mb-2">Font Style</h2>
+            {/* Font Selector */}
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowFontModal(true)}
-                className="w-full p-3 rounded-lg text-white bg-white/10 hover:bg-white/15 transition-colors text-left flex items-center justify-between"
+                className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
               >
-                <div className="flex items-center gap-3">
-                  <Type className="w-5 h-5 text-white/60" />
-                  <div>
-                    <div
-                      style={getVanderbiltFont(selectedFont)}
-                      className="text-lg"
-                    >
-                      Vanderbilt
-                    </div>
-                    <div style={FONTS[selectedFont].style} className="text-lg">
-                      {selectedFont === "galada"
-                        ? "মজাদার বিবাহ"
-                        : selectedFont === "karlaTamilInclined"
-                          ? "ஜோக் திருமணம்"
-                          : selectedFont === "martel"
-                            ? "नकली शादी"
-                            : selectedFont === "notoNastaliqUrdu"
-                              ? "فرضی شادی"
-                              : "Mock Shaadi"}
-                    </div>
+                <Type className="w-4 h-4 text-white" />
+                <div className="text-white text-sm">
+                  <div
+                    className={`${getFontConfig(selectedFont).class}`}
+                    style={getFontConfig(selectedFont).style}
+                  >
+                    {selectedFont === "galada"
+                      ? "মজাদার বিবাহ"
+                      : selectedFont === "karlaTamilInclined"
+                        ? "ஜோக் திருமணம்"
+                        : selectedFont === "martel"
+                          ? "नकली शादी"
+                          : selectedFont === "notoNastaliqUrdu"
+                            ? "فرضی شادی"
+                            : "Mock Shaadi"}
                   </div>
                 </div>
               </button>
             </div>
-          </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center ml-4 pl-4 border-l border-white/10">
-            <AnimatePresence mode="wait">
-              {collageUrl ? (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="flex flex-col gap-2 w-32"
-                >
-                  <button
-                    onClick={handleShare}
-                    className="w-full py-3 bg-[#9a031e] text-yellow-400 rounded-full font-medium flex items-center justify-center gap-2"
+            {/* Action Buttons */}
+            <div className="flex items-center ml-4 pl-4 border-l border-white/10">
+              <AnimatePresence mode="wait">
+                {collageUrl ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="flex flex-col gap-2 w-32"
                   >
-                    <Share2 className="w-5 h-5" />
-                    Share
-                  </button>
-                  <button
-                    onClick={() => setCollageUrl(null)}
-                    className="w-full py-3 bg-white/10 text-white rounded-full font-medium flex items-center justify-center gap-2"
+                    <button
+                      onClick={handleShare}
+                      className="w-full py-3 bg-[#9a031e] text-yellow-400 rounded-full font-medium flex items-center justify-center gap-2"
+                    >
+                      <Share2 className="w-5 h-5" />
+                      Share
+                    </button>
+                    <button
+                      onClick={() => setCollageUrl(null)}
+                      className="w-full py-3 bg-white/10 text-white rounded-full font-medium flex items-center justify-center gap-2"
+                    >
+                      <Plus className="w-5 h-5" />
+                      New
+                    </button>
+                  </motion.div>
+                ) : (
+                  <motion.button
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    onClick={createCollage}
+                    disabled={
+                      isCreating ||
+                      limitedPhotos.length === 0 ||
+                      signedUrls.length === 0
+                    }
+                    className={`w-32 h-full rounded-full font-medium flex items-center justify-center gap-2 ${
+                      limitedPhotos.length > 0 &&
+                      !isCreating &&
+                      signedUrls.length > 0
+                        ? "bg-[#9a031e] text-yellow-400"
+                        : "bg-white/10 text-white/50"
+                    }`}
                   >
-                    <Plus className="w-5 h-5" />
-                    New
-                  </button>
-                </motion.div>
-              ) : (
-                <motion.button
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  onClick={createCollage}
-                  disabled={
-                    isCreating ||
-                    limitedPhotos.length === 0 ||
-                    signedUrls.length === 0
-                  }
-                  className={`w-32 h-full rounded-full font-medium flex items-center justify-center gap-2 ${
-                    limitedPhotos.length > 0 &&
-                    !isCreating &&
-                    signedUrls.length > 0
-                      ? "bg-[#9a031e] text-yellow-400"
-                      : "bg-white/10 text-white/50"
-                  }`}
-                >
-                  <LayoutGrid className="w-5 h-5" />
-                  {isCreating
-                    ? "Creating..."
-                    : limitedPhotos.length === 0
-                      ? "No photos"
-                      : signedUrls.length === 0
-                        ? "Loading..."
-                        : "Create!"}
-                </motion.button>
-              )}
-            </AnimatePresence>
+                    <LayoutGrid className="w-5 h-5" />
+                    {isCreating
+                      ? "Creating..."
+                      : limitedPhotos.length === 0
+                        ? "No photos"
+                        : signedUrls.length === 0
+                          ? "Loading..."
+                          : "Create!"}
+                  </motion.button>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </div>

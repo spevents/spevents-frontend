@@ -1,3 +1,4 @@
+// src/components/PhotoSlideshow.tsx
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -30,6 +31,10 @@ interface PhotoWithStringDate {
   createdAt: string;
 }
 
+interface PhotoSlideshowProps {
+  eventId?: string;
+}
+
 type ViewMode = "simple" | "fun" | "presenter" | "model" | "marquee";
 
 const MAX_PHOTOS = 16;
@@ -37,7 +42,7 @@ const PHOTO_DISPLAY_TIME = 8000 + Math.random() * 2000; // 8-10 seconds
 const TRANSITION_DURATION = 10000; // 3 seconds for fade
 const PHOTO_REFRESH_INTERVAL = 2000 + Math.random() * 2000;
 
-export default function PhotoSlideshow() {
+export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>("simple");
   const [hideUI, setHideUI] = useState(false);
@@ -97,6 +102,27 @@ export default function PhotoSlideshow() {
     return 0;
   };
 
+  const loadPhotos = async () => {
+    if (!eventId) return;
+
+    try {
+      const fileNames = await listPhotos(eventId);
+      const loadedPhotos: Photo[] = fileNames.map((fileName) => ({
+        src: getPhotoUrl(eventId, fileName),
+        id: fileName,
+        createdAt: getTimestampFromFilename(fileName) || Date.now(),
+        transitionId: `${fileName}-${Date.now()}`,
+        expiryTime: Date.now() + PHOTO_DISPLAY_TIME,
+      }));
+
+      setPhotos(loadedPhotos);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error loading photos:", error);
+      setIsLoading(false);
+    }
+  };
+
   const addNewPhoto = () => {
     setDisplayedPhotos((current) => {
       // If we're at max photos, find the oldest one to replace
@@ -137,258 +163,228 @@ export default function PhotoSlideshow() {
         return current.map((photo) =>
           photo.transitionId === oldestPhoto.transitionId ? newPhoto : photo,
         );
+      } else {
+        // Add a new photo if we haven't reached the limit
+        const availablePhotos = photosRef.current.filter(
+          (photo) => !current.some((p) => p.id === photo.id),
+        );
+
+        if (availablePhotos.length === 0) {
+          return current; // No new photos to add
+        }
+
+        const randomPhoto =
+          availablePhotos[Math.floor(Math.random() * availablePhotos.length)];
+
+        const newPhoto = {
+          ...randomPhoto,
+          transitionId: `${randomPhoto.id}-${now}`,
+          expiryTime: now + PHOTO_DISPLAY_TIME,
+        };
+
+        // Schedule the next addition/replacement
+        const removalJitter = Math.random() * 1000;
+        timeoutsRef.current[newPhoto.transitionId] = setTimeout(() => {
+          addNewPhoto();
+        }, PHOTO_DISPLAY_TIME + removalJitter);
+
+        return [...current, newPhoto];
       }
-
-      // If we're not at max photos yet, add a new one
-      const availablePhotos = photosRef.current.filter(
-        (photo) => !current.some((p) => p.id === photo.id),
-      );
-
-      if (availablePhotos.length === 0) return current;
-
-      const randomPhoto =
-        availablePhotos[Math.floor(Math.random() * availablePhotos.length)];
-      const newPhoto = {
-        ...randomPhoto,
-        transitionId: `${randomPhoto.id}-${now}`,
-        expiryTime: now + PHOTO_DISPLAY_TIME,
-      };
-
-      // Schedule photo replacement
-      const removalJitter = Math.random() * 1000;
-      timeoutsRef.current[newPhoto.transitionId] = setTimeout(() => {
-        addNewPhoto();
-      }, PHOTO_DISPLAY_TIME + removalJitter);
-
-      return [...current, newPhoto];
     });
   };
 
-  const loadPhotosFromStorage = async () => {
-    try {
-      const fileNames = await listPhotos();
-      const photoUrls = fileNames.map((fileName) => ({
-        src: getPhotoUrl(fileName),
-        id: fileName,
-        createdAt: getTimestampFromFilename(fileName),
-        transitionId: `${fileName}-${Date.now()}`,
-        expiryTime: Date.now() + PHOTO_DISPLAY_TIME,
-      }));
-
-      // Sort by timestamp, newest first
-      const sortedPhotos = photoUrls.sort((a, b) => b.createdAt - a.createdAt);
-      setPhotos(sortedPhotos);
-      setIsLoading(false);
-    } catch (error) {
-      console.error("Error loading photos:", error);
-      setIsLoading(false);
-    }
-  };
-
+  // Load photos on mount and set up refresh interval
   useEffect(() => {
-    // Clear any existing timeouts
-    Object.values(timeoutsRef.current).forEach((timeout) =>
-      clearTimeout(timeout),
-    );
-    timeoutsRef.current = {};
+    if (eventId) {
+      loadPhotos();
+      const refreshInterval = setInterval(loadPhotos, PHOTO_REFRESH_INTERVAL);
+      return () => clearInterval(refreshInterval);
+    }
+  }, [eventId]);
 
-    loadPhotosFromStorage();
-    const pollInterval = setInterval(
-      loadPhotosFromStorage,
-      PHOTO_REFRESH_INTERVAL,
-    );
+  // Start slideshow when photos are loaded
+  useEffect(() => {
+    if (photos.length > 0 && displayedPhotos.length === 0) {
+      // Initial delay before starting slideshow
+      setTimeout(() => {
+        addNewPhoto();
+      }, 1000);
+    }
+  }, [photos.length, displayedPhotos.length]);
 
+  // Clear timeouts on unmount
+  useEffect(() => {
     return () => {
-      clearInterval(pollInterval);
-      Object.values(timeoutsRef.current).forEach((timeout) =>
-        clearTimeout(timeout),
-      );
+      Object.values(timeoutsRef.current).forEach((timeout) => {
+        clearTimeout(timeout);
+      });
     };
   }, []);
 
-  useEffect(() => {
-    if (!isLoading && photos.length > 0) {
-      // Clear any existing timeouts
-      Object.values(timeoutsRef.current).forEach((timeout) =>
-        clearTimeout(timeout),
-      );
-      timeoutsRef.current = {};
-
-      // Add initial photos with staggered timing
-      const initialCount = Math.min(MAX_PHOTOS, photos.length);
-      for (let i = 0; i < initialCount; i++) {
-        setTimeout(() => addNewPhoto(), i * (TRANSITION_DURATION / 2));
-      }
-
-      // Start the photo rotation cycle
-      const rotationInterval = setInterval(() => {
-        if (displayedPhotos.length >= MAX_PHOTOS) {
-          addNewPhoto();
-        }
-      }, PHOTO_DISPLAY_TIME / 2); // Check for rotation more frequently than display time
-
-      return () => {
-        clearInterval(rotationInterval);
-      };
-    }
-  }, [isLoading, photos]);
-
-  if (isLoading) {
-    return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center">
-        <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  const renderSlideshow = () => {
-    const photosWithStringDates = convertPhotosForDisplay(photos);
+  const renderViewMode = () => {
+    const photosForDisplay = convertPhotosForDisplay(displayedPhotos);
 
     switch (viewMode) {
       case "fun":
         return (
           <FunSlideshow
-            photos={photosWithStringDates}
+            photos={photosForDisplay}
             containerDimensions={containerDimensions}
           />
         );
       case "presenter":
         return (
-          <PresenterSlideshow photos={photosWithStringDates} hideUI={hideUI} />
+          <PresenterSlideshow
+            photos={photosForDisplay}
+            containerDimensions={containerDimensions}
+          />
         );
       case "model":
         return (
-          <ModelSlideshow photos={photosWithStringDates} hideUI={hideUI} />
+          <ModelSlideshow
+            photos={photosForDisplay}
+            containerDimensions={containerDimensions}
+          />
         );
       case "marquee":
         return (
-          <MarqueeSlideshow photos={photosWithStringDates} hideUI={hideUI} />
+          <MarqueeSlideshow
+            photos={photosForDisplay}
+            containerDimensions={containerDimensions}
+          />
         );
       default:
         return (
-          <div className="absolute inset-0 flex items-center justify-center pb-16">
-            <div className="w-full max-w-6xl px-8">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 auto-rows-fr">
-                <AnimatePresence mode="popLayout">
-                  {displayedPhotos.map((photo) => (
-                    <motion.div
-                      key={photo.transitionId}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 300,
-                        damping: 30,
-                        duration: 0.5,
-                      }}
-                      className="relative aspect-[4/3]"
-                    >
-                      <div className="absolute inset-0 p-1">
-                        <div className="w-full h-full bg-white/90 rounded-lg overflow-hidden">
-                          <img
-                            src={photo.src}
-                            alt="Event photo"
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
-            </div>
+          <div className="relative w-full h-full overflow-hidden bg-gray-900">
+            <AnimatePresence>
+              {displayedPhotos.map((photo) => (
+                <motion.div
+                  key={photo.transitionId}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 1.2 }}
+                  transition={{
+                    duration: TRANSITION_DURATION / 1000,
+                    ease: "easeInOut",
+                  }}
+                  className="absolute inset-0 flex items-center justify-center"
+                >
+                  <img
+                    src={photo.src}
+                    alt="Slideshow photo"
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         );
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black overflow-hidden">
-      {!hideUI && (
-        <div className="absolute top-4 left-4 z-50 flex items-center space-x-4">
-          <button
-            onClick={() => navigate(`/host/gallery`)}
-            className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-white hover:bg-white/20 transition-colors"
+    <div className="relative w-full h-screen bg-gray-900 overflow-hidden">
+      {/* Main slideshow content */}
+      {renderViewMode()}
+
+      {/* UI Controls */}
+      <AnimatePresence>
+        {!hideUI && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="absolute bottom-4 left-4 right-4"
           >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Back to Gallery</span>
-          </button>
+            <div className="flex items-center justify-between">
+              {/* Back button */}
+              <button
+                onClick={() => navigate(-1)}
+                className="p-3 bg-black/50 backdrop-blur-sm rounded-full text-white hover:bg-black/70 transition-colors"
+              >
+                <ArrowLeft size={20} />
+              </button>
 
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setViewMode("simple")}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-full backdrop-blur-sm transition-colors ${
-                viewMode === "simple"
-                  ? "bg-white/20 text-white"
-                  : "bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
-              }`}
-            >
-              <Layout className="w-5 h-5" />
-              <span>Grid</span>
-            </button>
+              {/* View mode controls */}
+              <div className="flex items-center gap-2 bg-black/50 backdrop-blur-sm rounded-full p-2">
+                <button
+                  onClick={() => setViewMode("simple")}
+                  className={`p-2 rounded-full transition-colors ${
+                    viewMode === "simple"
+                      ? "bg-white text-black"
+                      : "text-white hover:bg-white/20"
+                  }`}
+                >
+                  <Layout size={16} />
+                </button>
+                <button
+                  onClick={() => setViewMode("fun")}
+                  className={`p-2 rounded-full transition-colors ${
+                    viewMode === "fun"
+                      ? "bg-white text-black"
+                      : "text-white hover:bg-white/20"
+                  }`}
+                >
+                  <LayoutTemplate size={16} />
+                </button>
+                <button
+                  onClick={() => setViewMode("presenter")}
+                  className={`p-2 rounded-full transition-colors ${
+                    viewMode === "presenter"
+                      ? "bg-white text-black"
+                      : "text-white hover:bg-white/20"
+                  }`}
+                >
+                  <Presentation size={16} />
+                </button>
+                <button
+                  onClick={() => setViewMode("model")}
+                  className={`p-2 rounded-full transition-colors ${
+                    viewMode === "model"
+                      ? "bg-white text-black"
+                      : "text-white hover:bg-white/20"
+                  }`}
+                >
+                  <Hotel size={16} />
+                </button>
+                <button
+                  onClick={() => setViewMode("marquee")}
+                  className={`p-2 rounded-full transition-colors ${
+                    viewMode === "marquee"
+                      ? "bg-white text-black"
+                      : "text-white hover:bg-white/20"
+                  }`}
+                >
+                  <AlignHorizontalSpaceAround size={16} />
+                </button>
+              </div>
 
-            <button
-              onClick={() => setViewMode("fun")}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-full backdrop-blur-sm transition-colors ${
-                viewMode === "fun"
-                  ? "bg-white/20 text-white"
-                  : "bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
-              }`}
-            >
-              <LayoutTemplate className="w-5 h-5" />
-              <span>Fun</span>
-            </button>
+              {/* Hide UI button */}
+              <button
+                onClick={() => setHideUI(true)}
+                className="p-3 bg-black/50 backdrop-blur-sm rounded-full text-white hover:bg-black/70 transition-colors"
+              >
+                <EyeOff size={20} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-            <button
-              onClick={() => setViewMode("presenter")}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-full backdrop-blur-sm transition-colors ${
-                viewMode === "presenter"
-                  ? "bg-white/20 text-white"
-                  : "bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
-              }`}
-            >
-              <Presentation className="w-5 h-5" />
-              <span>Present</span>
-            </button>
-
-            <button
-              onClick={() => setViewMode("marquee")}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-full backdrop-blur-sm transition-colors ${
-                viewMode === "marquee"
-                  ? "bg-white/20 text-white"
-                  : "bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
-              }`}
-            >
-              <AlignHorizontalSpaceAround className="w-5 h-5" />
-              <span>Marquee</span>
-            </button>
-
-            <button
-              onClick={() => setViewMode("model")}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-full backdrop-blur-sm transition-colors ${
-                viewMode === "model"
-                  ? "bg-white/20 text-white"
-                  : "bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
-              }`}
-            >
-              <Hotel className="w-5 h-5" />
-              <span>Model</span>
-            </button>
-
-            <button
-              onClick={() => setHideUI(true)}
-              className="flex items-center space-x-2 px-4 py-2 rounded-full backdrop-blur-sm bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-colors"
-            >
-              <EyeOff className="w-5 h-5" />
-              <span>Hide UI</span>
-            </button>
-          </div>
+      {/* Loading state */}
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+          <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" />
         </div>
       )}
 
-      {renderSlideshow()}
+      {/* Click to show UI when hidden */}
+      {hideUI && (
+        <button
+          onClick={() => setHideUI(false)}
+          className="absolute inset-0 w-full h-full bg-transparent"
+        />
+      )}
     </div>
   );
 }

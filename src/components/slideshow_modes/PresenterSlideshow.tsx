@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 
 interface Props {
   photos: Array<{ src: string; id: string; createdAt: string }>;
+  containerDimensions: { width: number; height: number };
+
   hideUI?: boolean;
 }
 

@@ -1,8 +1,8 @@
 // src/components/PhotoGallery.tsx
 import React, { useState, useEffect } from "react";
 import { QrCode, Trash2, RefreshCw, CheckCircle } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { useParams } from "react-router-dom";
+import { motion } from "framer-motion";
 import { getPhotoUrl, listPhotos, deleteMultipleFiles } from "../lib/aws";
 import { QRCodeModal } from "./QRCodeModal";
 
@@ -13,7 +13,7 @@ interface StoragePhoto {
 }
 
 const PhotoGallery: React.FC = () => {
-  const navigate = useNavigate();
+  const { eventId } = useParams<{ eventId: string }>();
   const [photos, setPhotos] = useState<StoragePhoto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [_selectedPhoto, setSelectedPhoto] = useState<StoragePhoto | null>(
@@ -25,10 +25,12 @@ const PhotoGallery: React.FC = () => {
   const [isDeletingPhotos, setIsDeletingPhotos] = useState(false);
 
   const loadPhotosFromStorage = async () => {
+    if (!eventId) return;
+
     try {
-      const fileNames = await listPhotos();
+      const fileNames = await listPhotos(eventId);
       const photoUrls: StoragePhoto[] = fileNames.map((fileName) => ({
-        url: getPhotoUrl(fileName),
+        url: getPhotoUrl(eventId, fileName),
         name: fileName,
         created_at: new Date().toISOString(),
       }));
@@ -67,12 +69,12 @@ const PhotoGallery: React.FC = () => {
   };
 
   const deleteSelectedPhotos = async () => {
-    if (selectedPhotos.size === 0) return;
+    if (selectedPhotos.size === 0 || !eventId) return;
 
     setIsDeletingPhotos(true);
     try {
       // Convert Set to Array and delete all selected photos at once
-      await deleteMultipleFiles(Array.from(selectedPhotos));
+      await deleteMultipleFiles(eventId, Array.from(selectedPhotos));
 
       // Refresh the gallery
       await loadPhotosFromStorage();
@@ -89,148 +91,164 @@ const PhotoGallery: React.FC = () => {
   };
 
   useEffect(() => {
-    sessionStorage.removeItem("temp-photos");
     loadPhotosFromStorage();
     const pollInterval = setInterval(loadPhotosFromStorage, 5000);
     return () => clearInterval(pollInterval);
-  }, []);
+  }, [eventId]);
+
+  const refreshPhotos = () => {
+    setIsLoading(true);
+    loadPhotosFromStorage();
+  };
+
+  if (!eventId) {
+    return <div>No event ID provided</div>;
+  }
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="h-full flex flex-col bg-gray-900">
       {/* Header */}
-      <div className="sticky top-0 inset-x-0 bg-gray-900/80 backdrop-blur-md z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-white text-lg font-semibold">Gallery</h1>
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={() => setIsQRModalOpen(true)}
-              className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-            >
-              <QrCode className="w-5 h-5 text-white" />
-            </button>
-
-            {photos.length > 0 && (
-              <>
-                <button
-                  onClick={() => navigate("/host/slideshow")}
-                  className="px-4 py-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors"
-                >
-                  View Slideshow
-                </button>
-                <button
-                  onClick={() => setIsDeleteMode(!isDeleteMode)}
-                  className={`p-2 rounded-full transition-colors ${
-                    isDeleteMode
-                      ? "bg-red-500 hover:bg-red-600"
-                      : "bg-white/10 hover:bg-white/20"
-                  }`}
-                >
-                  <Trash2 className="w-5 h-5 text-white" />
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Delete Mode Controls */}
-        <AnimatePresence>
+      <div className="flex items-center justify-between p-6 border-b border-gray-700">
+        <h1 className="text-2xl font-bold text-white">Photo Gallery</h1>
+        <div className="flex items-center gap-3">
           {isDeleteMode && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="border-t border-white/10"
-            >
-              <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <button
-                    onClick={selectAllPhotos}
-                    className="px-4 py-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors"
-                  >
-                    {selectedPhotos.size === photos.length
-                      ? "Deselect All"
-                      : "Select All"}
-                  </button>
-                  <span className="text-white/70">
-                    {selectedPhotos.size} selected
-                  </span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => {
-                      setIsDeleteMode(false);
-                      setSelectedPhotos(new Set());
-                    }}
-                    className="px-4 py-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={deleteSelectedPhotos}
-                    disabled={selectedPhotos.size === 0 || isDeletingPhotos}
-                    className={`px-4 py-2 rounded-full text-white transition-colors ${
-                      selectedPhotos.size > 0 && !isDeletingPhotos
-                        ? "bg-red-500 hover:bg-red-600"
-                        : "bg-white/10 cursor-not-allowed"
-                    }`}
-                  >
-                    {isDeletingPhotos ? (
-                      <RefreshCw className="w-5 h-5 animate-spin" />
-                    ) : (
-                      `Delete ${selectedPhotos.size ? `(${selectedPhotos.size})` : ""}`
-                    )}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
+            <>
+              <button
+                onClick={selectAllPhotos}
+                className="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors"
+              >
+                {selectedPhotos.size === photos.length
+                  ? "Deselect All"
+                  : "Select All"}
+              </button>
+              <button
+                onClick={deleteSelectedPhotos}
+                disabled={selectedPhotos.size === 0 || isDeletingPhotos}
+                className="px-3 py-1 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
+              >
+                {isDeletingPhotos ? (
+                  <>
+                    <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={14} />
+                    Delete ({selectedPhotos.size})
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  setIsDeleteMode(false);
+                  setSelectedPhotos(new Set());
+                }}
+                className="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors"
+              >
+                Cancel
+              </button>
+            </>
           )}
-        </AnimatePresence>
+          {!isDeleteMode && (
+            <>
+              <button
+                onClick={() => setIsDeleteMode(true)}
+                className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                title="Delete Photos"
+              >
+                <Trash2 size={20} />
+              </button>
+              <button
+                onClick={refreshPhotos}
+                className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                title="Refresh Gallery"
+              >
+                <RefreshCw size={20} />
+              </button>
+              <button
+                onClick={() => setIsQRModalOpen(true)}
+                className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                title="Show QR Code"
+              >
+                <QrCode size={20} />
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Gallery Grid */}
-      <div className="px-4 pb-20">
+      {/* Content */}
+      <div className="flex-1 overflow-auto">
         {isLoading ? (
-          <div className="flex items-center justify-center h-[60vh]">
-            <RefreshCw className="w-8 h-8 text-white animate-spin" />
+          <div className="flex items-center justify-center h-64">
+            <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+          </div>
+        ) : photos.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-64 text-center">
+            <p className="text-gray-400 mb-4">No photos uploaded yet</p>
+            <button
+              onClick={() => setIsQRModalOpen(true)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Show QR Code to Get Started
+            </button>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-1">
-            {photos.map((photo) => (
-              <motion.button
-                key={photo.name}
-                onClick={() =>
-                  isDeleteMode
-                    ? togglePhotoSelection(photo)
-                    : setSelectedPhoto(photo)
-                }
-                className="relative aspect-square group focus:outline-none"
-              >
-                <img
-                  src={photo.url}
-                  alt="Event photo"
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-                <div
-                  className={`absolute inset-0 transition-colors ${
+          <div className="p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+              {photos.map((photo) => (
+                <motion.div
+                  key={photo.name}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`relative aspect-square bg-gray-800 rounded-lg overflow-hidden cursor-pointer ${
                     isDeleteMode
-                      ? selectedPhotos.has(photo.name)
-                        ? "bg-red-500/30"
-                        : "bg-black/20 hover:bg-black/30"
-                      : "bg-black/0 group-hover:bg-black/20"
+                      ? "ring-2 ring-offset-2 ring-offset-gray-900"
+                      : ""
+                  } ${
+                    selectedPhotos.has(photo.name)
+                      ? "ring-red-500"
+                      : isDeleteMode
+                        ? "ring-gray-600"
+                        : ""
                   }`}
-                />
-
-                {isDeleteMode && selectedPhotos.has(photo.name) && (
-                  <div className="absolute top-2 right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                    <CheckCircle className="w-4 h-4 text-white" />
-                  </div>
-                )}
-              </motion.button>
-            ))}
+                  onClick={() => {
+                    if (isDeleteMode) {
+                      togglePhotoSelection(photo);
+                    } else {
+                      setSelectedPhoto(photo);
+                    }
+                  }}
+                >
+                  <img
+                    src={photo.url}
+                    alt={`Photo ${photo.name}`}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  {isDeleteMode && (
+                    <div className="absolute top-2 right-2">
+                      <div
+                        className={`w-6 h-6 rounded-full border-2 border-white flex items-center justify-center ${
+                          selectedPhotos.has(photo.name)
+                            ? "bg-red-500"
+                            : "bg-gray-700 bg-opacity-50"
+                        }`}
+                      >
+                        {selectedPhotos.has(photo.name) && (
+                          <CheckCircle size={16} className="text-white" />
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+            </div>
           </div>
         )}
       </div>
+
+      {/* QR Code Modal */}
       <QRCodeModal
         isOpen={isQRModalOpen}
         onClose={() => setIsQRModalOpen(false)}

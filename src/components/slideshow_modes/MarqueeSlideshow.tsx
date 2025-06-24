@@ -9,6 +9,7 @@ interface Photo {
 
 interface MarqueeSlideshowProps {
   photos: Photo[];
+  containerDimensions: { width: number; height: number };
   hideUI?: boolean;
 }
 
