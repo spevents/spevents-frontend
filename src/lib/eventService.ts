@@ -50,22 +50,24 @@ class EventService {
   }
 
   async createEvent(data: CreateEventData): Promise<Event> {
-    const userEmail = await this.getCurrentUserEmail();
-    const now = new Date().toISOString();
-
-    const event: Event = {
-      id: this.generateEventId(),
-      name: data.name,
-      description: data.description,
-      createdAt: now,
-      updatedAt: now,
-      hostEmail: userEmail,
-      status: "draft",
-      photoCount: 0,
-      sessionCode: this.generateSessionCode(),
-    };
-
     try {
+      const userEmail = await this.getCurrentUserEmail();
+      const now = new Date().toISOString();
+
+      const event: Event = {
+        id: this.generateEventId(),
+        name: data.name,
+        description: data.description,
+        createdAt: now,
+        updatedAt: now,
+        hostEmail: userEmail,
+        status: "draft",
+        photoCount: 0,
+        sessionCode: this.generateSessionCode(),
+      };
+
+      console.log("Creating event:", event);
+
       // Convert Event to plain object for Firestore
       const eventData = {
         id: event.id,
@@ -79,18 +81,31 @@ class EventService {
         sessionCode: event.sessionCode,
       };
 
-      await addDoc(collection(db, this.collection), eventData);
+      const docRef = await addDoc(collection(db, this.collection), eventData);
+      console.log("Event created with doc ID:", docRef.id);
+
       return event;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating event:", error);
-      throw new Error("Failed to create event");
+      console.error("Error code:", error.code);
+      console.error("Error message:", error.message);
+
+      // Provide specific error messages
+      if (error.code === "permission-denied") {
+        throw new Error("Permission denied. Check Firestore security rules.");
+      } else if (error.code === "unauthenticated") {
+        throw new Error("User not authenticated. Please sign in again.");
+      } else {
+        throw new Error(`Failed to create event: ${error.message}`);
+      }
     }
   }
 
   async getUserEvents(): Promise<Event[]> {
-    const userEmail = await this.getCurrentUserEmail();
-
     try {
+      const userEmail = await this.getCurrentUserEmail();
+      console.log("Fetching events for user:", userEmail);
+
       const q = query(
         collection(db, this.collection),
         where("hostEmail", "==", userEmail),
@@ -104,17 +119,28 @@ class EventService {
         events.push(doc.data() as Event);
       });
 
+      console.log("Fetched events:", events.length);
       return events;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching events:", error);
-      throw new Error("Failed to load events");
+      console.error("Error code:", error.code);
+
+      if (error.code === "failed-precondition") {
+        throw new Error(
+          "Database index required. Check Firestore console for index creation links.",
+        );
+      } else if (error.code === "permission-denied") {
+        throw new Error("Permission denied. Check Firestore security rules.");
+      } else {
+        throw new Error(`Failed to load events: ${error.message}`);
+      }
     }
   }
 
   async updateEvent(eventId: string, updates: Partial<Event>): Promise<Event> {
-    const userEmail = await this.getCurrentUserEmail();
-
     try {
+      const userEmail = await this.getCurrentUserEmail();
+
       // Find the document with matching eventId and userEmail
       const q = query(
         collection(db, this.collection),
@@ -145,16 +171,16 @@ class EventService {
 
       await updateDoc(docRef, updateData);
       return updatedEvent;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating event:", error);
-      throw new Error("Failed to update event");
+      throw new Error(`Failed to update event: ${error.message}`);
     }
   }
 
   async deleteEvent(eventId: string): Promise<void> {
-    const userEmail = await this.getCurrentUserEmail();
-
     try {
+      const userEmail = await this.getCurrentUserEmail();
+
       // Find the document with matching eventId and userEmail
       const q = query(
         collection(db, this.collection),
@@ -170,9 +196,9 @@ class EventService {
 
       const docRef = querySnapshot.docs[0].ref;
       await deleteDoc(docRef);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting event:", error);
-      throw new Error("Failed to delete event");
+      throw new Error(`Failed to delete event: ${error.message}`);
     }
   }
 
@@ -191,7 +217,7 @@ class EventService {
       }
 
       return querySnapshot.docs[0].data() as Event;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error finding event by session code:", error);
       return null;
     }
