@@ -11,17 +11,19 @@ export const AuthGuard = () => {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Bypass auth in development
-  const BYPASS_AUTH = import.meta.env.DEV;
+  // Check for auth bypass
+  const BYPASS_AUTH = import.meta.env.VITE_BYPASS_AUTH === "true";
 
   useEffect(() => {
     if (BYPASS_AUTH) {
+      console.log("Auth bypassed via VITE_BYPASS_AUTH");
       setIsAuthorized(true);
       setIsLoading(false);
       return;
     }
 
     if (!isHostDomain()) {
+      setIsLoading(false);
       return;
     }
 
