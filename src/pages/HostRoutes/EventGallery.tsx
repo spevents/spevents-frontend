@@ -10,7 +10,11 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { getPhotoUrl, listPhotos, deleteMultipleFiles } from "../../lib/aws";
+import {
+  getPhotoUrl,
+  listAllEventPhotos,
+  deleteMultipleFiles,
+} from "../../lib/aws";
 
 interface StoragePhoto {
   url: string;
@@ -39,7 +43,8 @@ export function EventGallery() {
     if (!eventId) return;
 
     try {
-      const fileNames = await listPhotos(eventId);
+      // UPDATE: Use listAllEventPhotos instead of listPhotos
+      const fileNames = await listAllEventPhotos(eventId);
       const photoUrls: StoragePhoto[] = fileNames.map((fileName) => ({
         url: getPhotoUrl(eventId, fileName),
         name: fileName,

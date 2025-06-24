@@ -236,3 +236,29 @@ export function getTempPhotos(eventId: string) {
   const key = `${LOCAL_STORAGE_KEYS.TEMP_PHOTOS}-${eventId}`;
   return JSON.parse(sessionStorage.getItem(key) || "[]");
 }
+
+// List ALL photos for an event (both main event photos and guest photos)
+export async function listAllEventPhotos(eventId: string): Promise<string[]> {
+  const command = new ListObjectsV2Command({
+    Bucket: BUCKET_NAME,
+    Prefix: `events/${eventId}/`,
+  });
+
+  try {
+    const response = await s3Client.send(command);
+    return (response.Contents || [])
+      .map((item) => item.Key!)
+      .filter(
+        (key) =>
+          key.endsWith(".jpg") || key.endsWith(".jpeg") || key.endsWith(".png"),
+      )
+      .map((key) => {
+        // Extract just the filename from the full S3 key
+        const parts = key.split("/");
+        return parts[parts.length - 1]; // Get last part (filename)
+      });
+  } catch (error) {
+    console.error("Error listing all event photos:", error);
+    throw error;
+  }
+}

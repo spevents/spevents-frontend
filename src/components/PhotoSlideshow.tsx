@@ -11,7 +11,7 @@ import {
   AlignHorizontalSpaceAround,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { listPhotos, getPhotoUrl } from "../lib/aws";
+import { listAllEventPhotos, getPhotoUrl } from "../lib/aws";
 import FunSlideshow from "./slideshow_modes/FunSlideshow";
 import PresenterSlideshow from "./slideshow_modes/PresenterSlideshow";
 import ModelSlideshow from "./slideshow_modes/ModelSlideshow";
@@ -106,7 +106,7 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
     if (!eventId) return;
 
     try {
-      const fileNames = await listPhotos(eventId);
+      const fileNames = await listAllEventPhotos(eventId);
       const loadedPhotos: Photo[] = fileNames.map((fileName) => ({
         src: getPhotoUrl(eventId, fileName),
         id: fileName,
