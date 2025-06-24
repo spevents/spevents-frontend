@@ -1,5 +1,6 @@
 // src/contexts/SessionContext.tsx
 import React, { createContext, useContext, useState, useCallback } from "react";
+import { eventService } from "../lib/eventService";
 
 interface SessionContextType {
   sessionCode: string | null;
@@ -29,38 +30,24 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("spevents-session", code);
   }, []);
 
-  const isValidSession = useCallback(async (code: string): Promise<boolean> => {
-    try {
-      const storedCode = localStorage.getItem("spevents-session");
-      const envEventId = import.meta.env.VITE_EVENT_ID;
+  const isValidSession = useCallback(
+    async (eventId: string): Promise<boolean> => {
+      try {
+        console.log("Validating session for eventId:", eventId);
 
-      // Enhanced debugging
-      console.log("Session Validation Check:", {
-        receivedCode: code,
-        storedCode,
-        envEventId,
-        receivedCodeType: typeof code,
-        envEventIdType: typeof envEventId,
-        exactMatch: code === envEventId,
-        trimmedMatch: code.trim() === envEventId.trim(),
-        decodedMatch: decodeURIComponent(code) === envEventId,
-      });
+        // Check if this event ID exists in Firestore
+        const event = await eventService.getEventBySessionCode(eventId);
+        const isValid = event !== null;
 
-      // Try multiple matching strategies
-      const isMatch =
-        code === envEventId ||
-        code.trim() === envEventId.trim() ||
-        decodeURIComponent(code) === envEventId ||
-        code === storedCode;
-
-      console.log("Final match result:", isMatch);
-
-      return isMatch;
-    } catch (error) {
-      console.error("Error in isValidSession:", error);
-      return false;
-    }
-  }, []);
+        console.log("Session validation result:", { eventId, isValid, event });
+        return isValid;
+      } catch (error) {
+        console.error("Error in isValidSession:", error);
+        return false;
+      }
+    },
+    [],
+  );
 
   return (
     <SessionContext.Provider

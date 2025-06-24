@@ -200,6 +200,8 @@ export default function PhotoReview() {
     }
   };
 
+  // Find this section in PhotoReview.tsx around line 150-180:
+
   const handlePhotoAction = async (photo: Photo, isUpward: boolean) => {
     if (!eventId) return;
 
@@ -222,11 +224,12 @@ export default function PhotoReview() {
         const blob = await response.blob();
         const fileName = `photo-${Date.now()}.jpg`;
 
-        // Get presigned URL for upload
+        // UPDATE: Add isGuestPhoto: true for guest uploads
         const presignedUrl = await getPresignedUrl({
           eventId,
           fileName,
           contentType: "image/jpeg",
+          isGuestPhoto: true, // <- ADD THIS LINE
         });
 
         const uploadResponse = await fetch(presignedUrl, {
@@ -239,8 +242,8 @@ export default function PhotoReview() {
 
         if (!uploadResponse.ok) throw new Error("Upload failed");
 
-        // Store the uploaded photo info in localStorage
-        storeUploadedPhoto(eventId, fileName);
+        // UPDATE: Add isGuestPhoto parameter
+        storeUploadedPhoto(eventId, fileName, true); // <- ADD TRUE PARAMETER
 
         // Update session storage for temporary photos
         const tempPhotos = getTempPhotos(eventId).filter(
@@ -262,13 +265,12 @@ export default function PhotoReview() {
         setExitDirection(null);
       }
     } else {
-      // Handle delete action
+      // Handle delete action (unchanged)
       setPhotos((prev) => prev.filter((p) => p.id !== photo.id));
       if (currentIndex === totalPhotos - 1 && currentIndex > 0) {
         setCurrentPhotoIndex(currentIndex - 1);
       }
 
-      // Update session storage for temporary photos
       const tempPhotos = getTempPhotos(eventId).filter(
         (p: Photo) => p.id !== photo.id,
       );

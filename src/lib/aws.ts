@@ -26,24 +26,57 @@ function getEventPrefix(eventId: string): string {
   return `events/${eventId}/photos/`;
 }
 
+// Helper function to get guest-specific prefix
+function getGuestPrefix(eventId: string, guestId: string): string {
+  return `events/${eventId}/guests/${guestId}/`;
+}
+
 // Helper function to get photo key
-function getPhotoKey(eventId: string, fileName: string): string {
+function getPhotoKey(
+  eventId: string,
+  fileName: string,
+  guestId?: string,
+): string {
+  if (guestId) {
+    return `${getGuestPrefix(eventId, guestId)}${fileName}`;
+  }
   return `${getEventPrefix(eventId)}${fileName}`;
+}
+
+// Generate or get persistent guest ID
+export function getGuestId(): string {
+  let guestId = localStorage.getItem("spevents-guest-id");
+  if (!guestId) {
+    guestId = `guest_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    localStorage.setItem("spevents-guest-id", guestId);
+  }
+  return guestId;
 }
 
 export async function getPresignedUrl({
   eventId,
   fileName,
   contentType,
+  isGuestPhoto = false,
 }: {
   eventId: string;
   fileName: string;
   contentType: string;
+  isGuestPhoto?: boolean;
 }): Promise<string> {
+  const guestId = isGuestPhoto ? getGuestId() : undefined;
+
+  // Build metadata with proper typing
+  const metadata: Record<string, string> = { eventId };
+  if (isGuestPhoto && guestId) {
+    metadata.guestId = guestId;
+  }
+
   const command = new PutObjectCommand({
     Bucket: BUCKET_NAME,
-    Key: getPhotoKey(eventId, fileName),
+    Key: getPhotoKey(eventId, fileName, guestId),
     ContentType: contentType,
+    Metadata: metadata,
   });
 
   return getSignedUrl(s3Client, command, { expiresIn: 3600 });
@@ -52,21 +85,27 @@ export async function getPresignedUrl({
 export async function getSignedPhotoUrl(
   eventId: string,
   fileName: string,
+  guestId?: string,
 ): Promise<string> {
   const command = new GetObjectCommand({
     Bucket: BUCKET_NAME,
-    Key: getPhotoKey(eventId, fileName),
+    Key: getPhotoKey(eventId, fileName, guestId),
     ResponseContentType: "image/jpeg",
   });
 
   return getSignedUrl(s3Client, command, { expiresIn: 3600 });
 }
 
-export function getPhotoUrl(eventId: string, fileName: string): string {
-  return `${CLOUDFRONT_URL}/${getPhotoKey(eventId, fileName)}`;
+export function getPhotoUrl(
+  eventId: string,
+  fileName: string,
+  guestId?: string,
+): string {
+  return `${CLOUDFRONT_URL}/${getPhotoKey(eventId, fileName, guestId)}`;
 }
 
-export async function listPhotos(eventId: string): Promise<string[]> {
+// List all event photos (for hosts)
+export async function listEventPhotos(eventId: string): Promise<string[]> {
   const command = new ListObjectsV2Command({
     Bucket: BUCKET_NAME,
     Prefix: getEventPrefix(eventId),
@@ -80,20 +119,52 @@ export async function listPhotos(eventId: string): Promise<string[]> {
         (key) =>
           key.endsWith(".jpg") || key.endsWith(".jpeg") || key.endsWith(".png"),
       )
-      .map((key) => key.replace(getEventPrefix(eventId), "")); // Return just filename
+      .map((key) => key.replace(getEventPrefix(eventId), ""));
   } catch (error) {
-    console.error("Error listing photos:", error);
+    console.error("Error listing event photos:", error);
     throw error;
   }
+}
+
+// List guest's photos
+export async function listGuestPhotos(
+  eventId: string,
+  guestId?: string,
+): Promise<string[]> {
+  const targetGuestId = guestId || getGuestId();
+  const command = new ListObjectsV2Command({
+    Bucket: BUCKET_NAME,
+    Prefix: getGuestPrefix(eventId, targetGuestId),
+  });
+
+  try {
+    const response = await s3Client.send(command);
+    return (response.Contents || [])
+      .map((item) => item.Key!)
+      .filter(
+        (key) =>
+          key.endsWith(".jpg") || key.endsWith(".jpeg") || key.endsWith(".png"),
+      )
+      .map((key) => key.replace(getGuestPrefix(eventId, targetGuestId), ""));
+  } catch (error) {
+    console.error("Error listing guest photos:", error);
+    throw error;
+  }
+}
+
+// Backward compatibility - use eventId from environment as fallback
+export async function listPhotos(eventId: string): Promise<string[]> {
+  return listEventPhotos(eventId);
 }
 
 export async function deleteFile(
   eventId: string,
   fileName: string,
+  guestId?: string,
 ): Promise<void> {
   const command = new DeleteObjectCommand({
     Bucket: BUCKET_NAME,
-    Key: getPhotoKey(eventId, fileName),
+    Key: getPhotoKey(eventId, fileName, guestId),
   });
 
   try {
@@ -107,13 +178,14 @@ export async function deleteFile(
 export async function deleteMultipleFiles(
   eventId: string,
   fileNames: string[],
+  guestId?: string,
 ): Promise<void> {
   try {
     await Promise.all(
       fileNames.map((fileName) => {
         const command = new DeleteObjectCommand({
           Bucket: BUCKET_NAME,
-          Key: getPhotoKey(eventId, fileName),
+          Key: getPhotoKey(eventId, fileName, guestId),
         });
         return s3Client.send(command);
       }),
@@ -128,16 +200,23 @@ export async function deleteMultipleFiles(
 export const LOCAL_STORAGE_KEYS = {
   UPLOADED_PHOTOS: "uploaded-photos",
   TEMP_PHOTOS: "temp-photos",
+  GUEST_ID: "spevents-guest-id",
 } as const;
 
-export function storeUploadedPhoto(eventId: string, fileName: string) {
+export function storeUploadedPhoto(
+  eventId: string,
+  fileName: string,
+  isGuestPhoto = false,
+) {
+  const guestId = isGuestPhoto ? getGuestId() : undefined;
   const key = `${LOCAL_STORAGE_KEYS.UPLOADED_PHOTOS}-${eventId}`;
   const storedPhotos = JSON.parse(localStorage.getItem(key) || "[]");
 
   storedPhotos.push({
     name: fileName,
-    url: getPhotoUrl(eventId, fileName),
+    url: getPhotoUrl(eventId, fileName, guestId),
     created_at: new Date().toISOString(),
+    guestId: isGuestPhoto ? guestId : undefined,
   });
 
   localStorage.setItem(key, JSON.stringify(storedPhotos));
