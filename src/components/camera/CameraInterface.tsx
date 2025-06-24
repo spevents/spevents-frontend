@@ -12,6 +12,7 @@ import {
   ExtendedMediaTrackCapabilities,
   ExtendedMediaTrackConstraintSet,
 } from "./types/media";
+import { storeTempPhotos, getTempPhotos } from "../../lib/aws";
 
 // Types
 interface CameraInterfaceProps {
@@ -210,6 +211,9 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
   const capturePhoto = useCallback(async () => {
     if (!videoRef.current || photos.length >= PHOTO_LIMIT) return;
 
+    console.log("Capturing photo for eventId:", eventId);
+    console.log("Current photos:", photos.length);
+
     // Handle screen flash for front camera
     if (facingMode === "user" && isFlashEnabled) {
       if (flashRef.current) {
@@ -240,13 +244,17 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
     const newPhoto = { id: Date.now(), url: photoUrl };
 
     setPhotos((prev) => [...prev, newPhoto]);
-    const sessionPhotos = JSON.parse(
-      sessionStorage.getItem("temp-photos") || "[]",
-    );
-    sessionStorage.setItem(
-      "temp-photos",
-      JSON.stringify([...sessionPhotos, newPhoto]),
-    );
+
+    if (eventId) {
+      const sessionPhotos = getTempPhotos(eventId);
+      storeTempPhotos(eventId, [...sessionPhotos, newPhoto]);
+      console.log(
+        "Stored photo for eventId:",
+        eventId,
+        "Total photos:",
+        sessionPhotos.length + 1,
+      );
+    }
 
     navigator.vibrate?.(50);
   }, [photos.length, facingMode, isFlashEnabled, triggerCaptureEffect]);
