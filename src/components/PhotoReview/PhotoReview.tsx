@@ -216,6 +216,8 @@ export default function PhotoReview() {
       setIsUploading(true);
 
       try {
+        console.log("Starting upload for photo:", photo.id);
+
         setPhotos((prev) => prev.filter((p) => p.id !== photo.id));
         setDragPosition(0);
 
@@ -223,18 +225,26 @@ export default function PhotoReview() {
           setCurrentPhotoIndex(currentIndex - 1);
         }
 
+        console.log("Fetching photo blob...");
         const response = await fetch(photo.url);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch photo: ${response.status}`);
+        }
         const blob = await response.blob();
-        const fileName = `photo-${Date.now()}.jpg`;
+        console.log("Blob created, size:", blob.size);
 
-        // UPDATE: Add isGuestPhoto: true for guest uploads
+        const fileName = `photo-${Date.now()}.jpg`;
+        console.log("Getting presigned URL for:", fileName);
+
         const presignedUrl = await getPresignedUrl({
           eventId,
           fileName,
           contentType: "image/jpeg",
-          isGuestPhoto: true, // <- ADD THIS LINE
+          isGuestPhoto: true,
         });
+        console.log("Got presigned URL, length:", presignedUrl.length);
 
+        console.log("Starting S3 upload...");
         const uploadResponse = await fetch(presignedUrl, {
           method: "PUT",
           body: blob,
@@ -243,18 +253,27 @@ export default function PhotoReview() {
           },
         });
 
-        if (!uploadResponse.ok) throw new Error("Upload failed");
+        console.log("Upload response status:", uploadResponse.status);
+        if (!uploadResponse.ok) {
+          const errorText = await uploadResponse.text();
+          throw new Error(
+            `Upload failed: ${uploadResponse.status} - ${errorText}`,
+          );
+        }
 
-        // UPDATE: Add isGuestPhoto parameter
-        storeUploadedPhoto(eventId, fileName, true); // <- ADD TRUE PARAMETER
+        console.log("Upload successful, storing photo info...");
+        storeUploadedPhoto(eventId, fileName, true);
 
         // Update session storage for temporary photos
         const tempPhotos = getTempPhotos(eventId).filter(
           (p: Photo) => p.id !== photo.id,
         );
         storeTempPhotos(eventId, tempPhotos);
-      } catch (error) {
-        console.error("Upload failed:", error);
+
+        console.log("Photo upload completed successfully");
+      } catch (error: any) {
+        console.error("Upload failed with error:", error);
+        console.error("Error details:", error.message);
         if (processingPhotos.has(photo.id)) {
           setPhotos((prev) => [...prev, photo]);
         }
