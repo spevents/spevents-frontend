@@ -13,6 +13,13 @@ const REGION = import.meta.env.VITE_AWS_REGION;
 const BUCKET_NAME = import.meta.env.VITE_S3_BUCKET_NAME;
 const CLOUDFRONT_URL = import.meta.env.VITE_CLOUDFRONT_URL;
 
+export interface EventPhoto {
+  fileName: string;
+  fullKey: string;
+  isGuestPhoto: boolean;
+  guestId?: string;
+}
+
 const s3Client = new S3Client({
   region: REGION,
   credentials: {
@@ -238,7 +245,9 @@ export function getTempPhotos(eventId: string) {
 }
 
 // List ALL photos for an event (both main event photos and guest photos)
-export async function listAllEventPhotos(eventId: string): Promise<string[]> {
+export async function listAllEventPhotos(
+  eventId: string,
+): Promise<EventPhoto[]> {
   const command = new ListObjectsV2Command({
     Bucket: BUCKET_NAME,
     Prefix: `events/${eventId}/`,
@@ -253,12 +262,37 @@ export async function listAllEventPhotos(eventId: string): Promise<string[]> {
           key.endsWith(".jpg") || key.endsWith(".jpeg") || key.endsWith(".png"),
       )
       .map((key) => {
-        // Extract just the filename from the full S3 key
+        // Parse the S3 key to determine if it's a guest photo
         const parts = key.split("/");
-        return parts[parts.length - 1]; // Get last part (filename)
+        const fileName = parts[parts.length - 1]; // Get last part (filename)
+
+        // Check if it's a guest photo: events/eventId/guests/guestId/filename
+        if (parts.length === 5 && parts[2] === "guests") {
+          return {
+            fileName,
+            fullKey: key,
+            isGuestPhoto: true,
+            guestId: parts[3],
+          };
+        }
+
+        // Otherwise it's a regular event photo: events/eventId/photos/filename
+        return {
+          fileName,
+          fullKey: key,
+          isGuestPhoto: false,
+        };
       });
   } catch (error) {
     console.error("Error listing all event photos:", error);
     throw error;
+  }
+}
+
+export function getEventPhotoUrl(eventId: string, photo: EventPhoto): string {
+  if (photo.isGuestPhoto && photo.guestId) {
+    return `${CLOUDFRONT_URL}/events/${eventId}/guests/${photo.guestId}/${photo.fileName}`;
+  } else {
+    return `${CLOUDFRONT_URL}/events/${eventId}/photos/${photo.fileName}`;
   }
 }

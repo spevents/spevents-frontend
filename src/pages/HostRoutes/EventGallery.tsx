@@ -11,15 +11,19 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  getPhotoUrl,
   listAllEventPhotos,
+  getEventPhotoUrl,
   deleteMultipleFiles,
+  EventPhoto,
 } from "../../lib/aws";
 
-interface StoragePhoto {
+interface DisplayPhoto {
   url: string;
-  name: string;
+  fileName: string;
   created_at: string;
+  fullKey: string;
+  isGuestPhoto: boolean;
+  guestId?: string;
 }
 
 export function EventGallery() {
@@ -27,7 +31,7 @@ export function EventGallery() {
   const navigate = useNavigate();
   const { currentEvent, selectEvent } = useEvent();
 
-  const [photos, setPhotos] = useState<StoragePhoto[]>([]);
+  const [photos, setPhotos] = useState<DisplayPhoto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
   const [isDeleteMode, setIsDeleteMode] = useState(false);
@@ -43,22 +47,41 @@ export function EventGallery() {
     if (!eventId) return;
 
     try {
-      // UPDATE: Use listAllEventPhotos instead of listPhotos
-      const fileNames = await listAllEventPhotos(eventId);
-      const photoUrls: StoragePhoto[] = fileNames.map((fileName) => ({
-        url: getPhotoUrl(eventId, fileName),
-        name: fileName,
+      console.log("🔍 Loading photos for eventId:", eventId);
+
+      // Get all photos (both event and guest photos)
+      const eventPhotos: EventPhoto[] = await listAllEventPhotos(eventId);
+      console.log("📸 Found photos:", eventPhotos.length);
+
+      // Convert to display format with correct URLs
+      const displayPhotos: DisplayPhoto[] = eventPhotos.map((photo) => ({
+        url: getEventPhotoUrl(eventId, photo),
+        fileName: photo.fileName,
         created_at: new Date().toISOString(),
+        fullKey: photo.fullKey,
+        isGuestPhoto: photo.isGuestPhoto,
+        guestId: photo.guestId,
       }));
 
-      const sortedPhotos = photoUrls.sort(
-        (a: StoragePhoto, b: StoragePhoto) =>
+      console.log("🖼️ Display photos created:", displayPhotos.length);
+      console.log(
+        "📋 Sample photo URLs:",
+        displayPhotos.slice(0, 3).map((p) => ({
+          fileName: p.fileName,
+          url: p.url,
+          isGuest: p.isGuestPhoto,
+        })),
+      );
+
+      // Sort by creation time (most recent first)
+      const sortedPhotos = displayPhotos.sort(
+        (a: DisplayPhoto, b: DisplayPhoto) =>
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       );
 
       setPhotos(sortedPhotos);
     } catch (error) {
-      console.error("Error loading photos:", error);
+      console.error("❌ Error loading photos:", error);
     } finally {
       setIsLoading(false);
     }
@@ -75,12 +98,33 @@ export function EventGallery() {
 
     setIsDeletingPhotos(true);
     try {
-      await deleteMultipleFiles(eventId, Array.from(selectedPhotos));
+      // Group photos by type for deletion
+      const selectedPhotoObjects = photos.filter((p) =>
+        selectedPhotos.has(p.fileName),
+      );
+
+      // Delete guest photos (need guestId)
+      const guestPhotos = selectedPhotoObjects.filter(
+        (p) => p.isGuestPhoto && p.guestId,
+      );
+      for (const photo of guestPhotos) {
+        await deleteMultipleFiles(eventId, [photo.fileName], photo.guestId);
+      }
+
+      // Delete regular event photos
+      const eventPhotos = selectedPhotoObjects.filter((p) => !p.isGuestPhoto);
+      if (eventPhotos.length > 0) {
+        await deleteMultipleFiles(
+          eventId,
+          eventPhotos.map((p) => p.fileName),
+        );
+      }
+
       await loadPhotosFromStorage();
       setSelectedPhotos(new Set());
       setIsDeleteMode(false);
     } catch (error) {
-      console.error("Error deleting photos:", error);
+      console.error("❌ Error deleting photos:", error);
     } finally {
       setIsDeletingPhotos(false);
     }
@@ -107,7 +151,7 @@ export function EventGallery() {
                 {currentEvent?.name || "Event Gallery"}
               </h1>
               <p className="text-white/60 text-sm">
-                Session: {currentEvent?.sessionCode}
+                Session: {currentEvent?.sessionCode} • {photos.length} photos
               </p>
             </div>
           </div>
@@ -196,18 +240,28 @@ export function EventGallery() {
           <div className="flex items-center justify-center h-[60vh]">
             <RefreshCw className="w-8 h-8 text-white animate-spin" />
           </div>
+        ) : photos.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-[60vh] text-center">
+            <p className="text-white/60 mb-4">No photos uploaded yet</p>
+            <button
+              onClick={() => navigate(`/host/event/${eventId}/qr`)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Show QR Code to Get Started
+            </button>
+          </div>
         ) : (
           <div className="grid grid-cols-3 gap-1">
             {photos.map((photo) => (
               <motion.button
-                key={photo.name}
+                key={photo.fileName}
                 onClick={() => {
                   if (isDeleteMode) {
                     const newSelection = new Set(selectedPhotos);
-                    if (newSelection.has(photo.name)) {
-                      newSelection.delete(photo.name);
+                    if (newSelection.has(photo.fileName)) {
+                      newSelection.delete(photo.fileName);
                     } else {
-                      newSelection.add(photo.name);
+                      newSelection.add(photo.fileName);
                     }
                     setSelectedPhotos(newSelection);
                   }
@@ -219,18 +273,37 @@ export function EventGallery() {
                   alt="Event photo"
                   className="w-full h-full object-cover"
                   loading="lazy"
+                  onError={() => {
+                    console.error("❌ Failed to load image:", photo.url);
+                    console.error("Photo details:", photo);
+                  }}
+                  onLoad={() => {
+                    console.log(
+                      "✅ Successfully loaded image:",
+                      photo.fileName,
+                    );
+                  }}
                 />
+
+                {/* Guest photo indicator */}
+                {photo.isGuestPhoto && (
+                  <div
+                    className="absolute top-1 left-1 w-3 h-3 bg-green-500 rounded-full"
+                    title="Guest photo"
+                  />
+                )}
+
                 <div
                   className={`absolute inset-0 transition-colors ${
                     isDeleteMode
-                      ? selectedPhotos.has(photo.name)
+                      ? selectedPhotos.has(photo.fileName)
                         ? "bg-red-500/30"
                         : "bg-black/20 hover:bg-black/30"
                       : "bg-black/0 group-hover:bg-black/20"
                   }`}
                 />
 
-                {isDeleteMode && selectedPhotos.has(photo.name) && (
+                {isDeleteMode && selectedPhotos.has(photo.fileName) && (
                   <div className="absolute top-2 right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
                     <CheckCircle className="w-4 h-4 text-white" />
                   </div>
