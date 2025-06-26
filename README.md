@@ -177,9 +177,6 @@ For Corporate Events:
 For Venue Managers:
 "Every blank wall becomes interactive revenue. Charge $300+ for 'digital photo experiences' using just a projector."
 
-
-
-
 ==
 
 Needing to update session validator code

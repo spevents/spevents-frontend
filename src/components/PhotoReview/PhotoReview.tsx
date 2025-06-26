@@ -11,6 +11,7 @@ import {
   storeTempPhotos,
 } from "../../lib/aws";
 import { useNgrok } from "../../contexts/NgrokContext";
+import { useActualEventId } from "../session/SessionValidator";
 
 interface Photo {
   id: number;
@@ -69,13 +70,13 @@ const PhotoProgress: React.FC<{ total: number; current: number }> = ({
 
 // Review Complete Component
 const ReviewComplete: React.FC = () => {
-  const { eventId } = useParams();
+  const { eventId: sessionCode } = useParams();
   const { baseUrl } = useNgrok();
   const navigate = useNavigate();
 
   const navigateWithBaseUrl = (path: string) => {
     const fullPath =
-      path === "/" ? `/${eventId}/guest` : `/${eventId}/guest${path}`;
+      path === "/" ? `/${sessionCode}/guest` : `/${sessionCode}/guest${path}`;
     if (window.innerWidth <= 768 && baseUrl) {
       window.location.href = `${baseUrl}${fullPath}`;
     } else {
@@ -126,7 +127,10 @@ const ReviewComplete: React.FC = () => {
 };
 
 export default function PhotoReview() {
-  const { eventId } = useParams();
+  // Get sessionCode from URL and actualEventId from context
+  const { eventId: sessionCode } = useParams();
+  const actualEventId = useActualEventId();
+
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [processingPhotos, setProcessingPhotos] = useState<Set<number>>(
     new Set(),
@@ -146,21 +150,27 @@ export default function PhotoReview() {
   const [horizontalDrag, setHorizontalDrag] = useState(0);
   const [isHorizontalDragging, setIsHorizontalDragging] = useState(false);
 
+  // Debug logs
+  useEffect(() => {
+    console.log("🔍 PhotoReview Debug:");
+    console.log("  sessionCode from URL:", sessionCode);
+    console.log("  actualEventId from context:", actualEventId);
+  }, [sessionCode, actualEventId]);
+
   useEffect(() => {
     const updateScreenHeight = () => setScreenHeight(window.innerHeight);
     updateScreenHeight();
     window.addEventListener("resize", updateScreenHeight);
 
-    if (eventId) {
-      const tempPhotos = getTempPhotos(eventId);
-      console.log("Loading photos for eventId:", eventId);
-      console.log("Found temp photos:", tempPhotos);
-      console.log("Session storage key:", `temp-photos-${eventId}`);
+    if (actualEventId) {
+      console.log("📸 Loading temp photos for actualEventId:", actualEventId);
+      const tempPhotos = getTempPhotos(actualEventId);
+      console.log("📸 Found temp photos:", tempPhotos);
       setPhotos(tempPhotos);
     }
 
     return () => window.removeEventListener("resize", updateScreenHeight);
-  }, [eventId]);
+  }, [actualEventId]);
 
   const handleStackNavigation = (direction: 1 | -1) => {
     setCurrentPhotoIndex((prev) => {
@@ -203,10 +213,11 @@ export default function PhotoReview() {
     }
   };
 
-  // Find this section in PhotoReview.tsx around line 150-180:
-
   const handlePhotoAction = async (photo: Photo, isUpward: boolean) => {
-    if (!eventId) return;
+    if (!actualEventId) {
+      console.error("❌ No actualEventId available for photo action");
+      return;
+    }
 
     const currentIndex = currentPhotoIndex;
     const totalPhotos = photos.length;
@@ -216,7 +227,8 @@ export default function PhotoReview() {
       setIsUploading(true);
 
       try {
-        console.log("Starting upload for photo:", photo.id);
+        console.log("🚀 Starting upload for photo:", photo.id);
+        console.log("📍 Using actualEventId:", actualEventId);
 
         setPhotos((prev) => prev.filter((p) => p.id !== photo.id));
         setDragPosition(0);
@@ -225,26 +237,27 @@ export default function PhotoReview() {
           setCurrentPhotoIndex(currentIndex - 1);
         }
 
-        console.log("Fetching photo blob...");
+        console.log("📥 Fetching photo blob...");
         const response = await fetch(photo.url);
         if (!response.ok) {
           throw new Error(`Failed to fetch photo: ${response.status}`);
         }
         const blob = await response.blob();
-        console.log("Blob created, size:", blob.size);
+        console.log("✅ Blob created, size:", blob.size);
 
         const fileName = `photo-${Date.now()}.jpg`;
-        console.log("Getting presigned URL for:", fileName);
+        console.log("🔗 Getting presigned URL for:", fileName);
 
+        // Use actualEventId for S3 storage
         const presignedUrl = await getPresignedUrl({
-          eventId,
+          eventId: actualEventId, // ✅ Using actualEventId, NOT sessionCode
           fileName,
           contentType: "image/jpeg",
           isGuestPhoto: true,
         });
-        console.log("Got presigned URL, length:", presignedUrl.length);
+        console.log("✅ Got presigned URL");
 
-        console.log("Starting S3 upload...");
+        console.log("☁️ Starting S3 upload...");
         const uploadResponse = await fetch(presignedUrl, {
           method: "PUT",
           body: blob,
@@ -253,7 +266,7 @@ export default function PhotoReview() {
           },
         });
 
-        console.log("Upload response status:", uploadResponse.status);
+        console.log("📤 Upload response status:", uploadResponse.status);
         if (!uploadResponse.ok) {
           const errorText = await uploadResponse.text();
           throw new Error(
@@ -261,19 +274,21 @@ export default function PhotoReview() {
           );
         }
 
-        console.log("Upload successful, storing photo info...");
-        storeUploadedPhoto(eventId, fileName, true);
+        console.log("✅ Upload successful, storing photo info...");
+        // Store using actualEventId
+        storeUploadedPhoto(actualEventId, fileName, true);
 
-        // Update session storage for temporary photos
-        const tempPhotos = getTempPhotos(eventId).filter(
+        // Update session storage for temporary photos (use actualEventId)
+        const tempPhotos = getTempPhotos(actualEventId).filter(
           (p: Photo) => p.id !== photo.id,
         );
-        storeTempPhotos(eventId, tempPhotos);
+        storeTempPhotos(actualEventId, tempPhotos);
 
-        console.log("Photo upload completed successfully");
+        console.log("🎉 Photo upload completed successfully");
+        console.log("📁 Stored under eventId:", actualEventId);
       } catch (error: any) {
-        console.error("Upload failed with error:", error);
-        console.error("Error details:", error.message);
+        console.error("💥 Upload failed with error:", error);
+        console.error("🔍 Error details:", error.message);
         if (processingPhotos.has(photo.id)) {
           setPhotos((prev) => [...prev, photo]);
         }
@@ -287,16 +302,19 @@ export default function PhotoReview() {
         setExitDirection(null);
       }
     } else {
-      // Handle delete action (unchanged)
+      // Handle delete action
       setPhotos((prev) => prev.filter((p) => p.id !== photo.id));
       if (currentIndex === totalPhotos - 1 && currentIndex > 0) {
         setCurrentPhotoIndex(currentIndex - 1);
       }
 
-      const tempPhotos = getTempPhotos(eventId).filter(
-        (p: Photo) => p.id !== photo.id,
-      );
-      storeTempPhotos(eventId, tempPhotos);
+      // Update temp storage using actualEventId
+      if (actualEventId) {
+        const tempPhotos = getTempPhotos(actualEventId).filter(
+          (p: Photo) => p.id !== photo.id,
+        );
+        storeTempPhotos(actualEventId, tempPhotos);
+      }
 
       setDragPosition(0);
     }
@@ -335,6 +353,15 @@ export default function PhotoReview() {
 
     setDragPosition(0);
   };
+
+  // Don't render if we don't have actualEventId yet
+  if (!actualEventId) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (photos.length === 0) {
     return <ReviewComplete />;

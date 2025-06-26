@@ -1,3 +1,4 @@
+// src/components/camera/CameraInterface.tsx
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { useNgrok } from "../../contexts/NgrokContext";
@@ -39,8 +40,17 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
   const isDemoMode = location.pathname.startsWith("/demo");
   const basePrefix = isDemoMode ? "/demo" : "";
   const orientation = useOrientation();
-  useParams();
+
+  // Get sessionCode from URL params and actual eventId from context
+  const { eventId: sessionCode } = useParams();
   const actualEventId = useActualEventId();
+
+  // Debug logs
+  useEffect(() => {
+    console.log("🎯 CameraInterface Debug:");
+    console.log("  sessionCode from URL:", sessionCode);
+    console.log("  actualEventId from context:", actualEventId);
+  }, [sessionCode, actualEventId]);
 
   // State
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -65,6 +75,16 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
     initializeZoom,
     toggleZoomVisibility,
   } = useZoom(facingMode);
+
+  // Load existing photos on mount
+  useEffect(() => {
+    if (actualEventId) {
+      console.log("📸 Loading existing photos for eventId:", actualEventId);
+      const existingPhotos = getTempPhotos(actualEventId);
+      console.log("📸 Found existing photos:", existingPhotos.length);
+      setPhotos(existingPhotos);
+    }
+  }, [actualEventId]);
 
   // Cleanup function
   const cleanup = useCallback(() => {
@@ -211,10 +231,19 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
   }, []);
 
   const capturePhoto = useCallback(async () => {
-    if (!videoRef.current || photos.length >= PHOTO_LIMIT) return;
+    if (!videoRef.current || photos.length >= PHOTO_LIMIT || !actualEventId) {
+      console.warn("❌ Cannot capture photo:", {
+        hasVideo: !!videoRef.current,
+        photoCount: photos.length,
+        photoLimit: PHOTO_LIMIT,
+        actualEventId,
+      });
+      return;
+    }
 
-    console.log("Capturing photo for eventId:", actualEventId);
-    console.log("Current photos:", photos.length);
+    console.log("📸 Capturing photo...");
+    console.log("  Using actualEventId:", actualEventId);
+    console.log("  Current photos:", photos.length);
 
     // Handle screen flash for front camera
     if (facingMode === "user" && isFlashEnabled) {
@@ -247,31 +276,43 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
 
     setPhotos((prev) => [...prev, newPhoto]);
 
-    if (actualEventId) {
-      const sessionPhotos = getTempPhotos(actualEventId);
-      storeTempPhotos(actualEventId, [...sessionPhotos, newPhoto]);
-      console.log(
-        "Stored photo for eventId:",
-        actualEventId,
-        "Total photos:",
-        sessionPhotos.length + 1,
-      );
-    }
+    // Store using actualEventId (NOT sessionCode)
+    const sessionPhotos = getTempPhotos(actualEventId);
+    const updatedPhotos = [...sessionPhotos, newPhoto];
+    storeTempPhotos(actualEventId, updatedPhotos);
+
+    console.log("✅ Photo stored:");
+    console.log("  eventId:", actualEventId);
+    console.log("  Total photos:", updatedPhotos.length);
 
     navigator.vibrate?.(50);
-  }, [photos.length, facingMode, isFlashEnabled, triggerCaptureEffect]);
+  }, [
+    photos.length,
+    facingMode,
+    isFlashEnabled,
+    triggerCaptureEffect,
+    actualEventId,
+  ]);
 
   const navigateWithBaseUrl = (path: string) => {
+    // Use sessionCode for navigation (URL structure) but actualEventId for storage
     const fullPath =
-      path === "/"
-        ? `/${actualEventId}/guest`
-        : `/${actualEventId}/guest${path}`;
+      path === "/" ? `/${sessionCode}/guest` : `/${sessionCode}/guest${path}`;
     if (window.innerWidth <= 768 && baseUrl) {
       window.location.href = `${baseUrl}${fullPath}`;
     } else {
       navigate(fullPath);
     }
   };
+
+  // Don't render if we don't have actualEventId yet
+  if (!actualEventId) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div

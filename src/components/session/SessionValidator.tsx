@@ -12,7 +12,9 @@ interface SessionValidatorProps {
 const EventIdContext = createContext<string | null>(null);
 
 export const useActualEventId = () => {
-  return useContext(EventIdContext);
+  const eventId = useContext(EventIdContext);
+  console.log("useActualEventId returning:", eventId); // Debug log
+  return eventId;
 };
 
 export function SessionValidator({ children }: SessionValidatorProps) {
@@ -39,15 +41,16 @@ export function SessionValidator({ children }: SessionValidatorProps) {
 
         if (event) {
           console.log(
-            "Found event:",
+            "✅ Found event:",
             event.id,
             "for sessionCode:",
             sessionCode,
           );
+          console.log("Setting actualEventId to:", event.id);
           setActualEventId(event.id);
           setIsValid(true);
         } else {
-          console.log("No event found for sessionCode:", sessionCode);
+          console.log("❌ No event found for sessionCode:", sessionCode);
           setIsValid(false);
         }
       } catch (error) {
@@ -60,6 +63,11 @@ export function SessionValidator({ children }: SessionValidatorProps) {
 
     checkSession();
   }, [sessionCode, isValidSession]);
+
+  // Debug log when actualEventId changes
+  useEffect(() => {
+    console.log("actualEventId state changed to:", actualEventId);
+  }, [actualEventId]);
 
   if (isChecking) {
     return (
@@ -78,6 +86,7 @@ export function SessionValidator({ children }: SessionValidatorProps) {
             This session code is not valid or has expired. Please scan a valid
             QR code to join an event.
           </p>
+          <p className="text-white/40 text-sm">Session Code: {sessionCode}</p>
           <a
             href="/"
             className="block px-6 py-3 bg-white/10 text-white rounded-full hover:bg-white/20"
@@ -88,6 +97,8 @@ export function SessionValidator({ children }: SessionValidatorProps) {
       </div>
     );
   }
+
+  console.log("🎯 Providing actualEventId via context:", actualEventId);
 
   return (
     <EventIdContext.Provider value={actualEventId}>
