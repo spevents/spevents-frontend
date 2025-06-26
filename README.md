@@ -1,7 +1,7 @@
 <h1 align="center">
   <img src="./src/assets/dark-icon.svg" alt="Icon" width="100"/>
   <br>
-  <a href="https://spevents.live/">spevents</a> - <i> gather and display guest photos</i>
+  <a href="https://spevents.live/">spevents</a> - <i> real-time photo wall for guest photos</i>
 </h1>
 
 <p align="center">
