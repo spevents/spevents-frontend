@@ -110,21 +110,21 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
 
     try {
       console.log("🎬 Slideshow loading photos for eventId:", eventId);
-      
+
       const eventPhotos: EventPhoto[] = await listAllEventPhotos(eventId);
       console.log("📸 Slideshow found photos:", eventPhotos.length);
-      
+
       if (eventPhotos.length === 0) {
         console.log("📭 No photos found, setting empty array");
         setPhotos([]);
         setIsLoading(false);
         return;
       }
-      
+
       const loadedPhotos: Photo[] = eventPhotos.map((eventPhoto) => {
         const photoUrl = getEventPhotoUrl(eventId, eventPhoto);
         console.log("🔗 Generated URL for", eventPhoto.fileName, ":", photoUrl);
-        
+
         return {
           src: photoUrl,
           id: eventPhoto.fileName,
@@ -285,7 +285,9 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
               <div className="absolute inset-0 flex items-center justify-center text-white">
                 <div className="text-center">
                   <p className="text-xl mb-2">No photos to display</p>
-                  <p className="text-white/60">Photos will appear here as guests upload them</p>
+                  <p className="text-white/60">
+                    Photos will appear here as guests upload them
+                  </p>
                 </div>
               </div>
             )}
@@ -307,7 +309,10 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
                     alt="Slideshow photo"
                     className="max-w-full max-h-full object-contain"
                     onError={() => {
-                      console.error("❌ Failed to load slideshow image:", photo.src);
+                      console.error(
+                        "❌ Failed to load slideshow image:",
+                        photo.src,
+                      );
                     }}
                     onLoad={() => {
                       console.log("✅ Slideshow image loaded:", photo.id);
