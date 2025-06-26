@@ -27,7 +27,7 @@ export function EventSlideshow() {
 
   return (
     <div className="relative h-screen">
-      <PhotoSlideshow />
+      <PhotoSlideshow  eventId={eventId}/>
 
       {/* QR Code Panel */}
       {showQR && currentEvent?.sessionCode && (
