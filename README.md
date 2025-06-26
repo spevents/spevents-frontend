@@ -177,6 +177,13 @@ For Corporate Events:
 For Venue Managers:
 "Every blank wall becomes interactive revenue. Charge $300+ for 'digital photo experiences' using just a projector."
 
-==
+Competitors:
 
-Needing to update session validator code
+Create a competitor matrix out of all of these and let me know how spevents is different / competitive / why someone would choose spevents over this. Another side note that I was checking out was that most of these are for weddings, whereas spevents.live should also be for other types of events, like conferences and stuff. Let me know how I should be prioritizing my next steps with spevents regarding this.
+
+- https://www.reddit.com/r/weddingplanning/comments/1l8jn3d/guests_sharing_photos_with_qr_code_what_company/
+- livewall.no
+- chivent.com
+- pov.camera
+- https://warpbin.com/
+- https://www.reddit.com/r/Weddingsunder10k/comments/1jqwyfi/photo_app/?share_id=zYVskjoZDwF2ubrjAcez0&utm_content=1&utm_medium=ios_app&utm_name=ioscss&utm_source=share&utm_term=1
