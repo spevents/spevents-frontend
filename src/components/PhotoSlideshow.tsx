@@ -103,23 +103,46 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
   };
 
   const loadPhotos = async () => {
-    if (!eventId) return;
+    if (!eventId) {
+      console.log("❌ No eventId provided to slideshow");
+      setIsLoading(false);
+      return;
+    }
 
     try {
-      const eventPhotos: EventPhoto[] = await listAllEventPhotos(eventId);
-      const loadedPhotos: Photo[] = eventPhotos.map((eventPhoto) => ({
-        src: getEventPhotoUrl(eventId, eventPhoto),
-        id: eventPhoto.fileName,
-        createdAt: getTimestampFromFilename(eventPhoto.fileName) || Date.now(),
-        transitionId: `${eventPhoto.fileName}-${Date.now()}`,
-        expiryTime: Date.now() + PHOTO_DISPLAY_TIME,
-      }));
+      console.log("🎬 Slideshow loading photos for eventId:", eventId);
 
+      const eventPhotos: EventPhoto[] = await listAllEventPhotos(eventId);
+      console.log("📸 Slideshow found photos:", eventPhotos.length);
+
+      if (eventPhotos.length === 0) {
+        console.log("📭 No photos found, setting empty array");
+        setPhotos([]);
+        setIsLoading(false);
+        return;
+      }
+
+      const loadedPhotos: Photo[] = eventPhotos.map((eventPhoto) => {
+        const photoUrl = getEventPhotoUrl(eventId, eventPhoto);
+        console.log("🔗 Generated URL for", eventPhoto.fileName, ":", photoUrl);
+
+        return {
+          src: photoUrl,
+          id: eventPhoto.fileName,
+          createdAt:
+            getTimestampFromFilename(eventPhoto.fileName) || Date.now(),
+          transitionId: `${eventPhoto.fileName}-${Date.now()}`,
+          expiryTime: Date.now() + PHOTO_DISPLAY_TIME,
+        };
+      });
+
+      console.log("✅ Slideshow photos loaded:", loadedPhotos.length);
       setPhotos(loadedPhotos);
       setIsLoading(false);
     } catch (error) {
-      console.error("Error loading photos:", error);
-      setIsLoading(false);
+      console.error("💥 Error loading slideshow photos:", error);
+      setPhotos([]); // Set empty array on error
+      setIsLoading(false); // Critical: always set loading to false
     }
   };
 
