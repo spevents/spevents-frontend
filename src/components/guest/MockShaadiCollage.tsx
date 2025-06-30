@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { ChevronLeft, LayoutGrid, Plus, Share2, Type, X } from "lucide-react";
 import { shareToInstagram } from "./utils/collage";
-import { getSignedPhotoUrl } from "../../lib/aws";
+import { getSignedPhotoUrl } from "../../services/api";
+// import { getSignedPhotoUrl } from "../../lib/aws";
 import { AnimatePresence, motion } from "framer-motion";
 
 const THEME_COLORS = {

@@ -11,7 +11,8 @@ import {
   X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { getSignedPhotoUrl } from "../../lib/aws";
+import { getSignedPhotoUrl } from "../../services/api";
+// import { getSignedPhotoUrl } from "../../lib/aws";
 
 interface Photo {
   url: string;

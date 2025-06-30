@@ -4,12 +4,21 @@ import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { CheckCircle2, Trash2, Camera } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSwipeable } from "react-swipeable";
+
+// import {
+//   getPresignedUrl,
+//   storeUploadedPhoto,
+//   getTempPhotos,
+//   storeTempPhotos,
+// } from "../../lib/aws";
+
 import {
   getPresignedUrl,
   storeUploadedPhoto,
   getTempPhotos,
   storeTempPhotos,
-} from "../../lib/aws";
+} from "../../services/api";
+
 import { useNgrok } from "../../contexts/NgrokContext";
 import { useActualEventId } from "../session/SessionValidator";
 

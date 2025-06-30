@@ -2,7 +2,8 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { ChevronLeft, LayoutGrid } from "lucide-react";
-import { getSignedPhotoUrl } from "../../lib/aws";
+import { getSignedPhotoUrl } from "../../services/api";
+// import { getSignedPhotoUrl } from "../../lib/aws";
 // import { shareToInstagram } from "./utils/collage";
 import { AnimatePresence, motion } from "framer-motion";
 

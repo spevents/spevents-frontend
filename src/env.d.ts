@@ -1,10 +1,12 @@
-// src/env.d.ts
+// src/env.d.ts - Clean, public-safe environment variables
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_ALLOWED_EMAIL: string;
-  readonly VITE_EVENT_ID: string;
+  readonly VITE_BACKEND_URL: string;
+  readonly VITE_APP_NAME: string;
+  readonly VITE_DEMO_MODE: string;
 }
+
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }

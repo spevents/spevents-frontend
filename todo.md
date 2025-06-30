@@ -121,9 +121,6 @@
 - **Feature Usage Rate:** \_\_\_%
 - **Customer Satisfaction:** \_\_\_/10
 
-
-
-
 Other side notes:
 
 "BeReal meets big screens—authentic moments, instant gratification"
@@ -150,4 +147,3 @@ Create a competitor matrix out of all of these and let me know how spevents is d
 - pov.camera
 - https://warpbin.com/
 - https://www.reddit.com/r/Weddingsunder10k/comments/1jqwyfi/photo_app/?share_id=zYVskjoZDwF2ubrjAcez0&utm_content=1&utm_medium=ios_app&utm_name=ioscss&utm_source=share&utm_term=1
-

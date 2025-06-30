@@ -10,12 +10,19 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
 import {
   listAllEventPhotos,
   getEventPhotoUrl,
   deleteMultipleFiles,
   EventPhoto,
-} from "../../lib/aws";
+} from "../../services/api";
+// import {
+//   listAllEventPhotos,
+//   getEventPhotoUrl,
+//   deleteMultipleFiles,
+//   EventPhoto,
+// } from "../../lib/aws";
 
 interface DisplayPhoto {
   url: string;

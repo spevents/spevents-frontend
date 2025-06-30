@@ -7,7 +7,8 @@ import React, {
   useEffect,
 } from "react";
 import { Event, CreateEventData } from "../types/event";
-import { eventService } from "../lib/eventService";
+// import { eventService } from "../lib/eventService";
+import { eventService } from "../services/api";
 
 interface EventContextType {
   events: Event[];

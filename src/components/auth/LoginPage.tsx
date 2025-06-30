@@ -1,6 +1,8 @@
 // src/components/auth/LoginPage.tsx
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { auth } from "../config/firebase";
+// import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+// import { auth } from "../config/firebase";
+import { auth, GoogleAuthProvider, signInWithPopup } from "../../services/auth";
+
 import { useNavigate } from "react-router-dom";
 
 const ALLOWED_EMAIL = import.meta.env.VITE_ALLOWED_EMAIL;
@@ -17,13 +19,20 @@ export const LoginPage = () => {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
 
-      if (result.user.email === ALLOWED_EMAIL) {
+      if (result.user.email && result.user.email === ALLOWED_EMAIL) {
         localStorage.setItem("spevents-auth", result.user.email);
         navigate("/host/gallery");
       } else {
-        await auth.signOut();
-        alert("Unauthorized access");
+        alert("No email found");
       }
+
+      // if (result.user.email === ALLOWED_EMAIL) {
+      //   localStorage.setItem("spevents-auth", result.user.email);
+      //   navigate("/host/gallery");
+      // } else {
+      //   await auth.signOut();
+      //   alert("Unauthorized access");
+      // }
     } catch (error: any) {
       console.error("Firebase Auth Error:", {
         code: error.code,

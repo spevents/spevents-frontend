@@ -1,6 +1,7 @@
 // src/contexts/SessionContext.tsx
 import React, { createContext, useContext, useState, useCallback } from "react";
-import { eventService } from "../lib/eventService";
+// import { eventService } from "../lib/eventService";
+import { eventService } from "../services/api";
 
 interface SessionContextType {
   sessionCode: string | null;

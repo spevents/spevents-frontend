@@ -2,7 +2,8 @@
 import { useEffect, useState, createContext, useContext } from "react";
 import { useParams } from "react-router-dom";
 import { useSession } from "../../contexts/SessionContext";
-import { eventService } from "../../lib/eventService";
+import { eventService } from "../../services/api";
+// import { eventService } from "../../lib/eventService";
 
 interface SessionValidatorProps {
   children: React.ReactNode;

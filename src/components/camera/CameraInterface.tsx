@@ -13,7 +13,8 @@ import {
   ExtendedMediaTrackCapabilities,
   ExtendedMediaTrackConstraintSet,
 } from "./types/media";
-import { storeTempPhotos, getTempPhotos } from "../../lib/aws";
+import { storeTempPhotos, getTempPhotos } from "../../services/api";
+// import { storeTempPhotos, getTempPhotos } from "../../lib/aws";
 import { useActualEventId } from "../session/SessionValidator";
 
 // Types

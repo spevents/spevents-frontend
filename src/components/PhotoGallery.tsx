@@ -3,7 +3,8 @@ import React, { useState, useEffect } from "react";
 import { QrCode, Trash2, RefreshCw, CheckCircle } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { getPhotoUrl, listPhotos, deleteMultipleFiles } from "../lib/aws";
+import { getPhotoUrl, listPhotos, deleteMultipleFiles } from "../services/api";
+// import { getPhotoUrl, listPhotos, deleteMultipleFilescl } from "../lib/aws";
 import { QRCodeModal } from "./QRCodeModal";
 
 interface StoragePhoto {
@@ -29,7 +30,7 @@ const PhotoGallery: React.FC = () => {
 
     try {
       const fileNames = await listPhotos(eventId);
-      const photoUrls: StoragePhoto[] = fileNames.map((fileName) => ({
+      const photoUrls: StoragePhoto[] = fileNames.map((fileName: string) => ({
         url: getPhotoUrl(eventId, fileName),
         name: fileName,
         created_at: new Date().toISOString(),
