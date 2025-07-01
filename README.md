@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <h1 align="center">
   <img src="./src/assets/dark-icon.svg" alt="Icon" width="100"/>
   <br>
@@ -144,3 +145,7 @@ npm run build
 5. Open Pull Request
 
 ## [LICENSE](LICENSE)
+=======
+# spevents-frontend
+Public frontend for spevents.live
+>>>>>>> ec389aa48b2bcafc742c590a2ed44877020dba61
