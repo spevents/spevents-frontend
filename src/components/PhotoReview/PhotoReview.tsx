@@ -5,19 +5,16 @@ import { CheckCircle2, Trash2, Camera } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSwipeable } from "react-swipeable";
 
-// import {
-//   getPresignedUrl,
-//   storeUploadedPhoto,
-//   getTempPhotos,
-//   storeTempPhotos,
-// } from "../../lib/aws";
+// backend API calls
+import { getPresignedUrl } from "../../services/api";
+
+// local storage functions (keep these from lib/aws)
 
 import {
-  getPresignedUrl,
   storeUploadedPhoto,
   getTempPhotos,
   storeTempPhotos,
-} from "../../services/api";
+} from "../../lib/aws";
 
 import { useNgrok } from "../../contexts/NgrokContext";
 import { useActualEventId } from "../session/SessionValidator";
@@ -257,14 +254,15 @@ export default function PhotoReview() {
         const fileName = `photo-${Date.now()}.jpg`;
         console.log("🔗 Getting presigned URL for:", fileName);
 
-        // Use actualEventId for S3 storage
+        // ✅ Use backend API instead of direct AWS
         const presignedUrl = await getPresignedUrl({
-          eventId: actualEventId, // ✅ Using actualEventId, NOT sessionCode
+          eventId: actualEventId,
           fileName,
           contentType: "image/jpeg",
           isGuestPhoto: true,
+          guestId: undefined,
         });
-        console.log("✅ Got presigned URL");
+        console.log("✅ Got presigned URL from backend");
 
         console.log("☁️ Starting S3 upload...");
         const uploadResponse = await fetch(presignedUrl, {
