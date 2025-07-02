@@ -13,7 +13,7 @@ interface ApiResponse<T> {
 class ApiService {
   private async makeRequest<T>(
     endpoint: string,
-    options: RequestInit = {},
+    options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     try {
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -41,7 +41,7 @@ class ApiService {
   private async makeAuthenticatedRequest<T>(
     user: User,
     endpoint: string,
-    options: RequestInit = {},
+    options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     try {
       const token = await user.getIdToken();
@@ -61,7 +61,7 @@ class ApiService {
 
   async createEvent(
     user: User,
-    eventData: { name: string; description: string },
+    eventData: { name: string; description: string }
   ) {
     return this.makeAuthenticatedRequest(user, "/api/events", {
       method: "POST",
