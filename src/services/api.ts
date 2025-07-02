@@ -60,7 +60,7 @@ export interface EventPhoto {
 }
 
 export async function listAllEventPhotos(
-  eventId: string
+  eventId: string,
 ): Promise<EventPhoto[]> {
   try {
     const response = await getEventPhotos(eventId);
@@ -86,7 +86,7 @@ export function getSignedPhotoUrl(eventId: string, fileName: string): string {
 
 export function getEventPhotoUrl(
   eventId: string,
-  photo: EventPhoto | string
+  photo: EventPhoto | string,
 ): string {
   const cloudFrontUrl =
     import.meta.env.VITE_CLOUDFRONT_URL || "https://your-cloudfront-url";
@@ -113,7 +113,7 @@ export async function listPhotos(eventId: string): Promise<string[]> {
 export async function deleteMultipleFiles(
   eventId: string,
   fileNames: string[],
-  guestId?: string
+  guestId?: string,
 ): Promise<void> {
   // For now, just log - you'll need to implement the delete endpoint in your backend
   console.log("Delete files:", { eventId, fileNames, guestId });
@@ -194,7 +194,7 @@ export const eventService = {
   async getEventBySessionCode(sessionCode: string): Promise<Event | null> {
     try {
       const response = await fetch(
-        `${BACKEND_URL}/api/events?sessionCode=${sessionCode}`
+        `${BACKEND_URL}/api/events?sessionCode=${sessionCode}`,
       );
       if (!response.ok) {
         return null;
@@ -274,11 +274,11 @@ export const storeTempPhotos = (eventId: string, photos: Photo[]): void => {
 export const storeUploadedPhoto = (
   eventId: string,
   fileName: string,
-  isGuest: boolean
+  isGuest: boolean,
 ): void => {
   try {
     const uploaded = JSON.parse(
-      localStorage.getItem(`uploaded_photos_${eventId}`) || "[]"
+      localStorage.getItem(`uploaded_photos_${eventId}`) || "[]",
     );
     uploaded.push({
       fileName,
@@ -287,7 +287,7 @@ export const storeUploadedPhoto = (
     });
     localStorage.setItem(
       `uploaded_photos_${eventId}`,
-      JSON.stringify(uploaded)
+      JSON.stringify(uploaded),
     );
   } catch (error) {
     console.error("Error storing uploaded photo info:", error);
@@ -295,7 +295,7 @@ export const storeUploadedPhoto = (
 };
 
 export const getUploadedPhotos = (
-  eventId: string
+  eventId: string,
 ): Array<{ fileName: string; isGuest: boolean; uploadedAt: string }> => {
   try {
     const stored = localStorage.getItem(`uploaded_photos_${eventId}`);
