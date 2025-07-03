@@ -1,7 +1,7 @@
 // src/components/debug/SessionDebug.tsx
 
 import React, { useState, useEffect } from "react";
-import { eventService } from "../../services/api";
+import { eventService, guestService } from "../../services/api";
 
 interface SessionDebugProps {
   eventId: string;
@@ -21,7 +21,7 @@ export const SessionDebug: React.FC<SessionDebugProps> = ({ eventId }) => {
 
         // Test session code validation
         if (eventData?.sessionCode) {
-          const sessionEvent = await eventService.getEventBySessionCode(
+          const sessionEvent = await guestService.getEventBySessionCode(
             eventData.sessionCode,
           );
           setSessionValidation({

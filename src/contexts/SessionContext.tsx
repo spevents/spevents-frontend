@@ -1,7 +1,7 @@
 // src/contexts/SessionContext.tsx
 
 import React, { createContext, useContext, useState, useCallback } from "react";
-import { eventService } from "../services/api";
+import { guestService } from "../services/api";
 import { Event } from "../types/event";
 
 interface SessionContextType {
@@ -43,7 +43,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         console.log("Validating session for sessionCode:", sessionCode);
 
         // Check if this session code exists in Firestore
-        const event = await eventService.getEventBySessionCode(sessionCode);
+        const event = await guestService.getEventBySessionCode(sessionCode);
         const isValid = event !== null;
 
         console.log("Session validation result:", {

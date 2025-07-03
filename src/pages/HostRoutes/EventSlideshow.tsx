@@ -5,7 +5,7 @@ import { useEvent } from "../../contexts/EventContext";
 import { useEffect, useState } from "react";
 import { PhotoSlideshow } from "../../components";
 import { QRCodeSVG } from "qrcode.react";
-import { eventService } from "../../services/api";
+import { eventService, guestService } from "../../services/api";
 
 export function EventSlideshow() {
   const { eventId } = useParams<{ eventId: string }>();
@@ -37,7 +37,7 @@ export function EventSlideshow() {
 
         // Test session validation
         if (event?.sessionCode) {
-          const validatedEvent = await eventService.getEventBySessionCode(
+          const validatedEvent = await guestService.getEventBySessionCode(
             event.sessionCode,
           );
           setDebugInfo((prev: any) => ({
