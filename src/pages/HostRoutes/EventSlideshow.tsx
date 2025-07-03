@@ -57,6 +57,30 @@ export function EventSlideshow() {
     debugSession();
   }, [eventId]);
 
+  useEffect(() => {
+    const fixSessionCode = async () => {
+      if (!eventId) return;
+
+      try {
+        // Get current event
+        const event = await eventService.getEvent(eventId);
+
+        // If no session code or not active, activate it
+        if (!event.sessionCode || event.status !== "active") {
+          console.log("Activating event to generate session code...");
+          await eventService.updateEvent(eventId, { status: "active" });
+
+          // Refresh the event
+          selectEvent(eventId);
+        }
+      } catch (error: any) {
+        console.error("Error fixing session code:", error);
+      }
+    };
+
+    fixSessionCode();
+  }, [eventId]);
+
   if (!eventId) {
     return <Navigate to="/host" replace />;
   }
