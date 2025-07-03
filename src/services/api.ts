@@ -289,7 +289,7 @@ export const eventService = {
   async getEventBySessionCode(sessionCode: string): Promise<Event | null> {
     try {
       const response = await fetch(
-        `${BACKEND_URL}/api/events?sessionCode=${sessionCode}`,
+        `${BACKEND_URL}/api/events/session/${sessionCode}`,
       );
       if (!response.ok) {
         return null;
