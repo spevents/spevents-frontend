@@ -136,7 +136,9 @@ export function EventDashboard() {
                       {event.name}
                     </h3>
                     <span
-                      className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(event.status)}`}
+                      className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
+                        event.status,
+                      )}`}
                     >
                       {event.status}
                     </span>

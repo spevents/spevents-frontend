@@ -1,4 +1,5 @@
-// src/types/event.ts
+// spevents-frontend/src/types/event.ts
+
 export interface Event {
   id: string;
   name: string;
@@ -6,9 +7,11 @@ export interface Event {
   createdAt: string;
   updatedAt: string;
   hostEmail: string;
-  status: "draft" | "active" | "ended";
+  status: string;
   photoCount: number;
-  sessionCode?: string;
+  sessionCode: string;
+  eventId: string;
+  timestamp: number;
 }
 
 export interface CreateEventData {

@@ -1,41 +1,35 @@
 // src/services/auth.ts
+
 interface User {
-  email: string | null;
+  email: string;
+  getIdToken(): Promise<string>;
 }
 
 class AuthService {
-  public currentUser: User | null = null;
+  currentUser: User | null = null;
 
-  constructor() {
-    const email = localStorage.getItem("spevents-auth");
-    if (email) {
-      this.currentUser = { email };
-    }
+  setUser(email: string) {
+    this.currentUser = {
+      email,
+      getIdToken: async () => {
+        // Return a mock token for development
+        return "mock-token";
+      },
+    };
   }
 
-  get user() {
-    return this.currentUser;
+  signOut() {
+    this.currentUser = null;
+    localStorage.removeItem("spevents-auth");
   }
 }
-
-export class GoogleAuthProvider {}
 
 export const auth = new AuthService();
 
-export function signInWithPopup(
-  auth: AuthService,
-  _provider: GoogleAuthProvider,
-) {
-  const email = import.meta.env.VITE_ALLOWED_EMAIL || "demo@spevents.live";
-  auth.currentUser = { email };
-  localStorage.setItem("spevents-auth", email);
-  return Promise.resolve({ user: auth.currentUser });
-}
-
-export function onAuthStateChanged(
-  auth: AuthService,
-  callback: (user: User | null) => void,
-) {
-  callback(auth.currentUser);
-  return () => {}; // unsubscribe function
-}
+// For compatibility with Firebase auth
+export const setCurrentUser = (email: string) => {
+  auth.currentUser = {
+    email,
+    getIdToken: async () => "mock-token",
+  };
+};

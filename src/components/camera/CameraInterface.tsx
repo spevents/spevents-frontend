@@ -14,7 +14,6 @@ import {
   ExtendedMediaTrackConstraintSet,
 } from "./types/media";
 import { storeTempPhotos, getTempPhotos } from "../../services/api";
-// import { storeTempPhotos, getTempPhotos } from "../../lib/aws";
 import { useActualEventId } from "../session/SessionValidator";
 
 // Types
@@ -23,8 +22,10 @@ interface CameraInterfaceProps {
 }
 
 interface Photo {
-  id: number;
+  id: string;
   url: string;
+  eventId: string;
+  timestamp: number;
 }
 
 // Constants
@@ -273,7 +274,13 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
 
     context.drawImage(video, 0, 0);
     const photoUrl = canvas.toDataURL("image/jpeg", 0.8);
-    const newPhoto = { id: Date.now(), url: photoUrl };
+
+    const newPhoto: Photo = {
+      id: Date.now().toString(),
+      url: photoUrl,
+      eventId: actualEventId,
+      timestamp: Date.now(),
+    };
 
     setPhotos((prev) => [...prev, newPhoto]);
 
