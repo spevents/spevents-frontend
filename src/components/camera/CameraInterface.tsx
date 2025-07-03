@@ -13,7 +13,9 @@ import {
   ExtendedMediaTrackCapabilities,
   ExtendedMediaTrackConstraintSet,
 } from "./types/media";
+
 import { storeTempPhotos, getTempPhotos } from "../../services/api";
+
 import { useActualEventId } from "../session/SessionValidator";
 
 // Types
