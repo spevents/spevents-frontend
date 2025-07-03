@@ -4,7 +4,6 @@ import { useState } from "react";
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../config/firebase";
-import { Button } from "../ui/button";
 
 export const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -50,7 +49,7 @@ export const LoginPage = () => {
             </div>
           )}
 
-          <Button
+          <button
             onClick={handleGoogleSignIn}
             disabled={isLoading}
             className="w-full h-12 bg-white text-gray-900 hover:bg-gray-100 font-medium rounded-xl"
@@ -80,7 +79,7 @@ export const LoginPage = () => {
                 Continue with Google
               </>
             )}
-          </Button>
+          </button>
 
           <div className="mt-6 text-center">
             <p className="text-gray-400 text-sm">
