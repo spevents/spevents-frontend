@@ -34,6 +34,7 @@ const EventContext = createContext<EventContextType | undefined>(undefined);
 const mockEvents: Event[] = [
   {
     id: "mock-event-1",
+    eventId: "mock-event-1", // Added missing eventId
     name: "Mock Event 1",
     description: "Test event for development",
     createdAt: new Date().toISOString(),
@@ -42,6 +43,7 @@ const mockEvents: Event[] = [
     status: "active",
     photoCount: 0,
     sessionCode: "MOCK01",
+    timestamp: Date.now(), // Added missing timestamp
   },
 ];
 
@@ -52,6 +54,16 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   const BYPASS_AUTH = import.meta.env.VITE_BYPASS_AUTH === "true";
+
+  // Helper function to ensure API events match our Event type
+  const normalizeEvent = (event: any): Event => {
+    return {
+      ...event,
+      eventId: event.eventId || event.id, // Use eventId if available, fallback to id
+      timestamp: event.timestamp || Date.now(), // Use timestamp if available, fallback to current time
+      description: event.description || "", // Ensure description is always defined
+    };
+  };
 
   const loadEvents = useCallback(async () => {
     if (BYPASS_AUTH) {
@@ -64,7 +76,9 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
     setError(null);
     try {
       const userEvents = await eventService.getUserEvents();
-      setEvents(userEvents);
+      // Normalize events to match our Event type
+      const normalizedEvents = userEvents.map(normalizeEvent);
+      setEvents(normalizedEvents);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load events");
     } finally {
@@ -75,16 +89,19 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
   const createEvent = useCallback(
     async (data: CreateEventData): Promise<Event> => {
       if (BYPASS_AUTH) {
+        const eventId = `mock-${Date.now()}`;
         const newEvent: Event = {
-          id: `mock-${Date.now()}`,
+          id: eventId,
+          eventId: eventId, // Added missing eventId
           name: data.name,
-          description: data.description,
+          description: data.description || "", // Ensure description is defined
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           hostEmail: "dev@spevents.local",
           status: "draft",
           photoCount: 0,
           sessionCode: Math.random().toString(36).substring(2, 8).toUpperCase(),
+          timestamp: Date.now(), // Added missing timestamp
         };
         setEvents((prev) => [newEvent, ...prev]);
         return newEvent;
@@ -93,7 +110,14 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true);
       setError(null);
       try {
-        const newEvent = await eventService.createEvent(data);
+        // Ensure description is defined for API call
+        const eventData = {
+          ...data,
+          description: data.description || "",
+        };
+        const apiEvent = await eventService.createEvent(eventData);
+        // Normalize the event returned from API
+        const newEvent = normalizeEvent(apiEvent);
         setEvents((prev) => [newEvent, ...prev]);
         return newEvent;
       } catch (err) {
@@ -130,7 +154,9 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        const updatedEvent = await eventService.updateEvent(eventId, updates);
+        const apiEvent = await eventService.updateEvent(eventId, updates);
+        // Normalize the updated event
+        const updatedEvent = normalizeEvent(apiEvent);
         setEvents((prev) =>
           prev.map((e) => (e.id === eventId ? updatedEvent : e)),
         );
