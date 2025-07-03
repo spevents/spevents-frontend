@@ -1,3 +1,5 @@
+// src/pages/guest/GuestRoutes.tsx
+
 import {
   Routes,
   Route,
@@ -22,12 +24,13 @@ const isMobileDevice = () => {
 
 export const GuestRoutes = () => {
   const location = useLocation();
-  const { eventId } = useParams();
+  const { eventId } = useParams(); // This will now be the session code
 
   useEffect(() => {
     console.log(
-      `GuestRoutes - Path: ${location.pathname}, Event ID: ${eventId}`,
+      `🔄 GuestRoutes - Path: ${location.pathname}, Param (sessionCode): ${eventId}`,
     );
+    console.log(`📱 Is mobile device: ${isMobileDevice()}`);
 
     if (!isMobileDevice()) {
       sessionStorage.setItem("attempted-url", location.pathname);
@@ -39,6 +42,7 @@ export const GuestRoutes = () => {
   }
 
   if (!eventId) {
+    console.log("❌ No session code provided in URL");
     return (
       <Routes>
         <Route path="/" element={<GuestLanding />} />
@@ -47,12 +51,14 @@ export const GuestRoutes = () => {
     );
   }
 
+  console.log(`🎯 Processing session code: ${eventId}`);
+
   return (
     <Routes>
       <Route
         path="guest/*"
         element={
-          <SessionValidator>
+          <SessionValidator sessionCode={eventId}>
             <Routes>
               <Route
                 path="camera"

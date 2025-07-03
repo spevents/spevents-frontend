@@ -1,109 +1,127 @@
 // src/components/session/SessionValidator.tsx
-import { useEffect, useState, createContext, useContext } from "react";
-import { useParams } from "react-router-dom";
+
+import React, { useEffect, useState } from "react";
 import { useSession } from "../../contexts/SessionContext";
-import { eventService } from "../../services/api";
-// import { eventService } from "../../lib/eventService";
+import { guestService } from "../../services/api";
 
 interface SessionValidatorProps {
   children: React.ReactNode;
+  sessionCode?: string;
 }
 
-// Create context to provide actual eventId to child components
-const EventIdContext = createContext<string | null>(null);
-
-export const useActualEventId = () => {
-  const eventId = useContext(EventIdContext);
-  console.log("useActualEventId returning:", eventId); // Debug log
-  return eventId;
-};
-
-export function SessionValidator({ children }: SessionValidatorProps) {
-  const { eventId: sessionCode } = useParams(); // This is actually sessionCode from URL
-  const { isValidSession } = useSession();
-  const [isChecking, setIsChecking] = useState(true);
-  const [isValid, setIsValid] = useState(false);
-  const [actualEventId, setActualEventId] = useState<string | null>(null);
+export const SessionValidator: React.FC<SessionValidatorProps> = ({
+  children,
+  sessionCode,
+}) => {
+  const { setCurrentEvent, currentEvent } = useSession();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const checkSession = async () => {
+    const validateSession = async () => {
       if (!sessionCode) {
-        console.log("No sessionCode provided");
-        setIsValid(false);
-        setIsChecking(false);
+        console.error(`❌ SessionValidator: No session code provided`);
+        setError("No session code provided");
+        setLoading(false);
         return;
       }
 
       try {
-        console.log("Checking session for sessionCode:", sessionCode);
+        console.log(
+          `🔍 SessionValidator: Validating session code: ${sessionCode}`,
+        );
+        setLoading(true);
+        setError(null);
 
-        // Get the actual event using sessionCode
-        const event = await eventService.getEventBySessionCode(sessionCode);
+        // Log current state for debugging
+        console.log(`📱 Current URL: ${window.location.href}`);
+        console.log(`🔐 Session code to validate: ${sessionCode}`);
 
-        if (event) {
-          console.log(
-            "✅ Found event:",
-            event.id,
-            "for sessionCode:",
-            sessionCode,
-          );
-          console.log("Setting actualEventId to:", event.id);
-          setActualEventId(event.id);
-          setIsValid(true);
+        const event = await guestService.getEventBySessionCode(sessionCode);
+
+        console.log(`✅ SessionValidator: Event found:`, event);
+        console.log(
+          `📊 Event details: ID=${event.id}, Status=${event.status}, PhotoCount=${event.photoCount}`,
+        );
+
+        setCurrentEvent(event);
+        setLoading(false);
+      } catch (err: any) {
+        console.error(`❌ SessionValidator: Error validating session:`, err);
+        console.error(`🔍 Error details: ${err.message}`);
+
+        // Add more detailed error logging for mobile debugging
+        if (err.message.includes("404")) {
+          console.error(`🚫 Session not found: ${sessionCode}`);
+          setError(`Session "${sessionCode}" not found or inactive`);
+        } else if (err.message.includes("Network")) {
+          console.error(`🌐 Network error when validating session`);
+          setError(`Network error. Please check your connection.`);
         } else {
-          console.log("❌ No event found for sessionCode:", sessionCode);
-          setIsValid(false);
+          console.error(`🔥 Unexpected error:`, err);
+          setError(`Error loading event: ${err.message}`);
         }
-      } catch (error) {
-        console.error("Session validation error:", error);
-        setIsValid(false);
-      } finally {
-        setIsChecking(false);
+
+        setLoading(false);
       }
     };
 
-    checkSession();
-  }, [sessionCode, isValidSession]);
+    validateSession();
+  }, [sessionCode, setCurrentEvent]);
 
-  // Debug log when actualEventId changes
-  useEffect(() => {
-    console.log("actualEventId state changed to:", actualEventId);
-  }, [actualEventId]);
-
-  if (isChecking) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (!isValid || !actualEventId) {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-6">
-        <div className="text-center space-y-4">
-          <h1 className="text-2xl font-bold text-white">Invalid Session</h1>
-          <p className="text-white/60">
-            This session code is not valid or has expired. Please scan a valid
-            QR code to join an event.
-          </p>
-          <p className="text-white/40 text-sm">Session Code: {sessionCode}</p>
-          <a
-            href="/"
-            className="block px-6 py-3 bg-white/10 text-white rounded-full hover:bg-white/20"
-          >
-            Return Home
-          </a>
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading event...</p>
+          <p className="text-xs text-gray-400 mt-2">Session: {sessionCode}</p>
         </div>
       </div>
     );
   }
 
-  console.log("🎯 Providing actualEventId via context:", actualEventId);
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
+        <div className="text-center bg-white rounded-lg p-6 shadow-lg max-w-md w-full">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">
+            Session Error
+          </h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <p className="text-sm text-gray-400 mb-4">Code: {sessionCode}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors"
+          >
+            Try Again
+          </button>
+          <div className="mt-4 text-xs text-gray-400">
+            <p>Debug info logged to console</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  return (
-    <EventIdContext.Provider value={actualEventId}>
-      {children}
-    </EventIdContext.Provider>
+  if (!currentEvent) {
+    console.error(`❌ SessionValidator: No current event set after validation`);
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="text-center">
+          <p className="text-gray-600">No event data available</p>
+        </div>
+      </div>
+    );
+  }
+
+  console.log(
+    `✅ SessionValidator: Rendering children with event:`,
+    currentEvent.id,
   );
-}
+  return <>{children}</>;
+};
+
+// Export the useActualEventId hook for components that need it
+export { useActualEventId } from "../../contexts/SessionContext";

@@ -1,7 +1,8 @@
 // src/contexts/SessionContext.tsx
+
 import React, { createContext, useContext, useState, useCallback } from "react";
-// import { eventService } from "../lib/eventService";
 import { eventService } from "../services/api";
+import { Event } from "../types/event";
 
 interface SessionContextType {
   sessionCode: string | null;
@@ -10,6 +11,10 @@ interface SessionContextType {
   isValidSession: (code: string) => Promise<boolean>;
   setIsHost: (isHost: boolean) => void;
   isHost: boolean;
+
+  // Event management for guests
+  currentEvent: Event | null;
+  setCurrentEvent: (event: Event | null) => void;
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -19,6 +24,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     localStorage.getItem("spevents-session"),
   );
   const [isHost, setIsHost] = useState(false);
+  const [currentEvent, setCurrentEvent] = useState<Event | null>(null);
 
   const generateSessionCode = useCallback(() => {
     const code = Math.random().toString(36).substring(2, 8);
@@ -63,6 +69,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         isValidSession,
         setIsHost,
         isHost,
+        currentEvent,
+        setCurrentEvent,
       }}
     >
       {children}
@@ -76,4 +84,10 @@ export function useSession() {
     throw new Error("useSession must be used within a SessionProvider");
   }
   return context;
+}
+
+// Helper hook to get the actual event ID (for components that need it)
+export function useActualEventId(): string | null {
+  const { currentEvent } = useSession();
+  return currentEvent?.id || null;
 }
