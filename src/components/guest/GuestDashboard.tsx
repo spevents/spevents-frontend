@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getSignedPhotoUrl } from "../../services/api";
-// import { getSignedPhotoUrl } from "../../lib/aws";
+import { useActualEventId } from "../session/SessionValidator";
 
 interface Photo {
   url: string;
@@ -28,7 +28,10 @@ interface TabConfig {
 
 export function GuestDashboard() {
   const navigate = useNavigate();
-  const { eventId } = useParams();
+  const params = useParams();
+  const sessionCode = params.sessionCode || params.eventId;
+  const actualEventId = useActualEventId(); // For API calls
+
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("gallery");
@@ -63,10 +66,10 @@ export function GuestDashboard() {
 
   useEffect(() => {
     loadGuestPhotos();
-  }, [eventId]);
+  }, [actualEventId]);
 
   const loadGuestPhotos = async () => {
-    if (!eventId) return;
+    if (!actualEventId) return;
 
     try {
       const storedPhotos = JSON.parse(
@@ -78,7 +81,7 @@ export function GuestDashboard() {
         } else {
           const photoUrls = await Promise.all(
             storedPhotos.map(async (fileName: string) => ({
-              url: await getSignedPhotoUrl(eventId, fileName),
+              url: await getSignedPhotoUrl(actualEventId, fileName),
               name: fileName,
               created_at: new Date().toISOString(),
             })),
@@ -98,13 +101,13 @@ export function GuestDashboard() {
 
     switch (tabId) {
       case "camera":
-        navigate(`/${eventId}/guest/camera`);
+        navigate(`/${sessionCode}/guest/camera`);
         break;
       case "create":
-        navigate(`/${eventId}/guest/create`);
+        navigate(`/${sessionCode}/guest/create`);
         break;
       case "prize":
-        navigate(`/${eventId}/guest/feedback`);
+        navigate(`/${sessionCode}/guest/feedback`);
         break;
       case "gallery":
         // Already on gallery
@@ -180,7 +183,7 @@ export function GuestDashboard() {
               Start capturing memories by taking your first photo!
             </p>
             <button
-              onClick={() => navigate(`/${eventId}/guest/camera`)}
+              onClick={() => navigate(`/${sessionCode}/guest/camera`)}
               className="bg-white text-gray-900 px-6 py-2 rounded-full font-medium"
             >
               Take Photo
