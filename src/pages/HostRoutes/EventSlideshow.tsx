@@ -38,7 +38,7 @@ export function EventSlideshow() {
         // Test session validation
         if (event?.sessionCode) {
           const validatedEvent = await eventService.getEventBySessionCode(
-            event.sessionCode
+            event.sessionCode,
           );
           setDebugInfo((prev: any) => ({
             ...prev,

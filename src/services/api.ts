@@ -315,13 +315,34 @@ export const eventService = {
 
   async getEventBySessionCode(sessionCode: string): Promise<Event | null> {
     try {
-      const response = await fetch(
-        `${BACKEND_URL}/api/events/session/${sessionCode}`,
+      // Import Firebase directly instead of using API endpoint
+      const { db } = await import("../components/config/firebase");
+      const { collection, query, where, limit, getDocs } = await import(
+        "firebase/firestore"
       );
-      if (!response.ok) {
+
+      console.log(`🔍 Direct Firestore lookup for sessionCode: ${sessionCode}`);
+
+      const q = query(
+        collection(db, "events"),
+        where("sessionCode", "==", sessionCode.toUpperCase()),
+        limit(1),
+      );
+
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        console.log(`❌ No event found for sessionCode: ${sessionCode}`);
         return null;
       }
-      return response.json();
+
+      const doc = snapshot.docs[0];
+      const event = { id: doc.id, ...doc.data() } as Event;
+
+      console.log(
+        `✅ Found event: ${event.id} for sessionCode: ${sessionCode}`,
+      );
+      return event;
     } catch (error) {
       console.error("Error getting event by session code:", error);
       return null;

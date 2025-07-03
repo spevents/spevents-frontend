@@ -22,7 +22,7 @@ export const SessionDebug: React.FC<SessionDebugProps> = ({ eventId }) => {
         // Test session code validation
         if (eventData?.sessionCode) {
           const sessionEvent = await eventService.getEventBySessionCode(
-            eventData.sessionCode
+            eventData.sessionCode,
           );
           setSessionValidation({
             sessionCode: eventData.sessionCode,
