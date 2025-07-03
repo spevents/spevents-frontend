@@ -106,7 +106,8 @@ const PhotoProgress: React.FC<{ total: number; current: number }> = ({
 
 // Review Complete Component
 const ReviewComplete: React.FC = () => {
-  const { eventId: sessionCode } = useParams();
+  const params = useParams();
+  const sessionCode = params.sessionCode || params.eventId;
   const { baseUrl } = useNgrok();
   const navigate = useNavigate();
 
@@ -164,7 +165,8 @@ const ReviewComplete: React.FC = () => {
 
 export default function PhotoReview() {
   // Get sessionCode from URL and actualEventId from context
-  const { eventId: sessionCode } = useParams();
+  const params = useParams();
+  const sessionCode = params.sessionCode || params.eventId;
   const actualEventId = useActualEventId();
 
   const [photos, setPhotos] = useState<Photo[]>([]);

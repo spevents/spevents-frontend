@@ -101,61 +101,18 @@ export const GuestRoutes = () => {
               <Route path="review" element={<PhotoReview />} />
               <Route path="feedback" element={<FeedbackPage />} />
               <Route path="create" element={<CollageCreator />} />
-              <Route
-                path="*"
-                element={
-                  <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-6">
-                    <div className="text-center">
-                      <h2 className="text-xl mb-4">Page Not Found</h2>
-                      <p className="text-gray-400 mb-4">
-                        Available: camera, review, feedback, create
-                      </p>
-                      <button
-                        onClick={() =>
-                          (window.location.href = `/${sessionCode}/guest`)
-                        }
-                        className="bg-blue-600 px-4 py-2 rounded"
-                      >
-                        Go to Dashboard
-                      </button>
-                    </div>
-                  </div>
-                }
-              />
             </Routes>
           </SessionValidator>
         }
       />
 
-      {/* Redirect root sessionCode access to guest dashboard */}
       <Route
         path="/"
         element={<Navigate to={`/${sessionCode}/guest`} replace />}
       />
-
-      {/* Catch-all with debug info */}
       <Route
         path="*"
-        element={
-          <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-6">
-            <div className="text-center">
-              <h2 className="text-xl mb-4">Routing Debug</h2>
-              <div className="bg-gray-800 p-4 rounded text-left text-sm mb-4">
-                <p>Session: {sessionCode}</p>
-                <p>Path: {location.pathname}</p>
-                <p>Expected: /{sessionCode}/guest/camera</p>
-              </div>
-              <button
-                onClick={() =>
-                  (window.location.href = `/${sessionCode}/guest/camera`)
-                }
-                className="bg-blue-600 px-4 py-2 rounded"
-              >
-                Go to Camera
-              </button>
-            </div>
-          </div>
-        }
+        element={<Navigate to={`/${sessionCode}/guest`} replace />}
       />
     </Routes>
   );
