@@ -156,31 +156,60 @@ export async function getPresignedUrl({
   contentType,
   isGuestPhoto = false,
   guestId,
+  sessionCode,
 }: {
-  eventId: string;
+  eventId?: string;
   fileName: string;
   contentType: string;
   isGuestPhoto?: boolean;
   guestId?: string;
+  sessionCode?: string;
 }): Promise<string> {
-  const response = await fetch(`${BACKEND_URL}/api/upload`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
+  try {
+    console.log(`🔗 Requesting presigned URL:`, {
       eventId,
       fileName,
       contentType,
       isGuestPhoto,
       guestId,
-    }),
-  });
+      sessionCode,
+    });
 
-  if (!response.ok) {
-    throw new Error(`Failed to get presigned URL: ${response.status}`);
+    const response = await fetch(`${BACKEND_URL}/api/upload`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        eventId,
+        fileName,
+        contentType,
+        isGuestPhoto,
+        guestId,
+        sessionCode,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`❌ Presigned URL request failed:`, {
+        status: response.status,
+        statusText: response.statusText,
+        errorText,
+      });
+      throw new Error(
+        `Failed to get presigned URL: ${response.status} - ${errorText}`,
+      );
+    }
+
+    const { signedUrl } = await response.json();
+    console.log(`✅ Got presigned URL successfully`);
+    return signedUrl;
+  } catch (error) {
+    console.error(`❌ Error getting presigned URL:`, error);
+    throw error;
   }
-
-  const { signedUrl } = await response.json();
-  return signedUrl;
 }
 
 export async function uploadPhoto({
@@ -404,21 +433,26 @@ export const photoService = {
 
 export const guestService = {
   async getEventBySessionCode(sessionCode: string): Promise<Event> {
-    const response = await fetch(
-      `${BACKEND_URL}/api/guest/event?sessionCode=${sessionCode}`,
-      {
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+    try {
+      const response = await fetch(
+        `${BACKEND_URL}/api/guest/event?sessionCode=${sessionCode}`,
+        {
+          headers: { "Content-Type": "application/json" },
+        },
+      );
 
-    if (!response.ok) {
-      const error = await response
-        .json()
-        .catch(() => ({ message: "Unknown error" }));
-      throw new Error(error.message || `HTTP ${response.status}`);
+      if (!response.ok) {
+        const error = await response
+          .json()
+          .catch(() => ({ message: "Unknown error" }));
+        throw new Error(error.message || `HTTP ${response.status}`);
+      }
+
+      return response.json();
+    } catch (error) {
+      console.error("Error fetching event by session code:", error);
+      throw error;
     }
-
-    return response.json();
   },
 
   async uploadGuestPhoto(
@@ -426,40 +460,76 @@ export const guestService = {
     sessionCode: string,
     file: File,
   ): Promise<string> {
-    // Get presigned URL
-    const response = await fetch(`${BACKEND_URL}/api/photos`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    try {
+      console.log(`🚀 Starting guest photo upload:`, {
         eventId,
-        fileName: file.name,
         sessionCode,
-      }),
-    });
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+      });
 
-    if (!response.ok) {
-      const error = await response
-        .json()
-        .catch(() => ({ message: "Unknown error" }));
-      throw new Error(error.message || `HTTP ${response.status}`);
+      // Generate unique filename
+      const timestamp = Date.now();
+      const uniqueFileName = `guest-${timestamp}-${file.name}`;
+
+      // Get presigned URL using the unified endpoint
+      const response = await fetch(`${BACKEND_URL}/api/upload`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          sessionCode,
+          fileName: uniqueFileName,
+          contentType: file.type,
+          isGuestPhoto: true,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`❌ Failed to get presigned URL:`, {
+          status: response.status,
+          statusText: response.statusText,
+          errorText,
+        });
+        throw new Error(
+          `Failed to get presigned URL: ${response.status} - ${errorText}`,
+        );
+      }
+
+      const { signedUrl, photoUrl } = await response.json();
+      console.log(`✅ Got presigned URL, uploading to S3...`);
+
+      // Upload to S3
+      const uploadResponse = await fetch(signedUrl, {
+        method: "PUT",
+        body: file,
+        headers: {
+          "Content-Type": file.type,
+        },
+      });
+
+      if (!uploadResponse.ok) {
+        const errorText = await uploadResponse.text();
+        console.error(`❌ S3 upload failed:`, {
+          status: uploadResponse.status,
+          statusText: uploadResponse.statusText,
+          errorText,
+        });
+        throw new Error(
+          `S3 upload failed: ${uploadResponse.status} - ${errorText}`,
+        );
+      }
+
+      console.log(`✅ Guest photo uploaded successfully:`, photoUrl);
+      return photoUrl;
+    } catch (error) {
+      console.error(`❌ Guest photo upload error:`, error);
+      throw error;
     }
-
-    const { presignedUrl, photoUrl } = await response.json();
-
-    // Upload to S3
-    const uploadResponse = await fetch(presignedUrl, {
-      method: "PUT",
-      body: file,
-      headers: {
-        "Content-Type": file.type,
-      },
-    });
-
-    if (!uploadResponse.ok) {
-      throw new Error("Failed to upload photo");
-    }
-
-    return photoUrl;
   },
 };
 
