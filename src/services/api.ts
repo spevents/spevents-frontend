@@ -1,5 +1,7 @@
 // src/services/api.ts
 
+import { auth } from "../components/config/firebase";
+
 const BACKEND_URL = "https://api.spevents.live";
 
 // ===============================
@@ -20,6 +22,7 @@ export interface EventPhoto {
   isGuestPhoto: boolean;
   guestId?: string;
   url: string;
+  uploadedAt?: string;
 }
 
 interface Photo {
@@ -29,26 +32,73 @@ interface Photo {
   timestamp: number;
 }
 
+export interface UploadResponse {
+  presignedUrl: string;
+  photoKey: string;
+  photoUrl: string;
+  guestId?: string;
+}
+
+// ===============================
+// UTILITY FUNCTIONS
+// ===============================
+
+/**
+ * Get the authorization header with Firebase ID token
+ */
+const getAuthHeader = async (): Promise<{ Authorization: string } | {}> => {
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+
+  try {
+    const token = await user.getIdToken();
+    return { Authorization: `Bearer ${token}` };
+  } catch (error) {
+    console.error("Error getting ID token:", error);
+    throw new Error("Failed to get authentication token");
+  }
+};
+
+/**
+ * Make authenticated API request
+ */
+const makeAuthenticatedRequest = async (
+  endpoint: string,
+  options: RequestInit = {},
+): Promise<Response> => {
+  const authHeader = await getAuthHeader();
+
+  const response = await fetch(`${BACKEND_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeader,
+      ...options.headers,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ message: "Unknown error" }));
+    throw new Error(error.message || `HTTP ${response.status}`);
+  }
+
+  return response;
+};
+
 // ===============================
 // EVENT MANAGEMENT
 // ===============================
 
 export async function createEvent(eventData: CreateEventData): Promise<Event> {
   try {
-    const response = await fetch(`${BACKEND_URL}/api/events`, {
+    const response = await makeAuthenticatedRequest("/api/events", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(eventData),
     });
-
-    if (!response.ok) {
-      const error = await response
-        .json()
-        .catch(() => ({ message: "Unknown error" }));
-      throw new Error(
-        error.message || `Failed to create event: ${response.status}`,
-      );
-    }
 
     return response.json();
   } catch (error) {
@@ -59,19 +109,9 @@ export async function createEvent(eventData: CreateEventData): Promise<Event> {
 
 export async function getUserEvents(): Promise<Event[]> {
   try {
-    const response = await fetch(`${BACKEND_URL}/api/events`);
-
-    if (!response.ok) {
-      const error = await response
-        .json()
-        .catch(() => ({ message: "Unknown error" }));
-      throw new Error(
-        error.message || `Failed to get events: ${response.status}`,
-      );
-    }
-
+    const response = await makeAuthenticatedRequest("/api/events");
     const data = await response.json();
-    return data.events || [];
+    return Array.isArray(data) ? data : data.events || [];
   } catch (error) {
     console.error("Get events error:", error);
     throw error;
@@ -79,12 +119,9 @@ export async function getUserEvents(): Promise<Event[]> {
 }
 
 export async function getEvent(eventId: string): Promise<Event> {
-  const response = await fetch(`${BACKEND_URL}/api/events?eventId=${eventId}`);
-
-  if (!response.ok) {
-    throw new Error(`Failed to get event: ${response.status}`);
-  }
-
+  const response = await makeAuthenticatedRequest(
+    `/api/events?eventId=${eventId}`,
+  );
   return response.json();
 }
 
@@ -92,29 +129,21 @@ export async function updateEvent(
   eventId: string,
   updates: Partial<Event>,
 ): Promise<Event> {
-  const response = await fetch(`${BACKEND_URL}/api/events`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ eventId, ...updates }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to update event: ${response.status}`);
-  }
+  const response = await makeAuthenticatedRequest(
+    `/api/events?eventId=${eventId}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(updates),
+    },
+  );
 
   return response.json();
 }
 
 export async function deleteEvent(eventId: string): Promise<void> {
-  const response = await fetch(`${BACKEND_URL}/api/events`, {
+  await makeAuthenticatedRequest(`/api/events?eventId=${eventId}`, {
     method: "DELETE",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ eventId }),
   });
-
-  if (!response.ok) {
-    throw new Error(`Failed to delete event: ${response.status}`);
-  }
 }
 
 // ===============================
@@ -193,16 +222,11 @@ export async function uploadPhoto({
 
 export async function getEventPhotos(eventId: string): Promise<EventPhoto[]> {
   try {
-    const response = await fetch(
-      `${BACKEND_URL}/api/upload?eventId=${eventId}`,
+    const response = await makeAuthenticatedRequest(
+      `/api/photos?eventId=${eventId}`,
     );
-
-    if (!response.ok) {
-      throw new Error(`Failed to get photos: ${response.status}`);
-    }
-
     const data = await response.json();
-    return data.photos || [];
+    return Array.isArray(data) ? data : data.photos || [];
   } catch (error) {
     console.error("Get photos error:", error);
     return [];
@@ -226,15 +250,10 @@ export async function deleteMultipleFiles(
   guestId?: string,
 ): Promise<void> {
   try {
-    const response = await fetch(`${BACKEND_URL}/api/upload`, {
+    await makeAuthenticatedRequest("/api/upload", {
       method: "DELETE",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ eventId, fileNames, guestId }),
     });
-
-    if (!response.ok) {
-      throw new Error(`Failed to delete files: ${response.status}`);
-    }
   } catch (error) {
     console.error("Delete files error:", error);
     throw error;
@@ -286,6 +305,14 @@ export async function listPhotos(eventId: string): Promise<string[]> {
 // ===============================
 
 export const eventService = {
+  async getEvents(): Promise<Event[]> {
+    return getUserEvents();
+  },
+
+  async getEvent(eventId: string): Promise<Event> {
+    return getEvent(eventId);
+  },
+
   async getEventBySessionCode(sessionCode: string): Promise<Event | null> {
     try {
       const response = await fetch(
@@ -301,10 +328,6 @@ export const eventService = {
     }
   },
 
-  async getUserEvents(): Promise<Event[]> {
-    return getUserEvents();
-  },
-
   async createEvent(data: CreateEventData): Promise<Event> {
     return createEvent(data);
   },
@@ -315,6 +338,107 @@ export const eventService = {
 
   async deleteEvent(eventId: string): Promise<void> {
     return deleteEvent(eventId);
+  },
+};
+
+// ===============================
+// PHOTO SERVICE
+// ===============================
+
+export const photoService = {
+  async getEventPhotos(eventId: string): Promise<EventPhoto[]> {
+    return getEventPhotos(eventId);
+  },
+
+  async getUploadUrl(
+    eventId: string,
+    fileName: string,
+    sessionCode?: string,
+  ): Promise<UploadResponse> {
+    const params = new URLSearchParams({
+      eventId,
+      fileName,
+      ...(sessionCode && { sessionCode }),
+    });
+
+    const response = await makeAuthenticatedRequest(`/api/photos?${params}`, {
+      method: "POST",
+    });
+    return response.json();
+  },
+
+  async deletePhoto(eventId: string, photoKey: string): Promise<void> {
+    await makeAuthenticatedRequest(
+      `/api/photos?eventId=${eventId}&photoKey=${photoKey}`,
+      {
+        method: "DELETE",
+      },
+    );
+  },
+};
+
+// ===============================
+// GUEST SERVICE (Public API)
+// ===============================
+
+export const guestService = {
+  async getEventBySessionCode(sessionCode: string): Promise<Event> {
+    const response = await fetch(
+      `${BACKEND_URL}/api/guest/event?sessionCode=${sessionCode}`,
+      {
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+
+    if (!response.ok) {
+      const error = await response
+        .json()
+        .catch(() => ({ message: "Unknown error" }));
+      throw new Error(error.message || `HTTP ${response.status}`);
+    }
+
+    return response.json();
+  },
+
+  async uploadGuestPhoto(
+    eventId: string,
+    sessionCode: string,
+    file: File,
+  ): Promise<string> {
+    // Get presigned URL
+    const response = await fetch(`${BACKEND_URL}/api/photos`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        eventId,
+        fileName: file.name,
+        sessionCode,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response
+        .json()
+        .catch(() => ({ message: "Unknown error" }));
+      throw new Error(error.message || `HTTP ${response.status}`);
+    }
+
+    const { presignedUrl, photoUrl } = await response.json();
+
+    // Upload to S3
+    const uploadResponse = await fetch(presignedUrl, {
+      method: "PUT",
+      body: file,
+      headers: {
+        "Content-Type": file.type,
+      },
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error("Failed to upload photo");
+    }
+
+    return photoUrl;
   },
 };
 

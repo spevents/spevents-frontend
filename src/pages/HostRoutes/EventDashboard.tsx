@@ -14,11 +14,11 @@ import {
   Presentation,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useEvent } from "../../contexts/EventContext";
-import { Event } from "../../types/event";
+import { Event, useEvent } from "../../contexts/EventContext";
 
 export function EventDashboard() {
   const navigate = useNavigate();
+  const newLocal = useEvent();
   const {
     events,
     isLoading,
@@ -28,7 +28,7 @@ export function EventDashboard() {
     startEvent,
     endEvent,
     deleteEvent,
-  } = useEvent();
+  } = newLocal;
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -120,7 +120,7 @@ export function EventDashboard() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {events.map((event) => (
+            {events.map((event: Event) => (
               <motion.div
                 key={event.id}
                 initial={{ opacity: 0, y: 20 }}
