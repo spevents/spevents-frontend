@@ -16,7 +16,8 @@ interface TabConfig {
 }
 
 export default function FeedbackPage() {
-  const { eventId } = useParams();
+  const params = useParams();
+  const sessionCode = params.sessionCode || params.eventId;
   const navigate = useNavigate();
 
   const tabs: TabConfig[] = [
@@ -45,16 +46,16 @@ export default function FeedbackPage() {
   const handleTabClick = (tabId: string) => {
     switch (tabId) {
       case "camera":
-        navigate(`/${eventId}/guest/camera`);
+        navigate(`/${sessionCode}/guest/camera`);
         break;
       case "create":
-        navigate(`/${eventId}/guest/create`);
+        navigate(`/${sessionCode}/guest/create`);
         break;
       case "prize":
-        navigate(`/${eventId}/guest/feedback`);
+        navigate(`/${sessionCode}/guest/feedback`);
         break;
       case "gallery":
-        navigate(`/${eventId}/guest`);
+        navigate(`/${sessionCode}/guest`);
         break;
     }
   };
@@ -68,7 +69,7 @@ export default function FeedbackPage() {
         className="px-4 py-4 flex items-center justify-between bg-hunter-green/50"
       >
         <button
-          onClick={() => navigate(`/${eventId}/guest`)}
+          onClick={() => navigate(`/${sessionCode}/guest`)}
           className="p-2 rounded-full hover:bg-hunter-green/50 active:bg-hunter-green transition-colors"
         >
           <ArrowLeft className="w-6 h-6 text-timberwolf" />

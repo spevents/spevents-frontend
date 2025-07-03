@@ -1,3 +1,4 @@
+// src/components/guest/CollageCreator.tsx
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -23,7 +24,8 @@ type CollageType = "grid" | "mockShaadi" | null;
 
 export function CollageCreator() {
   const navigate = useNavigate();
-  const { eventId } = useParams();
+  const params = useParams();
+  const sessionCode = params.sessionCode || params.eventId;
   const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
   const [activeCollage, setActiveCollage] = useState<CollageType>(null);
   const [photos, setPhotos] = useState<Array<{ url: string; name: string }>>(
@@ -75,16 +77,16 @@ export function CollageCreator() {
   const handleTabClick = (tabId: string) => {
     switch (tabId) {
       case "camera":
-        navigate(`/${eventId}/guest/camera`);
+        navigate(`/${sessionCode}/guest/camera`);
         break;
       case "create":
         // Already on create page
         break;
       case "prize":
-        navigate(`/${eventId}/guest/feedback`);
+        navigate(`/${sessionCode}/guest/feedback`);
         break;
       case "gallery":
-        navigate(`/${eventId}/guest`);
+        navigate(`/${sessionCode}/guest`);
         break;
     }
   };
@@ -124,7 +126,7 @@ export function CollageCreator() {
           <div className="h-full flex flex-col">
             <div className="p-4 flex items-center justify-between border-b border-white/10">
               <button
-                onClick={() => navigate(`/${eventId}/guest`)}
+                onClick={() => navigate(`/${sessionCode}/guest`)}
                 className="p-2 hover:bg-white/10 rounded-full transition-colors"
               >
                 <ChevronLeft className="w-6 h-6 text-white" />

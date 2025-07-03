@@ -1,11 +1,10 @@
 // src/components/guest/GridCollage.tsx
+
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
 import { ChevronLeft, LayoutGrid } from "lucide-react";
 import { getSignedPhotoUrl } from "../../services/api";
-// import { getSignedPhotoUrl } from "../../lib/aws";
-// import { shareToInstagram } from "./utils/collage";
 import { AnimatePresence, motion } from "framer-motion";
+import { useActualEventId } from "../session/SessionValidator";
 
 const COLORS = {
   backgrounds: ["#000000", "#460b2f", "#9a031e", "#e36414", "#bf9b30"],
@@ -18,7 +17,8 @@ export interface GridCollageProps {
 }
 
 const GridCollage = ({ selectedPhotos, onClose }: GridCollageProps) => {
-  const { eventId } = useParams<{ eventId: string }>();
+  const actualEventId = useActualEventId();
+
   const [backgroundColor, setBackgroundColor] = useState("#000000");
   const [borderColor, setBorderColor] = useState("#000000");
   const [isCreating, setIsCreating] = useState(false);
@@ -28,7 +28,7 @@ const GridCollage = ({ selectedPhotos, onClose }: GridCollageProps) => {
   // Get signed URLs for all selected photos
   useEffect(() => {
     const getSignedUrls = async () => {
-      if (!eventId) return;
+      if (!actualEventId) return;
 
       try {
         const urls = await Promise.all(
@@ -36,7 +36,7 @@ const GridCollage = ({ selectedPhotos, onClose }: GridCollageProps) => {
             // Extract filename from CloudFront URL
             const fileName = photoUrl.split("/").pop();
             if (!fileName) throw new Error("Invalid photo URL");
-            return await getSignedPhotoUrl(eventId, fileName);
+            return await getSignedPhotoUrl(actualEventId, fileName);
           }),
         );
         setSignedUrls(urls);
@@ -46,7 +46,7 @@ const GridCollage = ({ selectedPhotos, onClose }: GridCollageProps) => {
     };
 
     getSignedUrls();
-  }, [selectedPhotos, eventId]);
+  }, [selectedPhotos, actualEventId]);
 
   const createGridCollage = async () => {
     console.log("Creating collage with signed URLs:", signedUrls); // Debug log

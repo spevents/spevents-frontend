@@ -1,10 +1,10 @@
 // src/components/guest/MockShaadiCollage.tsx
+
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
 import { ChevronLeft, LayoutGrid, Plus, Share2, Type, X } from "lucide-react";
 import { shareToInstagram } from "./utils/collage";
 import { getSignedPhotoUrl } from "../../services/api";
-// import { getSignedPhotoUrl } from "../../lib/aws";
+import { useActualEventId } from "../session/SessionValidator";
 import { AnimatePresence, motion } from "framer-motion";
 
 const THEME_COLORS = {
@@ -25,7 +25,7 @@ const selectableColors = {
   ...NEW_COLORS,
 };
 
-const excludeColors = ["#bf9b30", "#eae0d5"]; // Exclude gold and almond
+const excludeColors = ["#bf9b30", "#eae0d5"]; // Exclude gold and almond for now
 
 type FontOption =
   | "playfair"
@@ -173,7 +173,9 @@ const FontModal = ({
             >
               <div className="flex flex-col items-center text-center">
                 <div
-                  className={`text-2xl mb-2 text-white ${getFontConfig(key).class}`}
+                  className={`text-2xl mb-2 text-white ${
+                    getFontConfig(key).class
+                  }`}
                   style={getFontConfig(key).style}
                 >
                   {key === "galada"
@@ -202,7 +204,7 @@ const MockShaadiCollage = ({
   selectedPhotos,
   onClose,
 }: MockShaadiCollageProps) => {
-  const { eventId } = useParams<{ eventId: string }>();
+  const actualEventId = useActualEventId();
   const [selectedColor, setSelectedColor] = useState<string>(
     THEME_COLORS.tyrian,
   );
@@ -216,14 +218,14 @@ const MockShaadiCollage = ({
 
   useEffect(() => {
     const getSignedUrls = async () => {
-      if (!eventId) return;
+      if (!actualEventId) return;
 
       try {
         const urls = await Promise.all(
           limitedPhotos.map(async (photoUrl) => {
             const fileName = photoUrl.split("/").pop();
             if (!fileName) throw new Error("Invalid photo URL");
-            return await getSignedPhotoUrl(eventId, fileName);
+            return await getSignedPhotoUrl(actualEventId, fileName);
           }),
         );
         setSignedUrls(urls);
@@ -233,7 +235,7 @@ const MockShaadiCollage = ({
     };
 
     getSignedUrls();
-  }, [limitedPhotos, eventId]);
+  }, [limitedPhotos, actualEventId]);
 
   const createCollage = async () => {
     setIsCreating(true);
