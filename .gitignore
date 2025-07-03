@@ -50,3 +50,4 @@ aws/
 .babelrc
 __mocks__/
 coverage/
+.vercel

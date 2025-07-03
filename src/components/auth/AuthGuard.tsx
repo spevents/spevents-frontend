@@ -1,11 +1,10 @@
 // src/components/auth/AuthGuard.tsx
+
 import { useState, useEffect } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../config/firebase";
 import { isHostDomain } from "../config/routes";
-
-const ALLOWED_EMAIL = import.meta.env.VITE_ALLOWED_EMAIL;
 
 export const AuthGuard = () => {
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -28,7 +27,8 @@ export const AuthGuard = () => {
     }
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user && user.email === ALLOWED_EMAIL) {
+      // Allow any authenticated user (removed email restriction)
+      if (user?.email) {
         setIsAuthorized(true);
       } else {
         setIsAuthorized(false);
