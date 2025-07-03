@@ -261,15 +261,14 @@ export default function PhotoReview() {
     const totalPhotos = photos.length;
 
     if (isUpward) {
-      // Upload photo to backend
       setProcessingPhotos((prev) => new Set(prev).add(photo.id));
       setIsUploading(true);
 
       try {
         console.log("🚀 Starting upload for photo:", photo.id);
         console.log("📍 Using actualEventId:", actualEventId);
+        console.log("📍 Using sessionCode:", sessionCode);
 
-        // Remove from UI immediately for better UX
         setPhotos((prev) => prev.filter((p) => p.id !== photo.id));
         setDragPosition(0);
 
@@ -277,7 +276,6 @@ export default function PhotoReview() {
           setCurrentPhotoIndex(currentIndex - 1);
         }
 
-        // Convert photo to blob
         console.log("📥 Fetching photo blob...");
         const response = await fetch(photo.url);
         if (!response.ok) {
@@ -286,20 +284,19 @@ export default function PhotoReview() {
         const blob = await response.blob();
         console.log("✅ Blob created, size:", blob.size);
 
-        // Get presigned URL from backend
         const fileName = `photo-${Date.now()}.jpg`;
         console.log("🔗 Getting presigned URL for:", fileName);
 
+        // ✅ FIXED: Pass sessionCode for guest uploads
         const presignedUrl = await getPresignedUrl({
           eventId: actualEventId,
           fileName,
           contentType: "image/jpeg",
           isGuestPhoto: true,
-          guestId: undefined,
+          sessionCode: sessionCode, // ✅ Add session code here
         });
-        console.log("✅ Got presigned URL from backend");
+        console.log("✅ Got presigned URL");
 
-        // Upload to S3
         console.log("☁️ Starting S3 upload...");
         const uploadResponse = await fetch(presignedUrl, {
           method: "PUT",
@@ -318,8 +315,6 @@ export default function PhotoReview() {
         }
 
         console.log("✅ Upload successful, storing photo info...");
-
-        // Store uploaded photo info locally for tracking
         storeUploadedPhoto(actualEventId, fileName, true);
 
         // Update local temp storage to remove uploaded photo
@@ -333,8 +328,6 @@ export default function PhotoReview() {
       } catch (error: any) {
         console.error("💥 Upload failed with error:", error);
         console.error("🔍 Error details:", error.message);
-
-        // Restore photo to UI if upload failed
         if (processingPhotos.has(photo.id)) {
           setPhotos((prev) => [...prev, photo]);
         }
@@ -348,7 +341,7 @@ export default function PhotoReview() {
         setExitDirection(null);
       }
     } else {
-      // Delete photo (remove from local storage)
+      // Handle delete action
       setPhotos((prev) => prev.filter((p) => p.id !== photo.id));
       if (currentIndex === totalPhotos - 1 && currentIndex > 0) {
         setCurrentPhotoIndex(currentIndex - 1);
