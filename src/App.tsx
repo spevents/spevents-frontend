@@ -1,5 +1,4 @@
 // src/App.tsx
-
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { SessionProvider } from "./contexts/SessionContext";
 import { AuthGuard } from "./components/auth/AuthGuard";
@@ -11,41 +10,65 @@ import { isHostDomain, isGuestDomain } from "./components/config/routes";
 import { GuestLanding } from "./pages/guest/GuestLanding";
 
 export default function App() {
-  // Debug logs for troubleshooting
   const currentDomain = window.location.hostname;
   const currentPath = window.location.pathname;
   const isGuest = isGuestDomain();
   const isHost = isHostDomain();
 
-  console.log(`🌐 App Debug Info:`, {
+  // Enhanced debug logging
+  console.log(`🌐 App Debug:`, {
     domain: currentDomain,
     path: currentPath,
     isGuestDomain: isGuest,
     isHostDomain: isHost,
-    userAgent: navigator.userAgent.substring(0, 50) + "...",
+    fullURL: window.location.href,
   });
 
-  // Guest domain handling (join.spevents.live)
+  // Guest domain handling with enhanced error boundary
   if (isGuestDomain()) {
-    console.log(`🎯 Guest domain detected - Setting up guest routes`);
+    console.log(`🎯 Guest domain - routing path: ${currentPath}`);
+
+    // Debug path parsing
+    const pathParts = currentPath.split("/").filter(Boolean);
+    console.log(`📂 Path parts:`, pathParts);
 
     return (
       <SessionProvider>
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<GuestLanding />} />
-            {/* Handle session codes directly in the URL */}
             <Route path="/:sessionCode/*" element={<GuestRoutes />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            {/* Fallback for any unmatched routes */}
+            <Route
+              path="*"
+              element={
+                <div className="min-h-screen bg-gray-900 text-white p-6">
+                  <div className="max-w-md mx-auto text-center">
+                    <h2 className="text-xl mb-4">Route Debug Info</h2>
+                    <div className="bg-gray-800 p-4 rounded text-left text-sm">
+                      <p>Path: {currentPath}</p>
+                      <p>Parts: {JSON.stringify(pathParts)}</p>
+                      <p>Expected: /SESSION_CODE/guest/camera</p>
+                    </div>
+                    <button
+                      onClick={() => (window.location.href = "/")}
+                      className="mt-4 bg-blue-600 px-4 py-2 rounded"
+                    >
+                      Go Home
+                    </button>
+                  </div>
+                </div>
+              }
+            />
           </Routes>
         </BrowserRouter>
       </SessionProvider>
     );
   }
 
-  // Host domain handling (app.spevents.live) - excluding localhost
+  // Host domain handling
   if (isHostDomain() && currentDomain !== "localhost") {
-    console.log(`🏢 Host domain detected - Setting up host routes`);
+    console.log(`🏢 Host domain detected`);
 
     return (
       <SessionProvider>
@@ -62,21 +85,18 @@ export default function App() {
     );
   }
 
-  // Localhost handling - support both host and guest routes for development
-  console.log(`🛠️ Localhost detected - Setting up development routes`);
+  // Default/localhost handling
+  console.log(`🏠 Default domain routing`);
 
   return (
     <SessionProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
+          <Route path="/guest/*" element={<GuestRoutes />} />
           <Route element={<AuthGuard />}>
             <Route path="/host/*" element={<HostRoutes />} />
           </Route>
-          {/* Guest routes for localhost development - support both patterns */}
-          <Route path="/:sessionCode/guest/*" element={<GuestRoutes />} />
-          <Route path="/guest/:sessionCode/*" element={<GuestRoutes />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

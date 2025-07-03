@@ -16,7 +16,6 @@ import FeedbackPage from "../../components/guest/FeedbackPage";
 import { CollageCreator } from "../../components/guest/CollageCreator";
 import { SessionValidator } from "../../components/session/SessionValidator";
 
-// Mobile detection utility
 const isMobileDevice = () => {
   const userAgent = navigator.userAgent || navigator.vendor;
   return /android|iphone|ipad|ipod/i.test(userAgent.toLowerCase());
@@ -24,41 +23,74 @@ const isMobileDevice = () => {
 
 export const GuestRoutes = () => {
   const location = useLocation();
-  const { eventId } = useParams(); // This will now be the session code
+  const { sessionCode } = useParams(); // Renamed for clarity
 
   useEffect(() => {
-    console.log(
-      `🔄 GuestRoutes - Path: ${location.pathname}, Param (sessionCode): ${eventId}`,
-    );
-    console.log(`📱 Is mobile device: ${isMobileDevice()}`);
+    console.log(`🔄 GuestRoutes Debug:`, {
+      path: location.pathname,
+      sessionCode,
+      isMobile: isMobileDevice(),
+      fullLocation: location,
+    });
+  }, [location, sessionCode]);
 
-    if (!isMobileDevice()) {
-      sessionStorage.setItem("attempted-url", location.pathname);
-    }
-  }, [location, eventId]);
-
+  // Mobile check with better error message
   if (!isMobileDevice()) {
-    return <Navigate to="/" replace />;
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-6">
+        <div className="text-center">
+          <h2 className="text-xl mb-4">Desktop Not Supported</h2>
+          <p className="text-gray-400 mb-4">
+            Please use a mobile device to join events
+          </p>
+          <a
+            href="https://app.spevents.live"
+            className="text-blue-400 underline"
+          >
+            Host? Sign in here
+          </a>
+        </div>
+      </div>
+    );
   }
 
-  if (!eventId) {
-    console.log("❌ No session code provided in URL");
+  // Session code validation
+  if (!sessionCode) {
+    console.log("❌ No session code in URL params");
     return (
       <Routes>
         <Route path="/" element={<GuestLanding />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route
+          path="*"
+          element={
+            <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-6">
+              <div className="text-center">
+                <h2 className="text-xl mb-4">Invalid QR Code</h2>
+                <p className="text-gray-400 mb-4">
+                  Please scan a valid event QR code
+                </p>
+                <button
+                  onClick={() => (window.location.href = "/")}
+                  className="bg-blue-600 px-4 py-2 rounded"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
+          }
+        />
       </Routes>
     );
   }
 
-  console.log(`🎯 Processing session code: ${eventId}`);
+  console.log(`🎯 Processing session code: ${sessionCode}`);
 
   return (
     <Routes>
       <Route
         path="guest/*"
         element={
-          <SessionValidator sessionCode={eventId}>
+          <SessionValidator sessionCode={sessionCode}>
             <Routes>
               <Route
                 path="camera"
@@ -68,12 +100,62 @@ export const GuestRoutes = () => {
               <Route path="review" element={<PhotoReview />} />
               <Route path="feedback" element={<FeedbackPage />} />
               <Route path="create" element={<CollageCreator />} />
+              <Route
+                path="*"
+                element={
+                  <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-6">
+                    <div className="text-center">
+                      <h2 className="text-xl mb-4">Page Not Found</h2>
+                      <p className="text-gray-400 mb-4">
+                        Available: camera, review, feedback, create
+                      </p>
+                      <button
+                        onClick={() =>
+                          (window.location.href = `/${sessionCode}/guest`)
+                        }
+                        className="bg-blue-600 px-4 py-2 rounded"
+                      >
+                        Go to Dashboard
+                      </button>
+                    </div>
+                  </div>
+                }
+              />
             </Routes>
           </SessionValidator>
         }
       />
 
-      <Route path="*" element={<Navigate to={`/${eventId}/guest`} replace />} />
+      {/* Redirect root sessionCode access to guest dashboard */}
+      <Route
+        path="/"
+        element={<Navigate to={`/${sessionCode}/guest`} replace />}
+      />
+
+      {/* Catch-all with debug info */}
+      <Route
+        path="*"
+        element={
+          <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-6">
+            <div className="text-center">
+              <h2 className="text-xl mb-4">Routing Debug</h2>
+              <div className="bg-gray-800 p-4 rounded text-left text-sm mb-4">
+                <p>Session: {sessionCode}</p>
+                <p>Path: {location.pathname}</p>
+                <p>Expected: /{sessionCode}/guest/camera</p>
+              </div>
+              <button
+                onClick={() =>
+                  (window.location.href = `/${sessionCode}/guest/camera`)
+                }
+                className="bg-blue-600 px-4 py-2 rounded"
+              >
+                Go to Camera
+              </button>
+            </div>
+          </div>
+        }
+      />
     </Routes>
   );
 };
