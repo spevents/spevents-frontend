@@ -1,10 +1,6 @@
-// spevents-frontend/src/services/api.ts
+// src/services/api.ts
 
-import { auth } from "../components/config/firebase";
-// import { User } from "firebase/auth";
-
-// Use your current deployment URL
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3001";
+const BACKEND_URL = "https://api.spevents.live";
 
 // ===============================
 // TYPES & INTERFACES
@@ -12,20 +8,11 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3001";
 
 interface CreateEventData {
   name: string;
-  description: string;
+  description?: string;
 }
 
-interface Event {
-  id: string;
-  name: string;
-  description: string;
-  createdAt: string;
-  updatedAt: string;
-  hostEmail: string;
-  status: string;
-  photoCount: number;
-  sessionCode: string;
-}
+// Import Event type from the existing types file
+import { Event } from "../types/event";
 
 export interface EventPhoto {
   fileName: string;
@@ -43,61 +30,91 @@ interface Photo {
 }
 
 // ===============================
-// AUTH HELPERS
-// ===============================
-
-async function getAuthToken(): Promise<string> {
-  const user = auth.currentUser;
-  if (!user) {
-    throw new Error("User not authenticated");
-  }
-  return await user.getIdToken();
-}
-
-async function authenticatedFetch(url: string, options: RequestInit = {}) {
-  const token = await getAuthToken();
-
-  return fetch(url, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...options.headers,
-    },
-  });
-}
-
-// ===============================
 // EVENT MANAGEMENT
 // ===============================
 
 export async function createEvent(eventData: CreateEventData): Promise<Event> {
-  const response = await authenticatedFetch(`${BACKEND_URL}/api/events`, {
-    method: "POST",
-    body: JSON.stringify(eventData),
-  });
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/events`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(eventData),
+    });
+
+    if (!response.ok) {
+      const error = await response
+        .json()
+        .catch(() => ({ message: "Unknown error" }));
+      throw new Error(
+        error.message || `Failed to create event: ${response.status}`,
+      );
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error("Create event error:", error);
+    throw error;
+  }
+}
+
+export async function getUserEvents(): Promise<Event[]> {
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/events`);
+
+    if (!response.ok) {
+      const error = await response
+        .json()
+        .catch(() => ({ message: "Unknown error" }));
+      throw new Error(
+        error.message || `Failed to get events: ${response.status}`,
+      );
+    }
+
+    const data = await response.json();
+    return data.events || [];
+  } catch (error) {
+    console.error("Get events error:", error);
+    throw error;
+  }
+}
+
+export async function getEvent(eventId: string): Promise<Event> {
+  const response = await fetch(`${BACKEND_URL}/api/events?eventId=${eventId}`);
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(
-      error.message || `Failed to create event: ${response.status}`,
-    );
+    throw new Error(`Failed to get event: ${response.status}`);
   }
 
   return response.json();
 }
 
-export async function getUserEvents(): Promise<Event[]> {
-  const response = await authenticatedFetch(`${BACKEND_URL}/api/events`);
+export async function updateEvent(
+  eventId: string,
+  updates: Partial<Event>,
+): Promise<Event> {
+  const response = await fetch(`${BACKEND_URL}/api/events`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ eventId, ...updates }),
+  });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(
-      error.message || `Failed to get events: ${response.status}`,
-    );
+    throw new Error(`Failed to update event: ${response.status}`);
   }
 
   return response.json();
+}
+
+export async function deleteEvent(eventId: string): Promise<void> {
+  const response = await fetch(`${BACKEND_URL}/api/events`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ eventId }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to delete event: ${response.status}`);
+  }
 }
 
 // ===============================
@@ -137,30 +154,95 @@ export async function getPresignedUrl({
   return signedUrl;
 }
 
-export async function getEventPhotos(eventId: string) {
-  const response = await fetch(`${BACKEND_URL}/api/upload?eventId=${eventId}`);
+export async function uploadPhoto({
+  presignedUrl,
+  file,
+  onProgress,
+}: {
+  presignedUrl: string;
+  file: File;
+  onProgress?: (progress: number) => void;
+}): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
 
-  if (!response.ok) {
-    throw new Error(`Failed to get photos: ${response.status}`);
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable && onProgress) {
+        const progress = (event.loaded / event.total) * 100;
+        onProgress(progress);
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status === 200) {
+        resolve();
+      } else {
+        reject(new Error(`Upload failed with status: ${xhr.status}`));
+      }
+    };
+
+    xhr.onerror = () => {
+      reject(new Error("Upload failed"));
+    };
+
+    xhr.open("PUT", presignedUrl);
+    xhr.setRequestHeader("Content-Type", file.type);
+    xhr.send(file);
+  });
+}
+
+export async function getEventPhotos(eventId: string): Promise<EventPhoto[]> {
+  try {
+    const response = await fetch(
+      `${BACKEND_URL}/api/upload?eventId=${eventId}`,
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to get photos: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.photos || [];
+  } catch (error) {
+    console.error("Get photos error:", error);
+    return [];
   }
-
-  return response.json();
 }
 
 export async function listAllEventPhotos(
   eventId: string,
 ): Promise<EventPhoto[]> {
   try {
-    const response = await getEventPhotos(eventId);
-    return response.photos || [];
+    return await getEventPhotos(eventId);
   } catch (error) {
     console.error("Error listing event photos:", error);
     return [];
   }
 }
 
+export async function deleteMultipleFiles(
+  eventId: string,
+  fileNames: string[],
+  guestId?: string,
+): Promise<void> {
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/upload`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ eventId, fileNames, guestId }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete files: ${response.status}`);
+    }
+  } catch (error) {
+    console.error("Delete files error:", error);
+    throw error;
+  }
+}
+
 // ===============================
-// PHOTO URL GENERATION
+// PHOTO URL HELPERS
 // ===============================
 
 export function getPhotoUrl(eventId: string, fileName: string): string {
@@ -199,21 +281,45 @@ export async function listPhotos(eventId: string): Promise<string[]> {
   }
 }
 
-export async function deleteMultipleFiles(
-  eventId: string,
-  fileNames: string[],
-  guestId?: string,
-): Promise<void> {
-  // Note: This would need backend implementation
-  console.log("Delete function not yet implemented on backend", {
-    eventId,
-    fileNames,
-    guestId,
-  });
-}
+// ===============================
+// EVENT SERVICE OBJECT
+// ===============================
+
+export const eventService = {
+  async getEventBySessionCode(sessionCode: string): Promise<Event | null> {
+    try {
+      const response = await fetch(
+        `${BACKEND_URL}/api/events?sessionCode=${sessionCode}`,
+      );
+      if (!response.ok) {
+        return null;
+      }
+      return response.json();
+    } catch (error) {
+      console.error("Error getting event by session code:", error);
+      return null;
+    }
+  },
+
+  async getUserEvents(): Promise<Event[]> {
+    return getUserEvents();
+  },
+
+  async createEvent(data: CreateEventData): Promise<Event> {
+    return createEvent(data);
+  },
+
+  async updateEvent(eventId: string, updates: Partial<Event>): Promise<Event> {
+    return updateEvent(eventId, updates);
+  },
+
+  async deleteEvent(eventId: string): Promise<void> {
+    return deleteEvent(eventId);
+  },
+};
 
 // ===============================
-// TEMP PHOTO STORAGE (LOCAL)
+// LOCAL STORAGE FUNCTIONS
 // ===============================
 
 export const getTempPhotos = (eventId: string): Photo[] => {
@@ -270,28 +376,15 @@ export const getUploadedPhotos = (
 };
 
 // ===============================
-// EVENT SERVICE OBJECT
+// CONNECTION TEST
 // ===============================
 
-export const eventService = {
-  createEvent,
-  getUserEvents,
-
-  async getEventBySessionCode(sessionCode: string): Promise<Event | null> {
-    // This would need backend implementation
-    console.log("getEventBySessionCode not yet implemented", sessionCode);
-    return null;
-  },
-
-  async updateEvent(eventId: string, updates: Partial<Event>): Promise<Event> {
-    // This would need backend implementation
-    console.log("updateEvent not yet implemented", eventId, updates);
-    throw new Error("updateEvent not implemented");
-  },
-
-  async deleteEvent(eventId: string): Promise<void> {
-    // This would need backend implementation
-    console.log("deleteEvent not yet implemented", eventId);
-    throw new Error("deleteEvent not implemented");
-  },
-};
+export async function testConnection(): Promise<boolean> {
+  try {
+    const response = await fetch(`${BACKEND_URL}/health`);
+    return response.ok;
+  } catch (error) {
+    console.error("Backend connection test failed:", error);
+    return false;
+  }
+}

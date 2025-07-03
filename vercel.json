@@ -1,24 +1,37 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "framework": "vite",
-  "rewrites": [
+  "version": 2,
+  "builds": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "api/**/*.ts",
+      "use": "@vercel/node"
     }
   ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    }
+  ],
+  "env": {
+    "FIREBASE_PROJECT_ID": "@firebase_project_id",
+    "FIREBASE_CLIENT_EMAIL": "@firebase_client_email",
+    "FIREBASE_PRIVATE_KEY": "@firebase_private_key"
+  },
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/api/(.*)",
       "headers": [
         {
-          "key": "X-Frame-Options",
-          "value": "DENY"
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
         },
         {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
         }
       ]
     }
