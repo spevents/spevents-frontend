@@ -23,7 +23,8 @@ const isMobileDevice = () => {
 
 export const GuestRoutes = () => {
   const location = useLocation();
-  const { sessionCode } = useParams(); // Renamed for clarity
+  const params = useParams();
+  const sessionCode = params.sessionCode || params.eventId;
 
   useEffect(() => {
     console.log(`🔄 GuestRoutes Debug:`, {

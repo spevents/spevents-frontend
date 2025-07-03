@@ -46,7 +46,9 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
   const orientation = useOrientation();
 
   // Get sessionCode from URL params and actual eventId from context
-  const { eventId: sessionCode } = useParams();
+  const params = useParams();
+  const sessionCode = params.sessionCode || params.eventId;
+
   const actualEventId = useActualEventId();
 
   // Debug logs
