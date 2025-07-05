@@ -1,5 +1,11 @@
 ---
 
+main goal:
+
+- Creating simple photo wall where people can sign up and create multiple, isolated, and proviate events where guests can scan a QR code and upload photos that show up in real time at a large screen at the event.
+- Hosts for events recieve a digital photo album that contains all the guests uploaded photos during the event.
+- Guests keep their photos and receive digital photo strips they can share or keep for memories.
+
 # Spevents Development Checklist
 
 ## Phase 1: Market Validation (Weeks 1-4)
