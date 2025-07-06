@@ -71,7 +71,7 @@ export default function MiniPresenterSlideshow({
 
   if (photos.length === 0) {
     return (
-      <div className="h-full flex items-center justify-center text-brunswick-green/50">
+      <div className="h-full flex items-center justify-center text-DARKGREEN/50">
         No photos available
       </div>
     );

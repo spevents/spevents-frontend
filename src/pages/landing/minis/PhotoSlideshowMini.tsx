@@ -38,7 +38,7 @@ export default function PhotoSlideshowMini({
         animate={{ height: expanded ? 672 : 384 }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
       >
-        <div className="h-full flex items-center justify-center text-brunswick-green/50">
+        <div className="h-full flex items-center justify-center text-DARKGREEN/50">
           Swipe up on photos below to add them to the gallery
         </div>
       </motion.div>

@@ -146,7 +146,7 @@ export default function PhotoReviewMini({
       </AnimatePresence>
 
       {/* Action Indicators */}
-      <div className="absolute inset-y-0 left-4 flex flex-col justify-center items-center space-y-4 text-brunswick-green/30">
+      <div className="absolute inset-y-0 left-4 flex flex-col justify-center items-center space-y-4 text-DARKGREEN/30">
         <ArrowUpCircle className="w-8 h-8" />
         <ArrowDownCircle className="w-8 h-8" />
       </div>

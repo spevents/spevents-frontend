@@ -61,16 +61,16 @@ export default function FeedbackPage() {
   };
 
   return (
-    <div className="fixed inset-0 bg-brunswick-green font-sans flex flex-col">
+    <div className="fixed inset-0 bg-DARKGREEN font-sans flex flex-col">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="px-4 py-4 flex items-center justify-between bg-hunter-green/50"
+        className="px-4 py-4 flex items-center justify-between bg-GREEN/50"
       >
         <button
           onClick={() => navigate(`/${sessionCode}/guest`)}
-          className="p-2 rounded-full hover:bg-hunter-green/50 active:bg-hunter-green transition-colors"
+          className="p-2 rounded-full hover:bg-GREEN/50 active:bg-GREEN transition-colors"
         >
           <ArrowLeft className="w-6 h-6 text-EGGSHELL" />
         </button>
@@ -87,7 +87,7 @@ export default function FeedbackPage() {
           {/* Icon */}
           <div className="flex justify-center">
             <motion.div
-              className="w-24 h-24 rounded-full bg-fern-green flex items-center justify-center shadow-lg"
+              className="w-24 h-24 rounded-full bg-MIDGREEN flex items-center justify-center shadow-lg"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -111,8 +111,8 @@ export default function FeedbackPage() {
               href="https://forms.gle/8jFfkEZytdBzfHmV9"
               target="_blank"
               rel="noopener noreferrer"
-              className="block w-full bg-fern-green text-EGGSHELL text-lg font-medium py-4 px-6 rounded-full 
-                text-center active:opacity-90 transition-all shadow-lg hover:bg-LIGHTGREEN hover:text-brunswick-green"
+              className="block w-full bg-MIDGREEN text-EGGSHELL text-lg font-medium py-4 px-6 rounded-full 
+                text-center active:opacity-90 transition-all shadow-lg hover:bg-LIGHTGREEN hover:text-DARKGREEN"
             >
               Share Your Feedback
             </a>
@@ -124,7 +124,7 @@ export default function FeedbackPage() {
       </div>
 
       {/* Bottom Navigation - Fixed at bottom */}
-      <div className="fixed bottom-0 inset-x-0 bg-hunter-green/80 backdrop-blur-lg">
+      <div className="fixed bottom-0 inset-x-0 bg-GREEN/80 backdrop-blur-lg">
         <div className="max-w-md mx-auto px-4 py-2">
           <div className="flex items-center justify-around">
             {tabs.map((tab) => (
@@ -133,8 +133,8 @@ export default function FeedbackPage() {
                 onClick={() => handleTabClick(tab.id)}
                 className={`p-4 rounded-full relative ${
                   tab.id === "prize"
-                    ? "text-EGGSHELL bg-fern-green/30"
-                    : "text-LIGHTGREEN hover:text-EGGSHELL hover:bg-fern-green/20"
+                    ? "text-EGGSHELL bg-MIDGREEN/30"
+                    : "text-LIGHTGREEN hover:text-EGGSHELL hover:bg-MIDGREEN/20"
                 }`}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
