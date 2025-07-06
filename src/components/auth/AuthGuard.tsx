@@ -1,12 +1,15 @@
 // src/components/auth/AuthGuard.tsx
-
 import { useState, useEffect } from "react";
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../config/firebase";
 import { isHostDomain } from "../config/routes";
 
-export const AuthGuard = () => {
+interface AuthGuardProps {
+  children: React.ReactNode;
+}
+
+export const AuthGuard = ({ children }: AuthGuardProps) => {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -27,6 +30,11 @@ export const AuthGuard = () => {
     }
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log("AuthGuard: Auth state changed", {
+        user: !!user,
+        email: user?.email,
+      });
+
       // Allow any authenticated user (removed email restriction)
       if (user?.email) {
         setIsAuthorized(true);
@@ -40,16 +48,22 @@ export const AuthGuard = () => {
   }, [BYPASS_AUTH]);
 
   if (isLoading) {
+    console.log("AuthGuard: Loading...");
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-white">Loading...</p>
+        </div>
       </div>
     );
   }
 
   if (!isAuthorized) {
-    return <Navigate to="/login" replace />;
+    console.log("AuthGuard: Not authorized, redirecting to /");
+    return <Navigate to="/" replace />;
   }
 
-  return <Outlet />;
+  console.log("AuthGuard: Authorized, rendering children");
+  return <>{children}</>;
 };

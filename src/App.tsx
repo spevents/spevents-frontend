@@ -12,15 +12,11 @@ import { GuestLanding } from "./pages/guest/GuestLanding";
 
 export default function App() {
   const currentDomain = window.location.hostname;
-  // const currentPath = window.location.pathname;
-  // const isGuest = isGuestDomain();
-  // const isHost = isHostDomain();
 
   // Guest domain handling
   if (isGuestDomain()) {
     return (
       <AuthProvider>
-        {" "}
         <SessionProvider>
           <BrowserRouter>
             <Routes>
@@ -38,15 +34,18 @@ export default function App() {
   if (isHostDomain() && currentDomain !== "localhost") {
     return (
       <AuthProvider>
-        {" "}
         <SessionProvider>
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<SignInPage />} />{" "}
-              {/* Use new SignInPage */}
-              <Route element={<AuthGuard />}>
-                <Route path="/host/*" element={<HostRoutes />} />
-              </Route>
+              <Route path="/" element={<SignInPage />} />
+              <Route
+                path="/host/*"
+                element={
+                  <AuthGuard>
+                    <HostRoutes />
+                  </AuthGuard>
+                }
+              />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </BrowserRouter>
@@ -58,15 +57,19 @@ export default function App() {
   // Default/localhost handling
   return (
     <AuthProvider>
-      {" "}
       <SessionProvider>
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/guest/*" element={<GuestRoutes />} />
-            <Route element={<AuthGuard />}>
-              <Route path="/host/*" element={<HostRoutes />} />
-            </Route>
+            <Route
+              path="/host/*"
+              element={
+                <AuthGuard>
+                  <HostRoutes />
+                </AuthGuard>
+              }
+            />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
