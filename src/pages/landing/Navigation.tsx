@@ -70,13 +70,13 @@ export function Navigation() {
               className="flex items-center gap-2 px-4 py-2 bg-white/80 hover:bg-white text-brunswick-green rounded-lg transition-colors"
             >
               <img src={githubLogo} alt="GitHub" className="w-5 h-5" />
-              <span>Star on GitHub</span>
+              <span>Github</span>
             </a>
             <a
               href="https://app.spevents.live"
               className="px-4 py-2 bg-brunswick-green text-white rounded-lg hover:bg-hunter-green transition-colors"
             >
-              Host Sign In
+              Sign In
             </a>
             <a
               href="https://join.spevents.live"
@@ -116,14 +116,14 @@ export function Navigation() {
                 onClick={() => setIsMenuOpen(false)}
               >
                 <img src={githubLogo} alt="GitHub" className="w-5 h-5" />
-                <span>Star on GitHub</span>
+                <span>Github</span>
               </a>
               <a
                 href="https://app.spevents.live"
                 className="block p-3 bg-brunswick-green text-white rounded-lg hover:bg-hunter-green transition-colors text-center"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Host Sign In
+                Sign In
               </a>
               <a
                 href="https://join.spevents.live"

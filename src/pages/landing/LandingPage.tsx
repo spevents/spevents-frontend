@@ -22,7 +22,9 @@ const getUrls = () => {
     // During development, use localhost paths
     return {
       host: `${currentOrigin}/host/gallery`,
-      guest: `${currentOrigin}/${import.meta.env.VITE_EVENT_ID || "demo"}/guest`,
+      guest: `${currentOrigin}/${
+        import.meta.env.VITE_EVENT_ID || "demo"
+      }/guest`,
     };
   }
 
@@ -59,14 +61,14 @@ export const LandingPage = () => {
                 className="flex items-center gap-2 px-4 py-2 bg-white/80 hover:bg-white text-brunswick-green rounded-lg transition-colors"
               >
                 <img src={githubLogo} alt="GitHub" className="w-5 h-5" />
-                <span>Star on GitHub</span>
+                <span>GitHub</span>
               </a>
 
               <a
                 href={urls.host}
                 className="px-4 py-2 bg-brunswick-green text-white rounded-lg hover:bg-hunter-green transition-colors"
               >
-                Host Sign In
+                Sign In
               </a>
               <a
                 href={urls.guest}
@@ -106,7 +108,7 @@ export const LandingPage = () => {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   <img src={githubLogo} alt="GitHub" className="w-5 h-5" />
-                  <span>Star on GitHub</span>
+                  <span>Github</span>
                 </a>
 
                 <a
@@ -114,7 +116,7 @@ export const LandingPage = () => {
                   className="block p-3 bg-brunswick-green text-white rounded-lg hover:bg-hunter-green transition-colors text-center"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Host Sign In
+                  Sign In
                 </a>
                 <a
                   href={urls.guest}
