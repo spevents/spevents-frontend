@@ -40,9 +40,9 @@ export const LandingPage = () => {
   const urls = getUrls();
 
   return (
-    <div className="min-h-screen bg-timberwolf">
+    <div className="min-h-screen bg-EGGSHELL">
       {/* Navigation */}
-      <nav className="fixed top-0 inset-x-0 bg-timberwolf/80 backdrop-blur-sm z-50 border-b border-sage/20">
+      <nav className="fixed top-0 inset-x-0 bg-EGGSHELL/80 backdrop-blur-sm z-50 border-b border-LIGHTGREEN/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-2">
@@ -72,7 +72,7 @@ export const LandingPage = () => {
               </a>
               <a
                 href={urls.guest}
-                className="px-4 py-2 bg-sage text-brunswick-green rounded-lg hover:bg-fern-green hover:text-white transition-colors"
+                className="px-4 py-2 bg-LIGHTGREEN text-brunswick-green rounded-lg hover:bg-fern-green hover:text-white transition-colors"
               >
                 Join Event
               </a>
@@ -97,7 +97,7 @@ export const LandingPage = () => {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="md:hidden border-t border-sage/20 bg-timberwolf/95 backdrop-blur-sm"
+            className="md:hidden border-t border-LIGHTGREEN/20 bg-EGGSHELL/95 backdrop-blur-sm"
           >
             <div className="px-4 py-4 space-y-3">
               <a
@@ -118,7 +118,7 @@ export const LandingPage = () => {
               </a>
               <a
                 href={urls.guest}
-                className="block w-full px-4 py-2 bg-sage text-brunswick-green text-center rounded-lg hover:bg-fern-green hover:text-white transition-colors"
+                className="block w-full px-4 py-2 bg-LIGHTGREEN text-brunswick-green text-center rounded-lg hover:bg-fern-green hover:text-white transition-colors"
               >
                 Join Event
               </a>
@@ -166,7 +166,7 @@ export const LandingPage = () => {
               </a>
               <a
                 href={urls.guest}
-                className="px-8 py-4 bg-white/80 text-brunswick-green text-lg font-medium rounded-xl hover:bg-white transform hover:scale-105 transition-all duration-200 shadow-lg border border-sage/30"
+                className="px-8 py-4 bg-white/80 text-brunswick-green text-lg font-medium rounded-xl hover:bg-white transform hover:scale-105 transition-all duration-200 shadow-lg border border-LIGHTGREEN/30"
               >
                 Join an Event
               </a>
@@ -180,7 +180,7 @@ export const LandingPage = () => {
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         transition={{ duration: 0.8 }}
-        className="py-20 bg-sage/10"
+        className="py-20 bg-LIGHTGREEN/10"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -225,7 +225,7 @@ export const LandingPage = () => {
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="text-center p-6 rounded-2xl bg-white/60 backdrop-blur-sm border border-sage/30 hover:bg-white/80 transition-all duration-300"
+                className="text-center p-6 rounded-2xl bg-white/60 backdrop-blur-sm border border-LIGHTGREEN/30 hover:bg-white/80 transition-all duration-300"
               >
                 <div className="w-16 h-16 bg-brunswick-green/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <feature.icon className="w-8 h-8 text-brunswick-green" />

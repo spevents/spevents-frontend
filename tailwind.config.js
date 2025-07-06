@@ -11,6 +11,12 @@ module.exports = {
         "fern-green": "#588157",
         "hunter-green": "#3a5a40",
         "brunswick-green": "#344e41",
+
+        EGGSHELL: "#dad7cd",
+        LIGHTGREEN: "#a3b18a",
+        GREEN: "#3a5a40",
+        DARKGREEN: "#344e41",
+
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {

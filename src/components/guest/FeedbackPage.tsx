@@ -72,7 +72,7 @@ export default function FeedbackPage() {
           onClick={() => navigate(`/${sessionCode}/guest`)}
           className="p-2 rounded-full hover:bg-hunter-green/50 active:bg-hunter-green transition-colors"
         >
-          <ArrowLeft className="w-6 h-6 text-timberwolf" />
+          <ArrowLeft className="w-6 h-6 text-EGGSHELL" />
         </button>
       </motion.div>
 
@@ -97,10 +97,10 @@ export default function FeedbackPage() {
 
           {/* Title and Description */}
           <div className="text-center space-y-3">
-            <h1 className="text-3xl font-bold text-timberwolf">
+            <h1 className="text-3xl font-bold text-EGGSHELL">
               Win a $10 Gift Card
             </h1>
-            <p className="text-sage text-lg font-black">
+            <p className="text-LIGHTGREEN text-lg font-black">
               Spevents is changing event photography.
             </p>
           </div>
@@ -111,12 +111,12 @@ export default function FeedbackPage() {
               href="https://forms.gle/8jFfkEZytdBzfHmV9"
               target="_blank"
               rel="noopener noreferrer"
-              className="block w-full bg-fern-green text-timberwolf text-lg font-medium py-4 px-6 rounded-full 
-                text-center active:opacity-90 transition-all shadow-lg hover:bg-sage hover:text-brunswick-green"
+              className="block w-full bg-fern-green text-EGGSHELL text-lg font-medium py-4 px-6 rounded-full 
+                text-center active:opacity-90 transition-all shadow-lg hover:bg-LIGHTGREEN hover:text-brunswick-green"
             >
               Share Your Feedback
             </a>
-            <p className="text-center text-sage text-sm">
+            <p className="text-center text-LIGHTGREEN text-sm">
               Winners announced January 31, 2025
             </p>
           </div>
@@ -133,8 +133,8 @@ export default function FeedbackPage() {
                 onClick={() => handleTabClick(tab.id)}
                 className={`p-4 rounded-full relative ${
                   tab.id === "prize"
-                    ? "text-timberwolf bg-fern-green/30"
-                    : "text-sage hover:text-timberwolf hover:bg-fern-green/20"
+                    ? "text-EGGSHELL bg-fern-green/30"
+                    : "text-LIGHTGREEN hover:text-EGGSHELL hover:bg-fern-green/20"
                 }`}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}

@@ -139,7 +139,7 @@ export function ProductPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.2 }}
-                className="p-4 rounded-xl bg-white/50 backdrop-blur-sm border border-sage
+                className="p-4 rounded-xl bg-white/50 backdrop-blur-sm border border-LIGHTGREEN
                   hover:border-fern-green transition-all duration-300"
               >
                 <h3 className="text-lg font-semibold mb-1 text-brunswick-green">
@@ -168,7 +168,7 @@ export function ProductPage() {
                 href="https://calendly.com/spevents-party/30min"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group inline-flex h-12 items-center gap-2 rounded-full bg-sage/20 px-6 
+                className="group inline-flex h-12 items-center gap-2 rounded-full bg-LIGHTGREEN/20 px-6 
                   transition-all duration-300 ease-in-out hover:bg-brunswick-green"
               >
                 <span
