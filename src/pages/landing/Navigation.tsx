@@ -76,7 +76,7 @@ export function Navigation() {
               href="https://app.spevents.live"
               className="px-4 py-2 bg-brunswick-green text-white rounded-lg hover:bg-hunter-green transition-colors"
             >
-              Sign In
+              Sign Up
             </a>
             <a
               href="https://join.spevents.live"
@@ -123,7 +123,7 @@ export function Navigation() {
                 className="block p-3 bg-brunswick-green text-white rounded-lg hover:bg-hunter-green transition-colors text-center"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Sign In
+                Sign Up
               </a>
               <a
                 href="https://join.spevents.live"

@@ -61,6 +61,7 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<LandingPage />} />
+            <Route path="/signin" element={<SignInPage />} />
             <Route path="/guest/*" element={<GuestRoutes />} />
             <Route
               path="/host/*"

@@ -21,7 +21,7 @@ const getUrls = () => {
   if (domain === "local") {
     // During development, use localhost paths
     return {
-      host: `${currentOrigin}/host/gallery`,
+      host: `${currentOrigin}/signin`, // Changed from /host/gallery to /signin
       guest: `${currentOrigin}/${
         import.meta.env.VITE_EVENT_ID || "demo"
       }/guest`,
@@ -90,144 +90,183 @@ export const LandingPage = () => {
               )}
             </button>
           </div>
-
-          {/* Mobile Menu */}
-          {isMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="md:hidden absolute inset-x-0 top-16 bg-white/95 backdrop-blur-sm shadow-lg border-t border-sage/10"
-            >
-              <div className="px-4 py-4 space-y-3 text-center">
-                <a
-                  href="https://github.com/fbablu/spevents"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 p-3 bg-white/80 hover:bg-white text-brunswick-green rounded-lg transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <img src={githubLogo} alt="GitHub" className="w-5 h-5" />
-                  <span>Github</span>
-                </a>
-
-                <a
-                  href={urls.host}
-                  className="block p-3 bg-brunswick-green text-white rounded-lg hover:bg-hunter-green transition-colors text-center"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Sign In
-                </a>
-                <a
-                  href={urls.guest}
-                  className="block p-3 bg-sage text-brunswick-green rounded-lg hover:bg-fern-green hover:text-white transition-colors text-center"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Join Event
-                </a>
-              </div>
-            </motion.div>
-          )}
         </div>
+
+        {/* Mobile Menu */}
+        {isMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="md:hidden border-t border-sage/20 bg-timberwolf/95 backdrop-blur-sm"
+          >
+            <div className="px-4 py-4 space-y-3">
+              <a
+                href="https://github.com/fbablu/spevents"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 w-full px-4 py-2 bg-white/80 hover:bg-white text-brunswick-green rounded-lg transition-colors"
+              >
+                <img src={githubLogo} alt="GitHub" className="w-5 h-5" />
+                <span>GitHub</span>
+              </a>
+
+              <a
+                href={urls.host}
+                className="block w-full px-4 py-2 bg-brunswick-green text-white text-center rounded-lg hover:bg-hunter-green transition-colors"
+              >
+                Sign In
+              </a>
+              <a
+                href={urls.guest}
+                className="block w-full px-4 py-2 bg-sage text-brunswick-green text-center rounded-lg hover:bg-fern-green hover:text-white transition-colors"
+              >
+                Join Event
+              </a>
+            </div>
+          </motion.div>
+        )}
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-6">
-        <div className="container mx-auto max-w-6xl">
-          <motion.div
-            className="text-center mb-16"
-            initial="initial"
-            animate="animate"
-            variants={fadeIn}
-          >
+      <motion.section className="pt-24 pb-16" {...fadeIn}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
             <motion.h1
-              className="text-5xl md:text-6xl font-bold mb-6 text-brunswick-green"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-5xl sm:text-6xl lg:text-7xl font-bold text-brunswick-green mb-6"
             >
-              Easy Guest Photo Curation
+              Event Photo
+              <br />
+              <span className="text-hunter-green">Sharing</span>
             </motion.h1>
             <motion.p
-              className="text-xl text-hunter-green mb-8 max-w-2xl mx-auto"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="text-xl sm:text-2xl text-brunswick-green/80 mb-12 max-w-3xl mx-auto"
             >
-              Real-time guest photo collection. Just scan a QR code and swipe up
-              to submit photos. No apps required.
+              Create beautiful photo walls where guests can instantly share
+              memories. Real-time uploads, live displays, and automatic albums.
             </motion.p>
 
+            {/* CTA Buttons */}
             <motion.div
-              className="flex justify-center"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center items-center"
             >
               <a
-                href="https://calendly.com/spevents-party/30min"
-                className="group inline-flex h-12 items-center gap-2 rounded-full bg-sage/20 px-6 
-                  transition-all duration-300 ease-in-out hover:bg-brunswick-green"
+                href={urls.host}
+                className="px-8 py-4 bg-brunswick-green text-white text-lg font-medium rounded-xl hover:bg-hunter-green transform hover:scale-105 transition-all duration-200 shadow-lg"
               >
-                <span
-                  className="rounded-full bg-brunswick-green p-2 text-white transition-colors 
-                  group-hover:bg-white group-hover:text-brunswick-green"
-                >
-                  <CalendarCheck className="h-4 w-4" />
-                </span>
-                <span
-                  className="text-lg font-black text-brunswick-green transition-colors 
-                  group-hover:text-white"
-                >
-                  Book Demo
-                </span>
+                Start Your Event
+              </a>
+              <a
+                href={urls.guest}
+                className="px-8 py-4 bg-white/80 text-brunswick-green text-lg font-medium rounded-xl hover:bg-white transform hover:scale-105 transition-all duration-200 shadow-lg border border-sage/30"
+              >
+                Join an Event
               </a>
             </motion.div>
-          </motion.div>
+          </div>
+        </div>
+      </motion.section>
 
-          {/* Features Grid */}
-          <div className="grid md:grid-cols-3 gap-8 mt-20">
+      {/* Features Section */}
+      <motion.section
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        transition={{ duration: 0.8 }}
+        className="py-20 bg-sage/10"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-brunswick-green mb-6">
+              Everything You Need
+            </h2>
+            <p className="text-xl text-brunswick-green/80 max-w-2xl mx-auto">
+              Simple, powerful tools to capture and share every moment of your
+              event
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
               {
-                icon: Users,
-                title: "Guest Engagement",
+                icon: Camera,
+                title: "Instant Uploads",
                 description:
-                  "Keep guests present and connected while capturing every moment",
+                  "Guests scan QR codes to upload photos instantly to your event wall",
               },
               {
-                icon: Camera,
-                title: "Real-time Gallery",
+                icon: Users,
+                title: "Live Photo Wall",
                 description:
-                  "Photos appear instantly in a slideshow visualization",
+                  "Watch photos appear in real-time on any screen or display",
+              },
+              {
+                icon: CalendarCheck,
+                title: "Auto Albums",
+                description:
+                  "Receive complete digital albums after your event ends",
               },
               {
                 icon: LineChart,
                 title: "Easy Setup",
-                description: "No app downloads required, just scan and capture",
+                description:
+                  "Create events in minutes with our intuitive dashboard",
               },
             ].map((feature, index) => (
               <motion.div
                 key={index}
-                className="p-6 rounded-xl bg-white/50 backdrop-blur-sm border border-sage
-                  hover:border-fern-green transition-all duration-300"
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.2 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                className="text-center p-6 rounded-2xl bg-white/60 backdrop-blur-sm border border-sage/30 hover:bg-white/80 transition-all duration-300"
               >
-                <feature.icon className="w-12 h-12 text-fern-green mb-4" />
-                <h3 className="text-xl font-semibold mb-2 text-brunswick-green">
+                <div className="w-16 h-16 bg-brunswick-green/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <feature.icon className="w-8 h-8 text-brunswick-green" />
+                </div>
+                <h3 className="text-xl font-semibold text-brunswick-green mb-3">
                   {feature.title}
                 </h3>
-                <p className="text-hunter-green">{feature.description}</p>
+                <p className="text-brunswick-green/70">{feature.description}</p>
               </motion.div>
             ))}
           </div>
         </div>
-      </section>
+      </motion.section>
 
-      {/* Product Demo Section */}
+      {/* Product Showcase */}
       <ProductPage />
+
+      {/* Footer */}
+      <footer className="bg-brunswick-green text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <img src={lightIcon} alt="Spevents Logo" className="w-8 h-8" />
+              <div className="text-2xl font-bold">spevents</div>
+            </div>
+            <p className="text-white/80 mb-6">
+              Making event memories accessible to everyone
+            </p>
+            <div className="flex justify-center gap-6">
+              <a
+                href="https://github.com/fbablu/spevents"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-white/80 hover:text-white transition-colors"
+              >
+                GitHub
+              </a>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
