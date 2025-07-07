@@ -1,4 +1,4 @@
-// spevents-frontend/src/components/config/firebase.ts
+// src/components/config/firebase.ts
 
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
@@ -13,6 +13,16 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
+// Initialize Firebase services
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+// Enable offline persistence for better performance
+if (typeof window !== "undefined") {
+  import("firebase/firestore").then(({ enableNetwork }) => {
+    enableNetwork(db);
+  });
+}

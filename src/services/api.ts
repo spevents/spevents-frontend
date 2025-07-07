@@ -1,6 +1,7 @@
 // src/services/api.ts
 
-import { auth } from "../components/config/firebase";
+import { auth, db } from "../components/config/firebase";
+import { collection, query, where, limit, getDocs } from "firebase/firestore";
 
 const BACKEND_URL = "https://api.spevents.live";
 
@@ -13,7 +14,6 @@ interface CreateEventData {
   description?: string;
 }
 
-// Import Event type from the existing types file
 import { Event } from "../types/event";
 
 export interface EventPhoto {
@@ -111,10 +111,10 @@ export async function getUserEvents(): Promise<Event[]> {
   try {
     const response = await makeAuthenticatedRequest("/api/events");
     const data = await response.json();
-    return Array.isArray(data) ? data : data.events || [];
+    return Array.isArray(data) ? data : [];
   } catch (error) {
-    console.error("Get events error:", error);
-    throw error;
+    console.error("Get user events error:", error);
+    return [];
   }
 }
 
@@ -344,12 +344,6 @@ export const eventService = {
 
   async getEventBySessionCode(sessionCode: string): Promise<Event | null> {
     try {
-      // Import Firebase directly instead of using API endpoint
-      const { db } = await import("../components/config/firebase");
-      const { collection, query, where, limit, getDocs } = await import(
-        "firebase/firestore"
-      );
-
       console.log(`🔍 Direct Firestore lookup for sessionCode: ${sessionCode}`);
 
       const q = query(
