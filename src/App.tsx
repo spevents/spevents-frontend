@@ -9,6 +9,8 @@ import { LandingPage } from "./pages/landing/LandingPage";
 import { SignInPage } from "./components/auth/SignInPage";
 import { isHostDomain, isGuestDomain } from "./components/config/routes";
 import { GuestLanding } from "./pages/guest/GuestLanding";
+import { OnboardingPage } from "./pages/HostRoutes/OnboardingPage";
+import { RouteGuard } from "./components/auth/RouteGuard";
 
 export default function App() {
   const currentDomain = window.location.hostname;
@@ -39,6 +41,14 @@ export default function App() {
             <Routes>
               <Route path="/" element={<SignInPage />} />
               <Route
+                path="/onboarding"
+                element={
+                  <RouteGuard requireAuth={true}>
+                    <OnboardingPage />
+                  </RouteGuard>
+                }
+              />
+              <Route
                 path="/host/*"
                 element={
                   <AuthGuard>
@@ -63,6 +73,15 @@ export default function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/signin" element={<SignInPage />} />
             <Route path="/guest/*" element={<GuestRoutes />} />
+
+            <Route
+              path="/onboarding"
+              element={
+                <RouteGuard requireAuth={true}>
+                  <OnboardingPage />
+                </RouteGuard>
+              }
+            />
             <Route
               path="/host/*"
               element={

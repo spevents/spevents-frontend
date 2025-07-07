@@ -25,6 +25,7 @@ export interface Event {
   hostEmail: string;
   status: "draft" | "active" | "paused" | "ended";
   photoCount: number;
+  guestCount: number;
   sessionCode: string;
   timestamp: number;
 }
@@ -81,6 +82,7 @@ const normalizeEvent = (event: any): Event => {
     hostEmail: event.hostEmail || "",
     status: event.status || "draft",
     photoCount: event.photoCount || 0,
+    guestCount: event.guestCount || 0,
     sessionCode: event.sessionCode || "",
     timestamp: event.timestamp || Date.now(),
   };

@@ -1,10 +1,11 @@
-// src/pages/HostRoutes/HostRoutes.tsx
+// file: src/pages/HostRoutes/HostRoutes.tsx
 import { Routes, Route, Navigate } from "react-router-dom";
 import { EventProvider } from "../../contexts/EventContext";
 import { EventDashboard } from "./EventDashboard";
 import { EventGallery } from "./EventGallery";
 import { EventSlideshow } from "./EventSlideshow";
 import { EventQRCode } from "./EventQRCode";
+import { CreateEventPage } from "./CreateEventPage";
 
 export const HostRoutes = () => {
   return (
@@ -12,6 +13,8 @@ export const HostRoutes = () => {
       <Routes>
         {/* Main events dashboard */}
         <Route index element={<EventDashboard />} />
+
+        <Route path="create" element={<CreateEventPage />} />
 
         {/* Event-specific routes */}
         <Route path="event/:eventId/gallery" element={<EventGallery />} />
