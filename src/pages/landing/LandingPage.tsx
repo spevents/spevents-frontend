@@ -137,9 +137,9 @@ export const LandingPage = () => {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="text-5xl sm:text-6xl lg:text-7xl font-bold text-sp_darkgreen mb-6"
             >
-              Event Photo
+              Event Photo Sharing
               <br />
-              <span className="text-sp_green">Sharing</span>
+              {/* <span className="text-sp_green">Sharing</span> */}
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 30 }}
@@ -147,8 +147,7 @@ export const LandingPage = () => {
               transition={{ duration: 0.8, delay: 0.4 }}
               className="text-xl sm:text-2xl text-sp_darkgreen/80 mb-12 max-w-3xl mx-auto"
             >
-              Create beautiful photo walls where guests can instantly share
-              memories. Real-time uploads, live displays, and automatic albums.
+              Live photo walls. Instant guest uploads. No apps required.
             </motion.p>
 
             {/* CTA Buttons */}
@@ -241,6 +240,7 @@ export const LandingPage = () => {
       </motion.section>
 
       {/* Product Showcase */}
+      {/* Need to change this towards an edited video of how this works */}
       <ProductPage />
 
       {/* Footer */}

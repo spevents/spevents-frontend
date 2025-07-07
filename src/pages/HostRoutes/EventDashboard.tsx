@@ -417,15 +417,16 @@ export function EventDashboard() {
           {events.length === 0 ? (
             <div className="text-center py-12">
               <Calendar className="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                No events yet, you're no fun! 😄
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
+                You're no fun...
               </h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-6">
+              {/* <p className="text-gray-500 dark:text-gray-400 mb-6">
                 Get started by creating your first event.
-              </p>
+              </p> */}
+
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 dark:bg-green-500 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors mx-auto"
+                className="flex items-center gap-4 px-4 py-2 bg-green-600 dark:bg-green-500 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors mx-auto"
               >
                 <Plus className="w-4 h-4" />
                 Create Your First Event
@@ -663,7 +664,7 @@ export function EventDashboard() {
           Community Templates
         </h2>
         <p className="text-gray-600 dark:text-gray-400 mb-4">
-          Discover and share beautiful event presentation designs
+          Discover and share beautiful photo wall designs
         </p>
         <div className="inline-flex items-center px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-lg">
           <span className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full mr-2"></span>
