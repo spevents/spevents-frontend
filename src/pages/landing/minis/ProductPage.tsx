@@ -36,7 +36,7 @@ export function ProductPage() {
           variants={fadeIn}
         >
           <motion.h2
-            className="text-4xl md:text-5xl font-bold mb-6 text-DARKGREEN"
+            className="text-4xl md:text-5xl font-bold mb-6 text-sp_darkgreen"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
@@ -44,7 +44,7 @@ export function ProductPage() {
             Real-time Photo Sharing
           </motion.h2>
           <motion.p
-            className="text-xl text-GREEN mb-8 max-w-2xl mx-auto"
+            className="text-xl text-sp_green mb-8 max-w-2xl mx-auto"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
@@ -106,7 +106,7 @@ export function ProductPage() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.5 }}
-                      className="flex items-center justify-center space-x-2 py-4 text-GREEN/60"
+                      className="flex items-center justify-center space-x-2 py-4 text-sp_green/60"
                     >
                       <p>Swipe UP to add photos!</p>
                       <ArrowRight className="w-5 h-5 animate-pulse" />
@@ -139,13 +139,13 @@ export function ProductPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.2 }}
-                className="p-4 rounded-xl bg-white/50 backdrop-blur-sm border border-LIGHTGREEN
-                  hover:border-MIDGREEN transition-all duration-300"
+                className="p-4 rounded-xl bg-white/50 backdrop-blur-sm border border-sp_lightgreen
+                  hover:border-sp_midgreen transition-all duration-300"
               >
-                <h3 className="text-lg font-semibold mb-1 text-DARKGREEN">
+                <h3 className="text-lg font-semibold mb-1 text-sp_darkgreen">
                   {feature.title}
                 </h3>
-                <p className="text-GREEN text-sm">{feature.description}</p>
+                <p className="text-sp_green text-sm">{feature.description}</p>
               </motion.div>
             ))}
           </div>
@@ -166,17 +166,17 @@ export function ProductPage() {
                 href="https://calendly.com/spevents-party/30min"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group inline-flex h-12 items-center gap-2 rounded-full bg-LIGHTGREEN/20 px-6 
-                  transition-all duration-300 ease-in-out hover:bg-DARKGREEN"
+                className="group inline-flex h-12 items-center gap-2 rounded-full bg-sp_lightgreen/20 px-6 
+                  transition-all duration-300 ease-in-out hover:bg-sp_darkgreen"
               >
                 <span
-                  className="rounded-full bg-DARKGREEN p-2 text-white transition-colors 
-                  group-hover:bg-white group-hover:text-DARKGREEN"
+                  className="rounded-full bg-sp_darkgreen p-2 text-white transition-colors 
+                  group-hover:bg-white group-hover:text-sp_darkgreen"
                 >
                   <CalendarCheck className="h-4 w-4" />
                 </span>
                 <span
-                  className="text-lg font-black text-DARKGREEN transition-colors 
+                  className="text-lg font-black text-sp_darkgreen transition-colors 
                   group-hover:text-white"
                 >
                   Book Demo

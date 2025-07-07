@@ -6,11 +6,11 @@ import { AuthGuard } from "./components/auth/AuthGuard";
 import { HostRoutes } from "./pages/HostRoutes/HostRoutes";
 import { GuestRoutes } from "./pages/guest/GuestRoutes";
 import { LandingPage } from "./pages/landing/LandingPage";
-import { SignInPage } from "./components/auth/SignInPage";
 import { isHostDomain, isGuestDomain } from "./components/config/routes";
 import { GuestLanding } from "./pages/guest/GuestLanding";
 import { OnboardingPage } from "./pages/HostRoutes/OnboardingPage";
 import { RouteGuard } from "./components/auth/RouteGuard";
+import { SignInPage } from "./components/auth/SignInPage";
 
 export default function App() {
   const currentDomain = window.location.hostname;

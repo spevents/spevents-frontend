@@ -40,14 +40,16 @@ export const LandingPage = () => {
   const urls = getUrls();
 
   return (
-    <div className="min-h-screen bg-EGGSHELL">
+    <div className="min-h-screen bg-sp_eggshell">
       {/* Navigation */}
-      <nav className="fixed top-0 inset-x-0 bg-EGGSHELL/80 backdrop-blur-sm z-50 border-b border-LIGHTGREEN/20">
+      <nav className="fixed top-0 inset-x-0 bg-sp_eggshell/80 backdrop-blur-sm z-50 border-b border-sp_lightgreen/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-2">
               <img src={lightIcon} alt="Spevents Logo" className="w-8 h-8" />
-              <div className="text-2xl font-bold text-DARKGREEN">spevents</div>
+              <div className="text-2xl font-bold text-sp_darkgreen">
+                spevents
+              </div>
             </div>
 
             {/* Desktop Navigation */}
@@ -56,7 +58,7 @@ export const LandingPage = () => {
                 href="https://github.com/fbablu/spevents"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 bg-white/80 hover:bg-white text-DARKGREEN rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-white/80 hover:bg-white text-sp_darkgreen rounded-lg transition-colors"
               >
                 <img src={githubLogo} alt="GitHub" className="w-5 h-5" />
                 <span>GitHub</span>
@@ -64,13 +66,13 @@ export const LandingPage = () => {
 
               <a
                 href={urls.host}
-                className="px-4 py-2 bg-DARKGREEN text-white rounded-lg hover:bg-GREEN transition-colors"
+                className="px-4 py-2 bg-sp_darkgreen text-white rounded-lg hover:bg-sp_green transition-colors"
               >
                 Sign In
               </a>
               <a
                 href={urls.guest}
-                className="px-4 py-2 bg-LIGHTGREEN text-DARKGREEN rounded-lg hover:bg-MIDGREEN hover:text-white transition-colors"
+                className="px-4 py-2 bg-sp_lightgreen text-sp_darkgreen rounded-lg hover:bg-sp_midgreen hover:text-white transition-colors"
               >
                 Join Event
               </a>
@@ -82,9 +84,9 @@ export const LandingPage = () => {
               className="md:hidden p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
             >
               {isMenuOpen ? (
-                <X className="w-6 h-6 text-DARKGREEN" />
+                <X className="w-6 h-6 text-sp_darkgreen" />
               ) : (
-                <Menu className="w-6 h-6 text-DARKGREEN" />
+                <Menu className="w-6 h-6 text-sp_darkgreen" />
               )}
             </button>
           </div>
@@ -95,14 +97,14 @@ export const LandingPage = () => {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="md:hidden border-t border-LIGHTGREEN/20 bg-EGGSHELL/95 backdrop-blur-sm"
+            className="md:hidden border-t border-sp_lightgreen/20 bg-sp_eggshell/95 backdrop-blur-sm"
           >
             <div className="px-4 py-4 space-y-3">
               <a
                 href="https://github.com/fbablu/spevents"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 w-full px-4 py-2 bg-white/80 hover:bg-white text-DARKGREEN rounded-lg transition-colors"
+                className="flex items-center gap-2 w-full px-4 py-2 bg-white/80 hover:bg-white text-sp_darkgreen rounded-lg transition-colors"
               >
                 <img src={githubLogo} alt="GitHub" className="w-5 h-5" />
                 <span>GitHub</span>
@@ -110,13 +112,13 @@ export const LandingPage = () => {
 
               <a
                 href={urls.host}
-                className="block w-full px-4 py-2 bg-DARKGREEN text-white text-center rounded-lg hover:bg-GREEN transition-colors"
+                className="block w-full px-4 py-2 bg-sp_darkgreen text-white text-center rounded-lg hover:bg-sp_green transition-colors"
               >
                 Sign In
               </a>
               <a
                 href={urls.guest}
-                className="block w-full px-4 py-2 bg-LIGHTGREEN text-DARKGREEN text-center rounded-lg hover:bg-MIDGREEN hover:text-white transition-colors"
+                className="block w-full px-4 py-2 bg-sp_lightgreen text-sp_darkgreen text-center rounded-lg hover:bg-sp_midgreen hover:text-white transition-colors"
               >
                 Join Event
               </a>
@@ -133,17 +135,17 @@ export const LandingPage = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-5xl sm:text-6xl lg:text-7xl font-bold text-DARKGREEN mb-6"
+              className="text-5xl sm:text-6xl lg:text-7xl font-bold text-sp_darkgreen mb-6"
             >
               Event Photo
               <br />
-              <span className="text-GREEN">Sharing</span>
+              <span className="text-sp_green">Sharing</span>
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="text-xl sm:text-2xl text-DARKGREEN/80 mb-12 max-w-3xl mx-auto"
+              className="text-xl sm:text-2xl text-sp_darkgreen/80 mb-12 max-w-3xl mx-auto"
             >
               Create beautiful photo walls where guests can instantly share
               memories. Real-time uploads, live displays, and automatic albums.
@@ -158,13 +160,13 @@ export const LandingPage = () => {
             >
               <a
                 href={urls.host}
-                className="px-8 py-4 bg-DARKGREEN text-white text-lg font-medium rounded-xl hover:bg-GREEN transform hover:scale-105 transition-all duration-200 shadow-lg"
+                className="px-8 py-4 bg-sp_darkgreen text-white text-lg font-medium rounded-xl hover:bg-sp_green transform hover:scale-105 transition-all duration-200 shadow-lg"
               >
                 Start Your Event
               </a>
               <a
                 href={urls.guest}
-                className="px-8 py-4 bg-white/80 text-DARKGREEN text-lg font-medium rounded-xl hover:bg-white transform hover:scale-105 transition-all duration-200 shadow-lg border border-LIGHTGREEN/30"
+                className="px-8 py-4 bg-white/80 text-sp_darkgreen text-lg font-medium rounded-xl hover:bg-white transform hover:scale-105 transition-all duration-200 shadow-lg border border-sp_lightgreen/30"
               >
                 Join an Event
               </a>
@@ -178,14 +180,14 @@ export const LandingPage = () => {
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         transition={{ duration: 0.8 }}
-        className="py-20 bg-LIGHTGREEN/10"
+        className="py-20 bg-sp_lightgreen/10"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-DARKGREEN mb-6">
+            <h2 className="text-4xl font-bold text-sp_darkgreen mb-6">
               Everything You Need
             </h2>
-            <p className="text-xl text-DARKGREEN/80 max-w-2xl mx-auto">
+            <p className="text-xl text-sp_darkgreen/80 max-w-2xl mx-auto">
               Simple, powerful tools to capture and share every moment of your
               event
             </p>
@@ -223,15 +225,15 @@ export const LandingPage = () => {
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="text-center p-6 rounded-2xl bg-white/60 backdrop-blur-sm border border-LIGHTGREEN/30 hover:bg-white/80 transition-all duration-300"
+                className="text-center p-6 rounded-2xl bg-white/60 backdrop-blur-sm border border-sp_lightgreen/30 hover:bg-white/80 transition-all duration-300"
               >
-                <div className="w-16 h-16 bg-DARKGREEN/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <feature.icon className="w-8 h-8 text-DARKGREEN" />
+                <div className="w-16 h-16 bg-sp_darkgreen/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <feature.icon className="w-8 h-8 text-sp_darkgreen" />
                 </div>
-                <h3 className="text-xl font-semibold text-DARKGREEN mb-3">
+                <h3 className="text-xl font-semibold text-sp_darkgreen mb-3">
                   {feature.title}
                 </h3>
-                <p className="text-DARKGREEN/70">{feature.description}</p>
+                <p className="text-sp_darkgreen/70">{feature.description}</p>
               </motion.div>
             ))}
           </div>
@@ -242,7 +244,7 @@ export const LandingPage = () => {
       <ProductPage />
 
       {/* Footer */}
-      <footer className="bg-DARKGREEN text-white py-12">
+      <footer className="bg-sp_darkgreen text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="flex items-center justify-center gap-2 mb-4">

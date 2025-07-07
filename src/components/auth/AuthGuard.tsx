@@ -1,4 +1,5 @@
 // src/components/auth/AuthGuard.tsx
+
 import { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
@@ -13,17 +14,7 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check for auth bypass
-  const BYPASS_AUTH = import.meta.env.VITE_BYPASS_AUTH === "true";
-
   useEffect(() => {
-    if (BYPASS_AUTH) {
-      console.log("Auth bypassed via VITE_BYPASS_AUTH");
-      setIsAuthorized(true);
-      setIsLoading(false);
-      return;
-    }
-
     if (!isHostDomain()) {
       setIsLoading(false);
       return;
@@ -35,7 +26,6 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
         email: user?.email,
       });
 
-      // Allow any authenticated user (removed email restriction)
       if (user?.email) {
         setIsAuthorized(true);
       } else {
@@ -45,10 +35,9 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
     });
 
     return () => unsubscribe();
-  }, [BYPASS_AUTH]);
+  }, []);
 
   if (isLoading) {
-    console.log("AuthGuard: Loading...");
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
         <div className="text-center">
@@ -60,10 +49,8 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
   }
 
   if (!isAuthorized) {
-    console.log("AuthGuard: Not authorized, redirecting to /");
     return <Navigate to="/" replace />;
   }
 
-  console.log("AuthGuard: Authorized, rendering children");
   return <>{children}</>;
 };

@@ -8,6 +8,7 @@ import {
 import { useNavigate, Link } from "react-router-dom";
 import { auth } from "../config/firebase";
 import { useAuth } from "./AuthProvider";
+import darkIcon from "../../assets/dark-icon.svg";
 
 export function SignInPage() {
   const [isLoading, setIsLoading] = useState<string | null>(null);
@@ -120,30 +121,12 @@ export function SignInPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center p-4">
+    <div className="min-h-screen bg-sp_darkgreen flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/20 shadow-2xl">
+        <div className="bg-sp_eggshell/10 backdrop-blur-md rounded-3xl p-8 border border-sp_eggshell/50 shadow-2xl">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-              <svg
-                className="w-8 h-8 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
+            <div className="w-20 h-20  rounded-2xl mx-auto mb-4 flex items-center justify-center">
+              <img src={darkIcon} alt="Spevents Logo" className="w-16 h-16" />
             </div>
             <div className="space-y-2">
               <h1 className="text-3xl font-bold text-white">
@@ -184,13 +167,11 @@ export function SignInPage() {
 
             <div className="pt-6 space-y-4 text-center">
               <div className="relative">
-                <div className="absolute inset-0 flex items-center">
+                <div className="absolute inset-x-16 -translate-y-4 flex items-center">
                   <div className="w-full border-t border-white/20" />
                 </div>
                 <div className="relative flex justify-center text-sm uppercase">
-                  <span className="bg-gray-900 px-3 text-gray-300 font-medium">
-                    Or
-                  </span>
+                  <span className="text-sp_eggshell/100 font-medium">OR</span>
                 </div>
               </div>
 

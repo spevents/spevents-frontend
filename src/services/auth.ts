@@ -1,17 +1,17 @@
 // src/services/auth.ts
 
 import {
-  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider,
   signOut as firebaseSignOut,
   onAuthStateChanged,
 } from "firebase/auth";
 import { auth as firebaseAuth } from "../components/config/firebase";
 
-// Allowed emails for host access
-const ALLOWED_EMAILS = ["spevents.party@gmail.com"];
-
 const provider = new GoogleAuthProvider();
+provider.addScope("email");
+provider.addScope("profile");
 
 interface User {
   uid?: string;
@@ -36,12 +36,12 @@ class AuthService {
     // Listen for Firebase auth state changes
     onAuthStateChanged(firebaseAuth, (user) => {
       if (user && user.email) {
-        const isVerified = this.isEmailAllowed(user.email);
+        // REMOVED: Email restriction check - allow all users
         this.currentUser = {
           uid: user.uid,
           email: user.email,
           displayName: user.displayName || "",
-          isVerified,
+          isVerified: true, // All authenticated users are verified
           getIdToken: () => user.getIdToken(),
         };
       } else {
@@ -55,37 +55,36 @@ class AuthService {
     });
   }
 
-  private isEmailAllowed(email: string): boolean {
-    return ALLOWED_EMAILS.includes(email.toLowerCase());
-  }
-
   async signInWithGoogle(): Promise<AuthUser> {
     try {
-      const result = await signInWithPopup(firebaseAuth, provider);
+      await signInWithRedirect(firebaseAuth, provider);
+      throw new Error("Redirect initiated - this should not be reached");
+    } catch (error: any) {
+      console.error("Sign in error:", error);
+      throw error;
+    }
+  }
+
+  async handleRedirectResult(): Promise<AuthUser | null> {
+    try {
+      const result = await getRedirectResult(firebaseAuth);
+
+      if (!result || !result.user?.email) {
+        return null;
+      }
+
       const user = result.user;
-
-      if (!user.email) {
-        throw new Error("No email associated with Google account");
-      }
-
-      // Check if user is authorized
-      if (!this.isEmailAllowed(user.email)) {
-        await this.signOut();
-        throw new Error(
-          `Access denied. Only authorized emails can sign in as hosts.`,
-        );
-      }
 
       const authUser: AuthUser = {
         uid: user.uid,
-        email: user.email,
+        email: user.email || "",
         displayName: user.displayName || "",
         isVerified: true,
       };
 
       return authUser;
     } catch (error: any) {
-      console.error("Sign in error:", error);
+      console.error("Redirect result error:", error);
       throw error;
     }
   }
@@ -101,20 +100,12 @@ class AuthService {
     }
   }
 
-  // Legacy compatibility method
-  setUser(email: string) {
-    this.currentUser = {
-      email,
-      getIdToken: async () => "mock-token",
-    };
-  }
-
   getCurrentUser(): AuthUser | null {
     return this.currentUser as AuthUser | null;
   }
 
   isAuthenticated(): boolean {
-    return this.currentUser !== null && this.currentUser.isVerified !== false;
+    return this.currentUser !== null;
   }
 
   onAuthStateChanged(callback: (user: AuthUser | null) => void): () => void {
@@ -127,22 +118,6 @@ class AuthService {
       }
     };
   }
-
-  async waitForAuth(): Promise<AuthUser | null> {
-    return new Promise((resolve) => {
-      const unsubscribe = this.onAuthStateChanged((user) => {
-        unsubscribe();
-        resolve(user);
-      });
-    });
-  }
 }
 
 export const auth = new AuthService();
-
-// Legacy compatibility exports
-export const setCurrentUser = (email: string) => {
-  auth.setUser(email);
-};
-
-export const authService = auth;

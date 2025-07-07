@@ -64,7 +64,7 @@ export function Navigation() {
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-4">
             <a
-              href="https://github.com/fbablu/spevents"
+              href="https://github.com/spevents/spevents-frontend"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 px-4 py-2 bg-white/80 hover:bg-white text-DARKGREEN rounded-lg transition-colors"
@@ -109,7 +109,7 @@ export function Navigation() {
           >
             <div className="px-6 py-4 space-y-4">
               <a
-                href="https://github.com/fbablu/spevents"
+                href="https://github.com/spevents/spevents-frontend"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 p-3 bg-white/80 hover:bg-white text-DARKGREEN rounded-lg transition-colors"
