@@ -24,7 +24,7 @@ export function EventDashboard() {
   const { createEvent, selectEvent } = useEvent();
 
   const [activeTab, setActiveTab] = useState<"home" | "library" | "community">(
-    "home",
+    "home"
   );
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isMobile, setIsMobile] = useState(false);

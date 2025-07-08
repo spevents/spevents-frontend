@@ -28,8 +28,10 @@ import darkIcon from "../../assets/dark-icon.svg";
 
 interface SidebarNavProps {
   activeTab: string;
-  onTabChange: (tab: string) => void;
+  onTabChange: (tab: "home" | "library" | "community") => void;
   isMobile: boolean;
+  darkMode: ReturnType<typeof useDarkMode>;
+  sidebar: ReturnType<typeof useSidebar>;
 }
 
 const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
@@ -98,8 +100,8 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
             width: isMobile
               ? "280px"
               : sidebar.iconMode
-                ? "80px"
-                : `${sidebar.width}px`,
+              ? "80px"
+              : `${sidebar.width}px`,
             minWidth: sidebar.iconMode ? "80px" : "200px",
           }}
         >
@@ -360,7 +362,7 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
         </div>
       </>
     );
-  },
+  }
 );
 
 SidebarNav.displayName = "SidebarNav";
