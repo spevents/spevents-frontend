@@ -164,64 +164,74 @@ const LibraryContent = memo(({ onCreateEvent }: LibraryContentProps) => {
                   </p>
                 </div>
 
+                {/* Session Code and Guest Count */}
                 <div className="flex justify-between items-center mb-4 text-sm text-sp_green/60 dark:text-sp_dark_muted">
-                  <span>🔢 {event.sessionCode}</span>
-                  <span>👥 {event.guestCount || 0} guests</span>
+                  <span className="flex items-center gap-1">
+                    🔢 {event.sessionCode}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    👥 {event.guestCount || 0} guests
+                  </span>
                 </div>
 
-                {/* Action Menu */}
-                <div className="space-y-2">
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      onClick={() => handleEventClick(event)}
-                      className="flex items-center justify-center gap-1 px-3 py-2 bg-sp_eggshell/50 hover:bg-sp_eggshell dark:bg-sp_dark_bg dark:hover:bg-sp_lightgreen/20 text-sp_darkgreen dark:text-sp_dark_text rounded-lg transition-colors text-sm font-medium"
-                    >
-                      <Eye className="w-4 h-4" />
-                      Open
-                    </button>
-                    <button
-                      onClick={() => navigate(`/host/event/${event.id}/qr`)}
-                      className="flex items-center justify-center gap-1 px-3 py-2 bg-sp_eggshell/50 hover:bg-sp_eggshell dark:bg-sp_dark_bg dark:hover:bg-sp_lightgreen/20 text-sp_darkgreen dark:text-sp_dark_text rounded-lg transition-colors text-sm font-medium"
-                    >
-                      <QrCode className="w-4 h-4" />
-                      QR
-                    </button>
-                  </div>
+                {/* Action Buttons - Simplified Layout */}
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={() => handleEventClick(event)}
+                    className="flex items-center gap-2 px-4 py-2 bg-sp_eggshell/50 hover:bg-sp_eggshell dark:bg-sp_dark_bg dark:hover:bg-sp_lightgreen/20 text-sp_darkgreen dark:text-sp_dark_text rounded-lg transition-colors text-sm font-medium"
+                  >
+                    <Eye className="w-4 h-4" />
+                    Open
+                  </button>
 
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="flex items-center gap-2">
+                    {/* Status Control Button */}
                     {event.status === "draft" && (
                       <button
                         onClick={() => startEvent(event.id)}
-                        className="flex items-center justify-center gap-1 px-3 py-2 bg-sp_lightgreen/20 hover:bg-sp_lightgreen/30 text-sp_green dark:text-sp_lightgreen rounded-lg transition-colors text-sm"
+                        className="p-2 bg-sp_lightgreen/20 hover:bg-sp_lightgreen/30 text-sp_green dark:text-sp_lightgreen rounded-lg transition-colors"
+                        title="Start Event"
                       >
                         <Play className="w-4 h-4" />
-                        Start
                       </button>
                     )}
                     {event.status === "active" && (
                       <button
                         onClick={() => endEvent(event.id)}
-                        className="flex items-center justify-center gap-1 px-3 py-2 bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:hover:bg-yellow-900/50 text-yellow-700 dark:text-yellow-400 rounded-lg transition-colors text-sm"
+                        className="p-2 bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:hover:bg-yellow-900/50 text-yellow-700 dark:text-yellow-400 rounded-lg transition-colors"
+                        title="End Event"
                       >
                         <Pause className="w-4 h-4" />
-                        End
                       </button>
                     )}
+                    {event.status === "ended" && (
+                      <button
+                        onClick={() =>
+                          navigate(`/host/event/${event.id}/slideshow`)
+                        }
+                        className="p-2 bg-sp_eggshell/50 hover:bg-sp_eggshell dark:bg-sp_dark_bg dark:hover:bg-sp_lightgreen/20 text-sp_darkgreen dark:text-sp_dark_text rounded-lg transition-colors"
+                        title="View Slideshow"
+                      >
+                        <Presentation className="w-4 h-4" />
+                      </button>
+                    )}
+
+                    {/* QR Code Button */}
                     <button
-                      onClick={() =>
-                        navigate(`/host/event/${event.id}/slideshow`)
-                      }
-                      className="flex items-center justify-center gap-1 px-3 py-2 bg-sp_eggshell/50 hover:bg-sp_eggshell dark:bg-sp_dark_bg dark:hover:bg-sp_lightgreen/20 text-sp_darkgreen dark:text-sp_dark_text rounded-lg transition-colors text-sm"
+                      onClick={() => navigate(`/host/event/${event.id}/qr`)}
+                      className="p-2 bg-sp_eggshell/50 hover:bg-sp_eggshell dark:bg-sp_dark_bg dark:hover:bg-sp_lightgreen/20 text-sp_darkgreen dark:text-sp_dark_text rounded-lg transition-colors"
+                      title="Show QR Code"
                     >
-                      <Presentation className="w-4 h-4" />
-                      Show
+                      <QrCode className="w-4 h-4" />
                     </button>
+
+                    {/* Delete Button */}
                     <button
                       onClick={() => deleteEvent(event.id)}
-                      className="flex items-center justify-center gap-1 px-3 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 rounded-lg transition-colors text-sm"
+                      className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 rounded-lg transition-colors"
+                      title="Delete Event"
                     >
                       <Trash2 className="w-4 h-4" />
-                      Delete
                     </button>
                   </div>
                 </div>

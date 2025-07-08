@@ -15,8 +15,16 @@ module.exports = {
     extend: {
       colors: {
         ...palette,
+
+        // Light mode defaults
         background: palette.sp_eggshell,
         foreground: palette.sp_darkgreen,
+
+        // Dark mode
+        sp_dark_bg: palette.sp_darkgreen,
+        sp_dark_surface: palette.sp_eggshell,
+        sp_dark_text: palette.sp_darkgreen,
+        sp_dark_muted: palette.sp_midgreen,
 
         card: {
           DEFAULT: "#ffffff",

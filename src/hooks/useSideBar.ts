@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 
+const COLLAPSE_THRESHOLD = 1024;
+
 export function useSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [iconMode, setIconMode] = useState(false);
@@ -12,7 +14,34 @@ export function useSidebar() {
     return 280;
   });
   const [isResizing, setIsResizing] = useState(false);
+  const [screenWidth, setScreenWidth] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth;
+    }
+    return 1920;
+  });
   const sidebarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setScreenWidth(window.innerWidth);
+
+      // Auto-collapse when screen gets too small
+      if (window.innerWidth < 768) {
+        setIconMode(true);
+      }
+      // Auto-expand when screen gets large enough and was previously auto-collapsed
+      else if (window.innerWidth >= COLLAPSE_THRESHOLD && iconMode) {
+        setIconMode(false);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [iconMode]);
+
+  // Check if collapse functionality should be available
+  const canCollapse = screenWidth < COLLAPSE_THRESHOLD;
 
   useEffect(() => {
     localStorage.setItem("sidebarWidth", width.toString());
@@ -50,8 +79,11 @@ export function useSidebar() {
   }, [isResizing]);
 
   const toggleIconMode = useCallback(() => {
-    setIconMode(!iconMode);
-  }, [iconMode]);
+    // Only allow toggle if screen is below threshold or if user manually wants to expand
+    if (canCollapse || iconMode) {
+      setIconMode(!iconMode);
+    }
+  }, [iconMode, canCollapse]);
 
   return {
     collapsed,
@@ -64,5 +96,7 @@ export function useSidebar() {
     sidebarRef,
     handleMouseDown,
     toggleIconMode,
+    canCollapse,
+    screenWidth,
   };
 }
