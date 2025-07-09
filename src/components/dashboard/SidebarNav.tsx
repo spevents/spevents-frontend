@@ -1,6 +1,6 @@
 // src/components/dashboard/SidebarNav.tsx
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Home,
@@ -19,6 +19,8 @@ import {
   GripVertical,
   PanelLeftOpen,
   PanelLeftClose,
+  Plus,
+  MoreHorizontal,
 } from "lucide-react";
 import { useSidebar } from "../../hooks/useSideBar";
 import { useDarkMode } from "../../hooks/useDarkMode";
@@ -32,10 +34,11 @@ interface SidebarNavProps {
   isMobile: boolean;
   darkMode: ReturnType<typeof useDarkMode>;
   sidebar: ReturnType<typeof useSidebar>;
+  onCreateEvent?: () => void;
 }
 
 const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
-  ({ activeTab, onTabChange, isMobile }, ref) => {
+  ({ activeTab, onTabChange, isMobile, onCreateEvent }, ref) => {
     const sidebar = useSidebar();
     const darkMode = useDarkMode();
     const { user, signOut } = useAuth();
@@ -60,6 +63,45 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
 
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [showBrandingPanel, setShowBrandingPanel] = useState(false);
+    const [expandedSections, setExpandedSections] = useState({
+      starred: true,
+      recent: true,
+    });
+
+    // Mock starred events data
+    const starredEvents = [
+      { name: "Summer Wedding Reception", type: "event", status: "active" },
+      { name: "Corporate Annual Gala", type: "event", status: "ended" },
+      { name: "Birthday Celebration", type: "event", status: "draft" },
+      { name: "Anniversary Party", type: "event", status: "active" },
+      { name: "Graduation Ceremony", type: "event", status: "ended" },
+    ];
+
+    // Mock recent activities
+    const recentActivities = [
+      "Photo Upload Optimization",
+      "Dark Mode Implementation",
+      "Event Dashboard Redesign",
+      "QR Code Generation Feature",
+      "Guest Management System",
+      "Photo Gallery Enhancement",
+      "Mobile Responsive Updates",
+      "User Authentication Flow",
+      "Event Analytics Dashboard",
+      "Slideshow Feature Development",
+      "Social Media Integration",
+      "Payment Processing Setup",
+      "Email Notification System",
+      "Backup & Recovery System",
+      "Performance Optimization",
+    ];
+
+    const toggleSection = useCallback((section: string) => {
+      setExpandedSections((prev) => ({
+        ...prev,
+        [section]: !prev[section as keyof typeof prev],
+      }));
+    }, []);
 
     const getInitials = () => {
       if (userData?.firstName && userData?.lastName) {
@@ -74,6 +116,35 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
       } catch (error) {
         console.error("Sign out error:", error);
       }
+    };
+
+    const handleEventClick = useCallback((event: any) => {
+      console.log("Navigate to event:", event);
+    }, []);
+
+    const SidebarItem = ({
+      children,
+      className = "",
+      onClick,
+      isActive = false,
+    }: {
+      children: React.ReactNode;
+      className?: string;
+      onClick?: () => void;
+      isActive?: boolean;
+    }) => {
+      return (
+        <button
+          onClick={onClick}
+          className={`flex items-center w-full px-3 py-2 text-sm text-sp_green/70 dark:text-sp_dark_muted hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 hover:text-sp_darkgreen dark:hover:text-sp_dark_text rounded-lg transition-all duration-200 group ${
+            isActive
+              ? "bg-sp_lightgreen/20 text-sp_darkgreen dark:text-sp_lightgreen border border-sp_lightgreen/30"
+              : ""
+          } ${className}`}
+        >
+          {children}
+        </button>
+      );
     };
 
     return (
@@ -100,118 +171,77 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
             width: isMobile
               ? "280px"
               : sidebar.iconMode
-              ? "80px"
-              : `${sidebar.width}px`,
+                ? "80px"
+                : `${sidebar.width}px`,
             minWidth: sidebar.iconMode ? "80px" : "200px",
           }}
         >
-          {/* User Account Section */}
-          <div className="p-4 border-b border-sp_eggshell/30 dark:border-sp_lightgreen/20 flex-shrink-0">
-            <div className="relative">
-              <button
-                onClick={() => setShowProfileMenu(!showProfileMenu)}
-                className={`w-full flex items-center gap-3 p-3 rounded-xl hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 transition-colors ${
-                  sidebar.iconMode ? "justify-center" : ""
-                }`}
-              >
-                {user?.photoURL ? (
-                  <img
-                    src={user.photoURL}
-                    alt="Profile"
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium bg-gradient-to-br from-sp_midgreen to-sp_green">
-                    {getInitials()}
+          {/* Header */}
+          <div className="flex items-center gap-2 p-4 border-b border-sp_eggshell/30 dark:border-sp_lightgreen/20">
+            {!sidebar.iconMode && (
+              <>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-md flex items-center justify-center">
+                    <img
+                      src={darkMode.darkMode ? darkIcon : lightIcon}
+                      alt="Spevents"
+                      className="w-6 h-6"
+                    />
                   </div>
-                )}
-                {!sidebar.iconMode && (
-                  <>
-                    <div className="flex-1 text-left">
-                      <p className="font-medium text-sp_darkgreen dark:text-sp_dark_text">
-                        {userData.firstName} {userData.lastName}
-                      </p>
-                      <p className="text-sm text-sp_green/70 dark:text-sp_dark_muted truncate">
-                        {userData.email}
-                      </p>
-                    </div>
-                    <ChevronDown className="w-4 h-4 text-sp_green/50 dark:text-sp_dark_muted" />
-                  </>
-                )}
-              </button>
+                  <span className="text-lg font-bold bg-sp_darkgreen bg-clip-text text-transparent dark:bg-sp_eggshell">
+                    spevents
+                  </span>
+                </div>
+              </>
+            )}
 
-              <AnimatePresence>
-                {showProfileMenu && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    className={`absolute ${
-                      sidebar.iconMode ? "left-full ml-2" : "top-full mt-2"
-                    } ${
-                      sidebar.iconMode ? "w-64" : "left-0 right-0"
-                    } bg-white dark:bg-sp_dark_surface border border-sp_eggshell/30 dark:border-sp_lightgreen/20 rounded-xl shadow-lg z-50`}
-                  >
-                    <div className="p-3 border-b border-sp_eggshell/30 dark:border-sp_lightgreen/20">
-                      <p className="font-medium text-sp_darkgreen dark:text-sp_dark_text">
-                        {userData.firstName} {userData.lastName}
-                      </p>
-                      <p className="text-sm text-sp_green/70 dark:text-sp_dark_muted">
-                        {userData.email}
-                      </p>
-                    </div>
-                    <div className="p-2">
-                      <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_dark_text hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg">
-                        <UserIcon className="w-4 h-4" />
-                        Profile Settings
-                      </button>
-                      <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_dark_text hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg">
-                        <CreditCard className="w-4 h-4" />
-                        Subscription
-                      </button>
-                      <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_dark_text hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg">
-                        <Bell className="w-4 h-4" />
-                        Notifications
-                      </button>
-                      <hr className="my-1 border-sp_eggshell/30 dark:border-sp_lightgreen/20" />
-                      <button
-                        onClick={handleSignOut}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        Sign Out
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            {sidebar.iconMode && (
+              <div className="w-full flex justify-center">
+                <div className="w-6 h-6 rounded-md flex items-center justify-center">
+                  <img
+                    src={darkMode.darkMode ? darkIcon : lightIcon}
+                    alt="Spevents"
+                    className="w-6 h-6"
+                  />{" "}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Navigation - Takes up remaining space */}
-          <nav className="flex-1 p-4 overflow-y-auto">
-            <div className="space-y-2">
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-2 space-y-1">
+              {/* Create Event Button */}
+              <SidebarItem
+                className="bg-gradient-to-r from-sp_midgreen to-sp_green hover:from-sp_green hover:to-sp_darkgreen text-white font-medium"
+                onClick={onCreateEvent}
+              >
+                <div
+                  className={`flex items-center ${
+                    sidebar.iconMode ? "justify-center" : "gap-3"
+                  }`}
+                >
+                  <div className="w-6 h-6 bg-sp_green/20 rounded-full flex items-center justify-center">
+                    <Plus className="w-3 h-3" />
+                  </div>
+                  {!sidebar.iconMode && <span>Create Event</span>}
+                </div>
+              </SidebarItem>
+
+              {/* Navigation Items */}
               {[
-                { id: "home", label: "Home", icon: Home },
-                { id: "library", label: "Library", icon: Folder },
+                { id: "home", label: "Dashboard", icon: Home },
+                { id: "library", label: "Event Library", icon: Folder },
                 { id: "community", label: "Community", icon: Globe },
               ].map((item) => (
                 <div key={item.id} className="relative group">
-                  <button
+                  <SidebarItem
                     onClick={() => onTabChange(item.id as any)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 ${
-                      sidebar.iconMode ? "justify-center" : ""
-                    } ${
-                      activeTab === item.id
-                        ? "bg-gradient-to-r from-sp_lightgreen/20 to-sp_midgreen/20 text-sp_darkgreen dark:text-sp_lightgreen border border-sp_lightgreen/30 shadow-sm"
-                        : "text-sp_green/70 dark:text-sp_dark_muted hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10"
-                    }`}
+                    isActive={activeTab === item.id}
                   >
-                    <item.icon className="w-5 h-5" />
-                    {!sidebar.iconMode && (
-                      <span className="font-medium">{item.label}</span>
-                    )}
-                  </button>
+                    <item.icon className="w-4 h-4 mr-3" />
+                    {!sidebar.iconMode && <span>{item.label}</span>}
+                  </SidebarItem>
 
                   {/* Tooltip for collapsed mode */}
                   {sidebar.iconMode && (
@@ -222,37 +252,210 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
                 </div>
               ))}
             </div>
-          </nav>
+
+            {!sidebar.iconMode && (
+              <>
+                {/* Starred Events Section */}
+                <div className="px-2 mt-6">
+                  <button
+                    onClick={() => toggleSection("starred")}
+                    className="flex items-center gap-2 w-full px-2 py-1 text-xs text-sp_green/60 dark:text-sp_dark_muted hover:text-sp_green dark:hover:text-sp_dark_text transition-colors"
+                  >
+                    <ChevronDown
+                      className={`w-3 h-3 transition-transform ${
+                        expandedSections.starred ? "" : "-rotate-90"
+                      }`}
+                    />
+                    <span className="font-medium uppercase tracking-wide">
+                      Starred Events
+                    </span>
+                  </button>
+
+                  {expandedSections.starred && (
+                    <div className="mt-2 space-y-px">
+                      {starredEvents.map((event, index) => (
+                        <div key={index} className="relative group">
+                          <SidebarItem
+                            className="text-xs pr-8"
+                            onClick={() => handleEventClick(event)}
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div
+                                className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                                  event.status === "active"
+                                    ? "bg-sp_lightgreen"
+                                    : event.status === "ended"
+                                      ? "bg-sp_green/50"
+                                      : "bg-sp_midgreen/50"
+                                }`}
+                              />
+                              <span className="truncate">{event.name}</span>
+                            </div>
+                          </SidebarItem>
+                          <button className="absolute right-2 top-1/2 -translate-y-1/2 p-1 opacity-0 group-hover:opacity-100 hover:bg-sp_eggshell/20 dark:hover:bg-sp_lightgreen/10 rounded transition-all">
+                            <MoreHorizontal className="w-3 h-3 text-sp_green/60 dark:text-sp_dark_muted" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Recent Activities Section */}
+                <div className="px-2 mt-6">
+                  <button
+                    onClick={() => toggleSection("recent")}
+                    className="flex items-center gap-2 w-full px-2 py-1 text-xs text-sp_green/60 dark:text-sp_dark_muted hover:text-sp_green dark:hover:text-sp_dark_text transition-colors"
+                  >
+                    <ChevronDown
+                      className={`w-3 h-3 transition-transform ${
+                        expandedSections.recent ? "" : "-rotate-90"
+                      }`}
+                    />
+                    <span className="font-medium uppercase tracking-wide">
+                      Recent Activity
+                    </span>
+                  </button>
+
+                  {expandedSections.recent && (
+                    <div className="mt-2 space-y-px max-h-80 overflow-y-auto">
+                      {recentActivities.map((activity, index) => (
+                        <div key={index} className="relative group">
+                          <SidebarItem className="text-xs pr-8">
+                            <span className="truncate">{activity}</span>
+                          </SidebarItem>
+                          <button className="absolute right-2 top-1/2 -translate-y-1/2 p-1 opacity-0 group-hover:opacity-100 hover:bg-sp_eggshell/20 dark:hover:bg-sp_lightgreen/10 rounded transition-all">
+                            <MoreHorizontal className="w-3 h-3 text-sp_green/60 dark:text-sp_dark_muted" />
+                          </button>
+                        </div>
+                      ))}
+
+                      {/* View All Activities */}
+                      <SidebarItem className="text-xs justify-center text-sp_green/60 dark:text-sp_dark_muted hover:text-sp_green dark:hover:text-sp_dark_text">
+                        <MoreHorizontal className="w-4 h-4 mr-2" />
+                        <span>View all activities</span>
+                      </SidebarItem>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
 
           {/* Bottom Section - Fixed at bottom */}
           <div className="flex-shrink-0">
             {/* Dark Mode Toggle */}
-            <div className="p-4 border-t border-sp_eggshell/30 dark:border-sp_lightgreen/20">
-              <div className="relative group">
-                <button
+            {!sidebar.iconMode && (
+              <div className="px-2 pb-2">
+                <SidebarItem
                   onClick={() => darkMode.setDarkMode(!darkMode.darkMode)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-xl hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 transition-colors text-sp_green/70 dark:text-sp_dark_muted ${
-                    sidebar.iconMode ? "justify-center" : ""
-                  }`}
                 >
                   {darkMode.darkMode ? (
-                    <Sun className="w-5 h-5" />
+                    <Sun className="w-4 h-4 mr-3" />
                   ) : (
-                    <Moon className="w-5 h-5" />
+                    <Moon className="w-4 h-4 mr-3" />
                   )}
-                  {!sidebar.iconMode && (
-                    <span className="font-medium">
-                      {darkMode.darkMode ? "Light Mode" : "Dark Mode"}
-                    </span>
-                  )}
-                </button>
+                  <span>{darkMode.darkMode ? "Light Mode" : "Dark Mode"}</span>
+                </SidebarItem>
+              </div>
+            )}
 
-                {/* Tooltip for collapsed mode */}
-                {sidebar.iconMode && (
-                  <div className="absolute left-full ml-2 px-2 py-1 bg-sp_darkgreen dark:bg-sp_dark_surface text-white dark:text-sp_dark_text text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-                    {darkMode.darkMode ? "Light Mode" : "Dark Mode"}
+            {/* User Profile */}
+            <div className="p-2 border-t border-sp_eggshell/30 dark:border-sp_lightgreen/20">
+              <div className="relative">
+                <SidebarItem
+                  className="py-3"
+                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                >
+                  <div
+                    className={`flex items-center w-full ${
+                      sidebar.iconMode ? "justify-center" : "gap-3"
+                    }`}
+                  >
+                    {user?.photoURL ? (
+                      <img
+                        src={user.photoURL}
+                        alt="Profile"
+                        className="w-7 h-7 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-7 h-7 bg-gradient-to-br from-sp_midgreen to-sp_green rounded-full flex items-center justify-center text-sm font-medium text-white">
+                        {getInitials()}
+                      </div>
+                    )}
+                    {!sidebar.iconMode && (
+                      <>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-sp_darkgreen dark:text-sp_dark_text truncate">
+                            {userData.firstName} {userData.lastName}
+                          </div>
+                          <div className="text-xs text-sp_green/60 dark:text-sp_dark_muted">
+                            Pro plan
+                          </div>
+                        </div>
+                        <ChevronDown className="w-4 h-4 text-sp_green/60 dark:text-sp_dark_muted flex-shrink-0" />
+                      </>
+                    )}
                   </div>
-                )}
+                </SidebarItem>
+
+                <AnimatePresence>
+                  {showProfileMenu && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className={`absolute ${
+                        sidebar.iconMode ? "left-full ml-2" : "bottom-full mb-2"
+                      } ${
+                        sidebar.iconMode ? "w-64" : "left-0 right-0"
+                      } bg-white dark:bg-sp_dark_surface border border-sp_eggshell/30 dark:border-sp_lightgreen/20 rounded-xl shadow-lg z-50`}
+                    >
+                      <div className="p-3 border-b border-sp_eggshell/30 dark:border-sp_lightgreen/20">
+                        <p className="font-medium text-sp_darkgreen dark:text-sp_dark_text">
+                          {userData.firstName} {userData.lastName}
+                        </p>
+                        <p className="text-sm text-sp_green/70 dark:text-sp_dark_muted">
+                          {userData.email}
+                        </p>
+                        <p className="text-xs text-sp_green/60 dark:text-sp_dark_muted">
+                          Pro plan • spevents.live
+                        </p>
+                      </div>
+                      <div className="p-2">
+                        <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_dark_text hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg">
+                          <UserIcon className="w-4 h-4" />
+                          Profile Settings
+                        </button>
+                        <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_dark_text hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg">
+                          <CreditCard className="w-4 h-4" />
+                          Subscription
+                        </button>
+                        <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_dark_text hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg">
+                          <Bell className="w-4 h-4" />
+                          Notifications
+                        </button>
+                        <button
+                          onClick={() =>
+                            setShowBrandingPanel(!showBrandingPanel)
+                          }
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_dark_text hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg"
+                        >
+                          <HelpCircle className="w-4 h-4" />
+                          Help & Support
+                        </button>
+                        <hr className="my-1 border-sp_eggshell/30 dark:border-sp_lightgreen/20" />
+                        <button
+                          onClick={handleSignOut}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          Sign Out
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
 
@@ -277,75 +480,45 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
               </div>
             )}
 
-            {/* Spevents Branding Section - Always at bottom */}
-            <div className="p-4 border-t border-sp_eggshell/30 dark:border-sp_lightgreen/20">
-              <div className="relative">
-                <button
-                  onClick={() => setShowBrandingPanel(!showBrandingPanel)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-xl hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 transition-colors ${
-                    sidebar.iconMode ? "justify-center" : ""
-                  }`}
+            {/* Branding Panel */}
+            <AnimatePresence>
+              {showBrandingPanel && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="absolute bottom-20 left-2 right-2 bg-white dark:bg-sp_dark_surface border border-sp_eggshell/30 dark:border-sp_lightgreen/20 rounded-xl shadow-lg z-50"
                 >
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center">
-                    <img
-                      src={darkMode.darkMode ? darkIcon : lightIcon}
-                      alt="Spevents"
-                      className="w-6 h-6"
-                    />
+                  <div className="p-3 border-b border-sp_eggshell/30 dark:border-sp_lightgreen/20">
+                    <h3 className="font-semibold text-sp_darkgreen dark:text-sp_dark_text">
+                      spevents
+                    </h3>
+                    <p className="text-sm text-sp_green/70 dark:text-sp_dark_muted">
+                      Event Management Platform
+                    </p>
                   </div>
-                  {!sidebar.iconMode && (
-                    <div className="flex-1 text-left">
-                      <h2 className="text-lg font-bold bg-gradient-to-r from-sp_green to-sp_midgreen bg-clip-text text-transparent dark:from-sp_eggshell dark:to-sp_lightgreen dark:text-transparent">
-                        spevents
-                      </h2>
-                    </div>
-                  )}
-                </button>
-
-                <AnimatePresence>
-                  {showBrandingPanel && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className={`absolute ${
-                        sidebar.iconMode ? "left-full ml-2" : "bottom-full mb-2"
-                      } ${
-                        sidebar.iconMode ? "w-64" : "left-0 right-0"
-                      } bg-white dark:bg-sp_dark_surface border border-sp_eggshell/30 dark:border-sp_lightgreen/20 rounded-xl shadow-lg z-50`}
+                  <div className="p-2">
+                    <a
+                      href="https://www.spevents.live"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_dark_text hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg"
                     >
-                      <div className="p-3 border-b border-sp_eggshell/30 dark:border-sp_lightgreen/20">
-                        <h3 className="font-semibold text-sp_darkgreen dark:text-sp_dark_text">
-                          spevents
-                        </h3>
-                        <p className="text-sm text-sp_green/70 dark:text-sp_dark_muted">
-                          Event Management Platform
-                        </p>
-                      </div>
-                      <div className="p-2">
-                        <a
-                          href="https://www.spevents.live"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_dark_text hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                          Main Website
-                        </a>
-                        <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_dark_text hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg">
-                          <HelpCircle className="w-4 h-4" />
-                          FAQ
-                        </button>
-                        <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_dark_text hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg">
-                          <Mail className="w-4 h-4" />
-                          Contact Support
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
+                      <ExternalLink className="w-4 h-4" />
+                      Main Website
+                    </a>
+                    <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_dark_text hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg">
+                      <HelpCircle className="w-4 h-4" />
+                      FAQ
+                    </button>
+                    <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_dark_text hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg">
+                      <Mail className="w-4 h-4" />
+                      Contact Support
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Resize Handle - Desktop Only */}
@@ -362,7 +535,7 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
         </div>
       </>
     );
-  }
+  },
 );
 
 SidebarNav.displayName = "SidebarNav";

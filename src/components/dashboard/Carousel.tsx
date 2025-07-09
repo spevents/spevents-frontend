@@ -1,6 +1,5 @@
-// src/components/dashboard/Carousel.tsx
-
-import React, { memo, useState, useEffect, useCallback } from "react";
+//src/components/dashboard/Carousel.tsx
+import React, { useState, useCallback, useEffect, memo } from "react";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -21,14 +20,14 @@ const Carousel = memo(({ children, title }: CarouselProps) => {
   }, []);
 
   const nextPhoto = useCallback(() => {
-    const childrenArray = React.Children.toArray(children);
-    setCurrentIndex((prev) => (prev + 1) % childrenArray.length);
+    setCurrentIndex((prev) => (prev + 1) % React.Children.count(children));
   }, [children]);
 
   const prevPhoto = useCallback(() => {
-    const childrenArray = React.Children.toArray(children);
     setCurrentIndex(
-      (prev) => (prev - 1 + childrenArray.length) % childrenArray.length,
+      (prev) =>
+        (prev - 1 + React.Children.count(children)) %
+        React.Children.count(children),
     );
   }, [children]);
 
@@ -70,5 +69,4 @@ const Carousel = memo(({ children, title }: CarouselProps) => {
 });
 
 Carousel.displayName = "Carousel";
-
 export default Carousel;

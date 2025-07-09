@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { Menu } from "lucide-react";
@@ -24,10 +24,20 @@ export function EventDashboard() {
   const { createEvent, selectEvent } = useEvent();
 
   const [activeTab, setActiveTab] = useState<"home" | "library" | "community">(
-    "home"
+    "home",
   );
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+
+  // Sidebar width management
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    if (typeof window !== "undefined") {
+      return Number.parseInt(localStorage.getItem("sidebarWidth") || "280");
+    }
+    return 280;
+  });
+  const [isResizing, setIsResizing] = useState(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   const darkMode = useDarkMode();
   const sidebar = useSidebar();
@@ -44,6 +54,44 @@ export function EventDashboard() {
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, [sidebar]);
+
+  // Persist sidebar width
+  useEffect(() => {
+    localStorage.setItem("sidebarWidth", sidebarWidth.toString());
+  }, [sidebarWidth]);
+
+  // Sidebar resize functionality
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  }, []);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return;
+
+      const newWidth = Math.max(200, Math.min(400, e.clientX));
+      setSidebarWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+  }, [isResizing]);
 
   const handleCreateEvent = async (data: {
     name: string;
@@ -85,11 +133,17 @@ export function EventDashboard() {
       )}
 
       <SidebarNav
+        ref={sidebarRef}
         activeTab={activeTab}
         onTabChange={setActiveTab}
         isMobile={isMobile}
         darkMode={darkMode}
-        sidebar={sidebar}
+        sidebar={{
+          ...sidebar,
+          width: sidebarWidth,
+          handleMouseDown,
+        }}
+        onCreateEvent={() => setShowCreateModal(true)}
       />
 
       <div className="flex-1 overflow-hidden">

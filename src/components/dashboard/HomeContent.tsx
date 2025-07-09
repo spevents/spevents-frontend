@@ -1,6 +1,6 @@
 // src/components/dashboard/HomeContent.tsx
 
-import { memo, useMemo } from "react";
+import { memo, useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Calendar, Camera, Users, Plus, ArrowRight, Zap } from "lucide-react";
@@ -38,6 +38,15 @@ const HomeContent = memo(({ onCreateEvent }: HomeContentProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { events, isLoading, error, selectEvent } = useEvent();
+
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const getUserData = () => {
     if (!user) {
@@ -266,26 +275,27 @@ const HomeContent = memo(({ onCreateEvent }: HomeContentProps) => {
       </div>
 
       {/* Photos Carousel */}
-      {events.length > 0 && (
-        <Carousel title="Recent Photos">
-          {mockPhotos.map((photo) => (
-            <div key={photo.id} className="w-1/3 flex-shrink-0 px-2">
-              <div className="bg-white dark:bg-sp_dark_surface rounded-xl overflow-hidden border border-sp_eggshell/30 dark:border-sp_lightgreen/20">
-                <img
-                  src={photo.url || "/placeholder.svg"}
-                  alt={`Photo from ${photo.event}`}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="p-4">
-                  <p className="text-sm font-medium text-sp_darkgreen dark:text-sp_dark_text">
-                    {photo.event}
-                  </p>
-                </div>
+      <Carousel title="Recent Photos">
+        {mockPhotos.map((photo) => (
+          <div
+            key={photo.id}
+            className={`${isMobile ? "w-full" : "w-1/3"} flex-shrink-0 px-2`}
+          >
+            <div className="bg-white dark:bg-sp_dark_surface rounded-xl overflow-hidden border border-sp_eggshell/30 dark:border-sp_lightgreen/20">
+              <img
+                src={photo.url || "/placeholder.svg"}
+                alt={`Photo from ${photo.event}`}
+                className="w-full h-48 object-cover"
+              />
+              <div className="p-4">
+                <p className="text-sm font-medium text-sp_darkgreen dark:text-sp_dark_text">
+                  {photo.event}
+                </p>
               </div>
             </div>
-          ))}
-        </Carousel>
-      )}
+          </div>
+        ))}
+      </Carousel>
     </motion.div>
   );
 });

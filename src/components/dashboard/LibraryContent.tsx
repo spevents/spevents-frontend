@@ -135,7 +135,7 @@ const LibraryContent = memo(({ onCreateEvent }: LibraryContentProps) => {
               transition={{ delay: index * 0.1 }}
               className="bg-white dark:bg-sp_dark_surface rounded-xl border border-sp_eggshell/30 dark:border-sp_lightgreen/20 shadow-sm overflow-hidden hover:shadow-lg transition-all group"
             >
-              {/* Event Header */}
+              {/* Event Header with Gradient */}
               <div className="h-32 bg-gradient-to-br from-sp_lightgreen via-sp_midgreen to-sp_green relative overflow-hidden">
                 <div className="absolute inset-0 bg-black/10"></div>
                 <div className="absolute bottom-4 left-4 text-white">
@@ -166,19 +166,15 @@ const LibraryContent = memo(({ onCreateEvent }: LibraryContentProps) => {
 
                 {/* Session Code and Guest Count */}
                 <div className="flex justify-between items-center mb-4 text-sm text-sp_green/60 dark:text-sp_dark_muted">
-                  <span className="flex items-center gap-1">
-                    🔢 {event.sessionCode}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    👥 {event.guestCount || 0} guests
-                  </span>
+                  <span>🔢 {event.sessionCode}</span>
+                  <span>👥 {event.guestCount || 0} guests</span>
                 </div>
 
-                {/* Action Buttons - Simplified Layout */}
+                {/* Action Menu */}
                 <div className="flex items-center justify-between">
                   <button
                     onClick={() => handleEventClick(event)}
-                    className="flex items-center gap-2 px-4 py-2 bg-sp_eggshell/50 hover:bg-sp_eggshell dark:bg-sp_dark_bg dark:hover:bg-sp_lightgreen/20 text-sp_darkgreen dark:text-sp_dark_text rounded-lg transition-colors text-sm font-medium"
+                    className="flex items-center gap-2 px-4 py-2 bg-sp_eggshell/50 hover:bg-sp_eggshell dark:bg-sp_dark_surface dark:hover:bg-sp_lightgreen/20 text-sp_darkgreen dark:text-sp_dark_text rounded-lg transition-colors text-sm font-medium"
                   >
                     <Eye className="w-4 h-4" />
                     Open
@@ -209,7 +205,7 @@ const LibraryContent = memo(({ onCreateEvent }: LibraryContentProps) => {
                         onClick={() =>
                           navigate(`/host/event/${event.id}/slideshow`)
                         }
-                        className="p-2 bg-sp_eggshell/50 hover:bg-sp_eggshell dark:bg-sp_dark_bg dark:hover:bg-sp_lightgreen/20 text-sp_darkgreen dark:text-sp_dark_text rounded-lg transition-colors"
+                        className="p-2 bg-sp_eggshell/50 hover:bg-sp_eggshell dark:bg-sp_dark_surface dark:hover:bg-sp_lightgreen/20 text-sp_darkgreen dark:text-sp_dark_text rounded-lg transition-colors"
                         title="View Slideshow"
                       >
                         <Presentation className="w-4 h-4" />
@@ -219,7 +215,7 @@ const LibraryContent = memo(({ onCreateEvent }: LibraryContentProps) => {
                     {/* QR Code Button */}
                     <button
                       onClick={() => navigate(`/host/event/${event.id}/qr`)}
-                      className="p-2 bg-sp_eggshell/50 hover:bg-sp_eggshell dark:bg-sp_dark_bg dark:hover:bg-sp_lightgreen/20 text-sp_darkgreen dark:text-sp_dark_text rounded-lg transition-colors"
+                      className="p-2 bg-sp_eggshell/50 hover:bg-sp_eggshell dark:bg-sp_dark_surface dark:hover:bg-sp_lightgreen/20 text-sp_darkgreen dark:text-sp_dark_text rounded-lg transition-colors"
                       title="Show QR Code"
                     >
                       <QrCode className="w-4 h-4" />
