@@ -126,7 +126,9 @@ export function SignInPage() {
         <div className="bg-sp_eggshell/10 backdrop-blur-md rounded-3xl p-8 border border-sp_eggshell/50 shadow-2xl">
           <div className="text-center mb-8">
             <div className="w-20 h-20  rounded-2xl mx-auto mb-4 flex items-center justify-center">
-              <img src={darkIcon} alt="Spevents Logo" className="w-16 h-16" />
+              <a href="https://www.spevents.live">
+                <img src={darkIcon} alt="Spevents Logo" className="w-16 h-16" />
+              </a>
             </div>
             <div className="space-y-2">
               <h1 className="text-3xl font-bold text-white">

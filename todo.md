@@ -1,4 +1,16 @@
----
+- [ ] Finish aesthetics for Light/Dark mode on LandingPage
+- [ ] Finish aesthetics for Light/Dark mode on GuestDashboard
+- [ ] Fix https://app.spevents.live/host/event/EVENT_ID/gallery page to match aesthetics
+- [ ] Fix https://app.spevents.live/host/events/EVENT_ID/ routing to Event Library
+- [ ] Fix https://app.spevents.live/host/events/EVENT_ID/ routing to Event Library
+- [ ] Fix /gallery routing to match aesthetics
+- [ ] Fix /gallery routing so that it goes back to event_library instead of just /host
+- [ ] Fix /qr routing to match aesthetics
+- [ ] Fix /qr routing so that it goes back to event_library instead of just /host
+- [ ] Fix /slideshow routing to match aesthetics
+- [ ] Fix /slideshow routing so that it goes back to event_library instead of just /host
+- [ ] Fix and make /event UI more intuitive, make more sense basically
+- [ ] Fix CreateEventModal; live app uses CreateEventModal.tsx instead of proper event creater CreateEventPage; make a simpler mode (just theme and presets) vs more customized Canva like editor
 
 main goal:
 
