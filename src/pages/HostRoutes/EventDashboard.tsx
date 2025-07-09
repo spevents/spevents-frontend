@@ -23,9 +23,9 @@ export function EventDashboard() {
   const { user } = useAuth();
   const { createEvent, selectEvent } = useEvent();
 
-  const [activeTab, setActiveTab] = useState<"home" | "library" | "community">(
-    "home",
-  );
+  const [activeTab, setActiveTab] = useState<
+    "home" | "library" | "community" | "photos" | "guests"
+  >("home");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 

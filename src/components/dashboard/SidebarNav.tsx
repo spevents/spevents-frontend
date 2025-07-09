@@ -6,6 +6,8 @@ import {
   Home,
   Folder,
   Globe,
+  Images,
+  Users,
   UserIcon,
   ChevronDown,
   Bell,
@@ -30,7 +32,9 @@ import darkIcon from "../../assets/dark-icon.svg";
 
 interface SidebarNavProps {
   activeTab: string;
-  onTabChange: (tab: "home" | "library" | "community") => void;
+  onTabChange: (
+    tab: "home" | "library" | "community" | "photos" | "guests",
+  ) => void;
   isMobile: boolean;
   darkMode: ReturnType<typeof useDarkMode>;
   sidebar: ReturnType<typeof useSidebar>;
@@ -233,6 +237,8 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
                 { id: "home", label: "Dashboard", icon: Home },
                 { id: "library", label: "Event Library", icon: Folder },
                 { id: "community", label: "Community", icon: Globe },
+                { id: "photos", label: "Photos", icon: Images },
+                { id: "guests", label: "Guests", icon: Users },
               ].map((item) => (
                 <div key={item.id} className="relative group">
                   <SidebarItem
@@ -419,7 +425,7 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
                           {userData.email}
                         </p>
                         <p className="text-xs text-sp_green/60 dark:text-sp_dark_muted">
-                          Pro plan • spevents.live
+                          Free plan
                         </p>
                       </div>
                       <div className="p-2">
