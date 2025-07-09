@@ -11,6 +11,25 @@
 - [ ] Fix /slideshow routing so that it goes back to event_library instead of just /host
 - [ ] Fix and make /event UI more intuitive, make more sense basically
 - [ ] Fix CreateEventModal; live app uses CreateEventModal.tsx instead of proper event creater CreateEventPage; make a simpler mode (just theme and presets) vs more customized Canva like editor
+- [ ] Fix updated UI for Event Library, update total number of photos that were uploaded
+- [ ] Starred events?; Example:
+      ? What does every bday have that it needs
+      ? create presets for each type of event (BDay theme, Wedding Theme)
+      ? Prevent bad photos
+- [ ] Create restrictions NSFW filter for what photos are put onto the
+- [ ] 3D Model, make it where geolocated internally
+
+# Marketing and Promotions
+
+- [ ] Vanderbilt Large events
+  - Vanderbilt Career / Activities Fair
+  - Belmont Career / Activities Fair
+  - Promoting through Greek Row
+    --> Doing all of this to get more traction and user's for later funding;
+    --> Simple charging of Free Tier / Student Tier / Pro Tier ($15 a month)
+  - Working with Vanderbilt School of Business
+  - Research Symposium get-togethers / social mixers on campus
+  - Commodore Launches
 
 main goal:
 
