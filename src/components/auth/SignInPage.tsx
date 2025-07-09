@@ -64,7 +64,7 @@ export function SignInPage() {
       if (result.user?.email) {
         localStorage.setItem("spevents-auth", result.user.email);
         console.log(
-          "SignIn: Authentication successful, AuthProvider will handle navigation",
+          "SignIn: Authentication successful, AuthProvider will handle navigation"
         );
 
         // Don't navigate manually - let the useEffect handle it when AuthProvider updates

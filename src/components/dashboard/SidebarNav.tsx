@@ -33,7 +33,7 @@ import darkIcon from "../../assets/dark-icon.svg";
 interface SidebarNavProps {
   activeTab: string;
   onTabChange: (
-    tab: "home" | "library" | "community" | "photos" | "guests",
+    tab: "home" | "library" | "community" | "photos" | "guests"
   ) => void;
   isMobile: boolean;
   darkMode: ReturnType<typeof useDarkMode>;
@@ -140,9 +140,11 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
       return (
         <button
           onClick={onClick}
-          className={`flex items-center w-full px-3 py-2 text-sm text-sp_green/70 dark:text-sp_dark_muted hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 hover:text-sp_darkgreen dark:hover:text-sp_dark_text rounded-lg transition-all duration-200 group ${
+          //                                                      LIGHT TEXT            DARK TEXT
+          className={`flex items-center w-full px-3 py-2 text-sm text-sp_green/70 dark:text-sp_eggshell hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 hover:text-sp_darkgreen dark:hover:text-sp_eggshell rounded-lg transition-all duration-200 group ${
             isActive
-              ? "bg-sp_lightgreen/20 text-sp_darkgreen dark:text-sp_lightgreen border border-sp_lightgreen/30"
+              ? //
+                "bg-sp_lightgreen/20 text-sp_darkgreen dark:text-sp_lightgreen border border-sp_lightgreen/30"
               : ""
           } ${className}`}
         >
@@ -175,8 +177,8 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
             width: isMobile
               ? "280px"
               : sidebar.iconMode
-                ? "80px"
-                : `${sidebar.width}px`,
+              ? "80px"
+              : `${sidebar.width}px`,
             minWidth: sidebar.iconMode ? "80px" : "200px",
           }}
         >
@@ -251,7 +253,7 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
 
                   {/* Tooltip for collapsed mode */}
                   {sidebar.iconMode && (
-                    <div className="absolute left-full ml-2 px-2 py-1 bg-sp_darkgreen dark:bg-sp_dark_surface text-white dark:text-sp_dark_text text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                    <div className="absolute left-full ml-2 px-2 py-1 bg-sp_darkgreen dark:bg-sp_dark_surface text-white dark:text-sp_eggshell text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
                       {item.label}
                     </div>
                   )}
@@ -265,7 +267,7 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
                 <div className="px-2 mt-6">
                   <button
                     onClick={() => toggleSection("starred")}
-                    className="flex items-center gap-2 w-full px-2 py-1 text-xs text-sp_green/60 dark:text-sp_dark_muted hover:text-sp_green dark:hover:text-sp_dark_text transition-colors"
+                    className="flex items-center gap-2 w-full px-2 py-1 text-xs text-sp_green/60 dark:text-sp_eggshell/70 hover:text-sp_green dark:hover:text-sp_eggshell transition-colors"
                   >
                     <ChevronDown
                       className={`w-3 h-3 transition-transform ${
@@ -291,15 +293,15 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
                                   event.status === "active"
                                     ? "bg-sp_lightgreen"
                                     : event.status === "ended"
-                                      ? "bg-sp_green/50"
-                                      : "bg-sp_midgreen/50"
+                                    ? "bg-sp_green/50"
+                                    : "bg-sp_midgreen/50"
                                 }`}
                               />
                               <span className="truncate">{event.name}</span>
                             </div>
                           </SidebarItem>
                           <button className="absolute right-2 top-1/2 -translate-y-1/2 p-1 opacity-0 group-hover:opacity-100 hover:bg-sp_eggshell/20 dark:hover:bg-sp_lightgreen/10 rounded transition-all">
-                            <MoreHorizontal className="w-3 h-3 text-sp_green/60 dark:text-sp_dark_muted" />
+                            <MoreHorizontal className="w-3 h-3 text-sp_green/60 dark:text-sp_eggshell/70" />
                           </button>
                         </div>
                       ))}
@@ -311,7 +313,7 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
                 <div className="px-2 mt-6">
                   <button
                     onClick={() => toggleSection("recent")}
-                    className="flex items-center gap-2 w-full px-2 py-1 text-xs text-sp_green/60 dark:text-sp_dark_muted hover:text-sp_green dark:hover:text-sp_dark_text transition-colors"
+                    className="flex items-center gap-2 w-full px-2 py-1 text-xs text-sp_green/60 dark:text-sp_eggshell/70 hover:text-sp_green dark:hover:text-sp_eggshell transition-colors"
                   >
                     <ChevronDown
                       className={`w-3 h-3 transition-transform ${
@@ -331,13 +333,13 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
                             <span className="truncate">{activity}</span>
                           </SidebarItem>
                           <button className="absolute right-2 top-1/2 -translate-y-1/2 p-1 opacity-0 group-hover:opacity-100 hover:bg-sp_eggshell/20 dark:hover:bg-sp_lightgreen/10 rounded transition-all">
-                            <MoreHorizontal className="w-3 h-3 text-sp_green/60 dark:text-sp_dark_muted" />
+                            <MoreHorizontal className="w-3 h-3 text-sp_green/60 dark:text-sp_eggshell/70" />
                           </button>
                         </div>
                       ))}
 
                       {/* View All Activities */}
-                      <SidebarItem className="text-xs justify-center text-sp_green/60 dark:text-sp_dark_muted hover:text-sp_green dark:hover:text-sp_dark_text">
+                      <SidebarItem className="text-xs justify-center text-sp_green/60 dark:text-sp_eggshell/70 hover:text-sp_green dark:hover:text-sp_eggshell">
                         <MoreHorizontal className="w-4 h-4 mr-2" />
                         <span>View all activities</span>
                       </SidebarItem>
@@ -348,7 +350,7 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
             )}
           </div>
 
-          {/* Bottom Section - Fixed at bottom */}
+          {/* Bottom Section*/}
           <div className="flex-shrink-0">
             {/* Dark Mode Toggle */}
             {!sidebar.iconMode && (
@@ -392,14 +394,14 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
                     {!sidebar.iconMode && (
                       <>
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-sp_darkgreen dark:text-sp_dark_text truncate">
+                          <div className="text-sm font-medium text-sp_darkgreen dark:text-sp_eggshell truncate">
                             {userData.firstName} {userData.lastName}
                           </div>
-                          <div className="text-xs text-sp_green/60 dark:text-sp_dark_muted">
+                          <div className="text-xs text-sp_green/60 dark:text-sp_eggshell/70">
                             Pro plan
                           </div>
                         </div>
-                        <ChevronDown className="w-4 h-4 text-sp_green/60 dark:text-sp_dark_muted flex-shrink-0" />
+                        <ChevronDown className="w-4 h-4 text-sp_green/60 dark:text-sp_eggshell/70 flex-shrink-0" />
                       </>
                     )}
                   </div>
@@ -418,26 +420,26 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
                       } bg-white dark:bg-sp_dark_surface border border-sp_eggshell/30 dark:border-sp_lightgreen/20 rounded-xl shadow-lg z-50`}
                     >
                       <div className="p-3 border-b border-sp_eggshell/30 dark:border-sp_lightgreen/20">
-                        <p className="font-medium text-sp_darkgreen dark:text-sp_dark_text">
+                        <p className="font-medium text-sp_darkgreen dark:text-sp_eggshell">
                           {userData.firstName} {userData.lastName}
                         </p>
-                        <p className="text-sm text-sp_green/70 dark:text-sp_dark_muted">
+                        <p className="text-sm text-sp_green/70 dark:text-sp_eggshell/70">
                           {userData.email}
                         </p>
-                        <p className="text-xs text-sp_green/60 dark:text-sp_dark_muted">
+                        <p className="text-xs text-sp_green/60 dark:text-sp_eggshell/60">
                           Free plan
                         </p>
                       </div>
                       <div className="p-2">
-                        <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_dark_text hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg">
+                        <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_eggshell hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg">
                           <UserIcon className="w-4 h-4" />
                           Profile Settings
                         </button>
-                        <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_dark_text hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg">
+                        <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_eggshell hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg">
                           <CreditCard className="w-4 h-4" />
                           Subscription
                         </button>
-                        <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_dark_text hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg">
+                        <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_eggshell hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg">
                           <Bell className="w-4 h-4" />
                           Notifications
                         </button>
@@ -445,7 +447,7 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
                           onClick={() =>
                             setShowBrandingPanel(!showBrandingPanel)
                           }
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_dark_text hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg"
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_eggshell hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg"
                         >
                           <HelpCircle className="w-4 h-4" />
                           Help & Support
@@ -470,7 +472,7 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
               <div className="px-4 pb-2">
                 <button
                   onClick={sidebar.toggleIconMode}
-                  className={`w-full flex items-center gap-3 p-2 rounded-lg hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 transition-colors text-sp_green/70 dark:text-sp_dark_muted ${
+                  className={`w-full flex items-center gap-3 p-2 rounded-lg hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 transition-colors text-sp_green/70 dark:text-sp_eggshell/70 ${
                     sidebar.iconMode ? "justify-center" : ""
                   }`}
                 >
@@ -496,10 +498,10 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
                   className="absolute bottom-20 left-2 right-2 bg-white dark:bg-sp_dark_surface border border-sp_eggshell/30 dark:border-sp_lightgreen/20 rounded-xl shadow-lg z-50"
                 >
                   <div className="p-3 border-b border-sp_eggshell/30 dark:border-sp_lightgreen/20">
-                    <h3 className="font-semibold text-sp_darkgreen dark:text-sp_dark_text">
+                    <h3 className="font-semibold text-sp_darkgreen dark:text-sp_eggshell">
                       spevents
                     </h3>
-                    <p className="text-sm text-sp_green/70 dark:text-sp_dark_muted">
+                    <p className="text-sm text-sp_green/70 dark:text-sp_eggshell/70">
                       Event Management Platform
                     </p>
                   </div>
@@ -508,16 +510,16 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
                       href="https://www.spevents.live"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_dark_text hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_eggshell hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg"
                     >
                       <ExternalLink className="w-4 h-4" />
                       Main Website
                     </a>
-                    <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_dark_text hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg">
+                    <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_eggshell hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg">
                       <HelpCircle className="w-4 h-4" />
                       FAQ
                     </button>
-                    <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_dark_text hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg">
+                    <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_eggshell hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg">
                       <Mail className="w-4 h-4" />
                       Contact Support
                     </button>
@@ -541,7 +543,7 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
         </div>
       </>
     );
-  },
+  }
 );
 
 SidebarNav.displayName = "SidebarNav";
