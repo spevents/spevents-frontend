@@ -90,10 +90,10 @@ const LibraryContent = memo(({ onCreateEvent }: LibraryContentProps) => {
     >
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-3xl font-bold text-sp_darkgreen dark:text-sp_dark_text mb-2">
+          <h2 className="text-3xl font-bold text-sp_darkgreen dark:text-sp_eggshell mb-2">
             Event Library
           </h2>
-          <p className="text-sp_green/80 dark:text-sp_dark_muted">
+          <p className="text-sp_green/80 dark:text-sp_eggshell">
             Manage all your created events
           </p>
         </div>

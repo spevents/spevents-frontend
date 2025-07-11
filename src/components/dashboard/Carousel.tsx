@@ -34,7 +34,7 @@ const Carousel = memo(({ children, title }: CarouselProps) => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-sp_darkgreen dark:text-sp_dark_text">
+        <h3 className="text-xl font-semibold text-sp_darkgreen dark:text-sp_eggshell">
           {title}
         </h3>
         <div className="flex gap-2">

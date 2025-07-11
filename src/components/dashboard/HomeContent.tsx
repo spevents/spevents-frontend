@@ -1,4 +1,4 @@
-// src/components/dashboard/HomeContent.tsx
+// src/dashboard/HomeContent.tsx
 
 import { memo, useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
@@ -11,6 +11,10 @@ import Carousel from "./Carousel";
 
 interface HomeContentProps {
   onCreateEvent: () => void;
+}
+
+interface EventData {
+  id: string;
 }
 
 // Mock photos for carousel
@@ -81,11 +85,11 @@ const HomeContent = memo(({ onCreateEvent }: HomeContentProps) => {
       case "ended":
         return "bg-sp_eggshell/20 text-sp_darkgreen dark:text-sp_dark_text border-sp_eggshell/30";
       default:
-        return "bg-sp_midgreen/20 text-sp_green dark:text-sp_lightgreen border-sp_midgreen/30";
+        return "bg-sp_midgreen/20 text-sp_green dark:text-sp_darkgreen border-sp_midgreen";
     }
   };
 
-  const handleEventClick = (event: any) => {
+  const handleEventClick = (event: EventData) => {
     selectEvent(event.id);
     navigate(`/host/event/${event.id}/gallery`);
   };
@@ -139,10 +143,10 @@ const HomeContent = memo(({ onCreateEvent }: HomeContentProps) => {
     >
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-sp_lightgreen/10 to-sp_midgreen/10 dark:from-sp_lightgreen/20 dark:to-sp_midgreen/20 rounded-2xl p-6 border border-sp_lightgreen/20">
-        <h2 className="text-3xl font-bold text-sp_darkgreen dark:text-sp_dark_text mb-2">
+        <h2 className="text-3xl font-bold text-sp_darkgreen dark:text-sp_eggshell mb-2">
           Welcome back, {userData.firstName}! 👋
         </h2>
-        <p className="text-sp_green/80 dark:text-sp_dark_muted">
+        <p className="text-sp_green/80 dark:text-sp_eggshell">
           Here's what's happening with your events today.
         </p>
       </div>
@@ -204,7 +208,7 @@ const HomeContent = memo(({ onCreateEvent }: HomeContentProps) => {
       {/* Recent Events */}
       <div>
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-semibold text-sp_darkgreen dark:text-sp_dark_text">
+          <h3 className="text-xl font-semibold text-sp_darkgreen dark:text-sp_eggshell">
             Recent Events
           </h3>
           <motion.button
@@ -273,8 +277,6 @@ const HomeContent = memo(({ onCreateEvent }: HomeContentProps) => {
           </div>
         )}
       </div>
-
-      {/* Photos Carousel */}
       <Carousel title="Recent Photos">
         {mockPhotos.map((photo) => (
           <div
@@ -288,7 +290,7 @@ const HomeContent = memo(({ onCreateEvent }: HomeContentProps) => {
                 className="w-full h-48 object-cover"
               />
               <div className="p-4">
-                <p className="text-sm font-medium text-sp_darkgreen dark:text-sp_dark_text">
+                <p className="text-sm font-medium text-sp_darkgreen dark:text-sp_eggshell">
                   {photo.event}
                 </p>
               </div>
@@ -299,7 +301,6 @@ const HomeContent = memo(({ onCreateEvent }: HomeContentProps) => {
     </motion.div>
   );
 });
-
 HomeContent.displayName = "HomeContent";
 
 export default HomeContent;

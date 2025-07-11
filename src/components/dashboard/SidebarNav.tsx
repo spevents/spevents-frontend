@@ -33,7 +33,7 @@ import darkIcon from "../../assets/dark-icon.svg";
 interface SidebarNavProps {
   activeTab: string;
   onTabChange: (
-    tab: "home" | "library" | "community" | "photos" | "guests"
+    tab: "home" | "library" | "community" | "photos" | "guests",
   ) => void;
   isMobile: boolean;
   darkMode: ReturnType<typeof useDarkMode>;
@@ -177,8 +177,8 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
             width: isMobile
               ? "280px"
               : sidebar.iconMode
-              ? "80px"
-              : `${sidebar.width}px`,
+                ? "80px"
+                : `${sidebar.width}px`,
             minWidth: sidebar.iconMode ? "80px" : "200px",
           }}
         >
@@ -293,8 +293,8 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
                                   event.status === "active"
                                     ? "bg-sp_lightgreen"
                                     : event.status === "ended"
-                                    ? "bg-sp_green/50"
-                                    : "bg-sp_midgreen/50"
+                                      ? "bg-sp_green/50"
+                                      : "bg-sp_midgreen/50"
                                 }`}
                               />
                               <span className="truncate">{event.name}</span>
@@ -543,7 +543,7 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
         </div>
       </>
     );
-  }
+  },
 );
 
 SidebarNav.displayName = "SidebarNav";
