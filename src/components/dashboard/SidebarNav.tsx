@@ -1,6 +1,6 @@
 // src/components/dashboard/SidebarNav.tsx
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Home,
@@ -33,7 +33,7 @@ import darkIcon from "../../assets/dark-icon.svg";
 interface SidebarNavProps {
   activeTab: string;
   onTabChange: (
-    tab: "home" | "library" | "community" | "photos" | "guests",
+    tab: "home" | "library" | "community" | "photos" | "guests"
   ) => void;
   isMobile: boolean;
   darkMode: ReturnType<typeof useDarkMode>;
@@ -71,6 +71,28 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
       starred: true,
       recent: true,
     });
+
+    // Ref for profile menu click-outside detection
+    const profileMenuRef = useRef<HTMLDivElement>(null);
+
+    // Close profile menu when clicking outside
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (
+          profileMenuRef.current &&
+          !profileMenuRef.current.contains(event.target as Node)
+        ) {
+          setShowProfileMenu(false);
+        }
+      };
+
+      if (showProfileMenu) {
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+          document.removeEventListener("mousedown", handleClickOutside);
+        };
+      }
+    }, [showProfileMenu]);
 
     // Mock starred events data
     const starredEvents = [
@@ -177,8 +199,8 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
             width: isMobile
               ? "280px"
               : sidebar.iconMode
-                ? "80px"
-                : `${sidebar.width}px`,
+              ? "80px"
+              : `${sidebar.width}px`,
             minWidth: sidebar.iconMode ? "80px" : "200px",
           }}
         >
@@ -293,8 +315,8 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
                                   event.status === "active"
                                     ? "bg-sp_lightgreen"
                                     : event.status === "ended"
-                                      ? "bg-sp_green/50"
-                                      : "bg-sp_midgreen/50"
+                                    ? "bg-sp_green/50"
+                                    : "bg-sp_midgreen/50"
                                 }`}
                               />
                               <span className="truncate">{event.name}</span>
@@ -370,7 +392,7 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
 
             {/* User Profile */}
             <div className="p-2 border-t border-sp_eggshell/30 dark:border-sp_lightgreen/20">
-              <div className="relative">
+              <div className="relative" ref={profileMenuRef}>
                 <SidebarItem
                   className="py-3"
                   onClick={() => setShowProfileMenu(!showProfileMenu)}
@@ -417,7 +439,7 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
                         sidebar.iconMode ? "left-full ml-2" : "bottom-full mb-2"
                       } ${
                         sidebar.iconMode ? "w-64" : "left-0 right-0"
-                      } bg-white dark:bg-sp_dark_surface border border-sp_eggshell/30 dark:border-sp_lightgreen/20 rounded-xl shadow-lg z-50`}
+                      } bg-white dark:bg-sp_darkgreen border border-sp_eggshell/30 dark:border-sp_lightgreen/20 rounded-xl shadow-lg z-50`}
                     >
                       <div className="p-3 border-b border-sp_eggshell/30 dark:border-sp_lightgreen/20">
                         <p className="font-medium text-sp_darkgreen dark:text-sp_eggshell">
@@ -543,7 +565,7 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
         </div>
       </>
     );
-  },
+  }
 );
 
 SidebarNav.displayName = "SidebarNav";

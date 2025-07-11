@@ -148,7 +148,7 @@ export function EventGallery() {
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate("/host")}
+              onClick={() => navigate("/host?tab=library")}
               className="p-2 hover:bg-white/10 rounded-full transition-colors"
             >
               <ArrowLeft className="w-5 h-5 text-white" />
@@ -231,7 +231,9 @@ export function EventGallery() {
                     {isDeletingPhotos ? (
                       <RefreshCw className="w-5 h-5 animate-spin" />
                     ) : (
-                      `Delete ${selectedPhotos.size ? `(${selectedPhotos.size})` : ""}`
+                      `Delete ${
+                        selectedPhotos.size ? `(${selectedPhotos.size})` : ""
+                      }`
                     )}
                   </button>
                 </div>

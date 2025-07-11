@@ -3,7 +3,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { Menu } from "lucide-react";
 
@@ -20,12 +20,22 @@ import CreateEventModal from "../../components/dashboard/CreateEventModal";
 
 export function EventDashboard() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const { createEvent, selectEvent } = useEvent();
 
+  // Get initial tab from URL params, default to "home"
+  const initialTab =
+    (searchParams.get("tab") as
+      | "home"
+      | "library"
+      | "community"
+      | "photos"
+      | "guests") || "home";
+
   const [activeTab, setActiveTab] = useState<
     "home" | "library" | "community" | "photos" | "guests"
-  >("home");
+  >(initialTab);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -41,6 +51,20 @@ export function EventDashboard() {
 
   const darkMode = useDarkMode();
   const sidebar = useSidebar();
+
+  // Update URL when tab changes
+  const handleTabChange = (
+    tab: "home" | "library" | "community" | "photos" | "guests",
+  ) => {
+    setActiveTab(tab);
+    if (tab === "home") {
+      // Remove tab param for home (clean URL)
+      setSearchParams({});
+    } else {
+      // Set tab param for other tabs
+      setSearchParams({ tab });
+    }
+  };
 
   useEffect(() => {
     const checkMobile = () => {
@@ -135,7 +159,7 @@ export function EventDashboard() {
       <SidebarNav
         ref={sidebarRef}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         isMobile={isMobile}
         darkMode={darkMode}
         sidebar={{
