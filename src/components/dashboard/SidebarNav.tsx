@@ -397,8 +397,8 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
                                     event.status === "active"
                                       ? "bg-sp_lightgreen"
                                       : event.status === "ended"
-                                      ? "bg-sp_green/50"
-                                      : "bg-sp_darkgreen/50"
+                                        ? "bg-sp_green/50"
+                                        : "bg-sp_darkgreen/50"
                                   }`}
                                 />
                                 <span className="truncate">{event.name}</span>
@@ -593,7 +593,7 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
         </div>
       </div>
     );
-  }
+  },
 );
 
 SidebarNav.displayName = "SidebarNav";

@@ -77,7 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
           console.warn(
             "Firestore unavailable, using localStorage fallback:",
-            error
+            error,
           );
 
           // Fallback to localStorage-only mode
@@ -99,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             };
             localStorage.setItem(
               "spevents_user_data",
-              JSON.stringify(userData)
+              JSON.stringify(userData),
             );
           }
         }
@@ -150,7 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.warn(
         "Failed to save onboarding completion to Firestore, using localStorage fallback:",
-        error
+        error,
       );
     }
   };

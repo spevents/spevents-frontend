@@ -18,7 +18,7 @@ export class UserService {
    * Creates or gets user profile, returns whether user is new
    */
   async createOrGetUserProfile(
-    firebaseUser: any
+    firebaseUser: any,
   ): Promise<{ profile: UserProfile; isNewUser: boolean }> {
     const userRef = doc(db, "users", firebaseUser.uid);
     const userSnap = await getDoc(userRef);
@@ -55,7 +55,7 @@ export class UserService {
         onboardingCompleted: true,
         firstLogin: false,
       },
-      { merge: true }
+      { merge: true },
     );
   }
 

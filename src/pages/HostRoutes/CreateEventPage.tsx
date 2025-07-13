@@ -527,7 +527,7 @@ export function CreateEventPage() {
                                     (v) =>
                                       v.id === view.id
                                         ? { ...v, name: e.target.value }
-                                        : v
+                                        : v,
                                   );
                                   setEventData((prev) => ({
                                     ...prev,
