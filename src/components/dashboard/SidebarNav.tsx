@@ -158,9 +158,9 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
       return (
         <button
           onClick={onClick}
-          className={`flex items-center w-full px-3 py-2 text-sm text-sp_green/70 dark:text-sp_eggshell hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 hover:text-sp_darkgreen dark:hover:text-sp_eggshell rounded-lg transition-all duration-200 group ${
+          className={`flex items-center w-full px-3 py-2 text-sm text-sp_darkgreen dark:text-sp_eggshell hover:bg-sp_green dark:hover:bg-sp_eggshell/10 hover:text-sp_darkgreen dark:hover:text-sp_eggshell rounded-lg transition-all duration-200 group ${
             isActive
-              ? "bg-sp_lightgreen/20 text-sp_darkgreen dark:text-sp_lightgreen border border-sp_lightgreen/30"
+              ? "bg-sp_lightgreen text-sp_eggshell dark:text-sp_eggshell/100 border border-sp_lightgreen/30"
               : ""
           } ${className}`}
         >
@@ -222,12 +222,12 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
         <div
           ref={ref}
           className={`
-            ${isMobile ? "fixed left-0 top-0 z-50" : "relative"}
-            h-screen bg-white dark:bg-sp_dark_surface border-r border-sp_eggshell/30 dark:border-sp_lightgreen/20 
-            flex flex-col transition-all duration-300 ease-in-out
-            ${sidebar.collapsed && !isMobile ? "w-20" : ""}
-            ${sidebar.iconMode && !isMobile ? "w-20" : ""}
-          `}
+        ${isMobile ? "fixed left-0 top-0 z-50" : "relative"}
+        h-screen bg-white dark:bg-sp_darkgreen border-r border-sp_eggshell/30 dark:border-sp_lightgreen/20
+        flex flex-col transition-all duration-300 ease-in-out
+        ${sidebar.collapsed && !isMobile ? "w-20" : ""}
+        ${sidebar.iconMode && !isMobile ? "w-20" : ""}
+      `}
           style={{
             width: isMobile ? "280px" : sidebar.iconMode ? "80px" : "280px",
             minWidth: sidebar.iconMode ? "80px" : "200px",
@@ -270,7 +270,7 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
             <div className="p-2 space-y-1">
               {/* Create Event Button */}
               <SidebarItem
-                className="bg-gradient-to-r from-sp_midgreen to-sp_green hover:from-sp_green hover:to-sp_darkgreen text-white font-medium"
+                className="bg-gradient-to-r from-sp_green to-sp_lightgreen hover:from-sp_lightgreen hover:to-sp_darkgreen text-white font-medium"
                 onClick={onCreateEvent}
               >
                 <div
@@ -318,7 +318,7 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
                 <div className="px-2 mt-6">
                   <button
                     onClick={() => toggleSection("starred")}
-                    className="flex items-center gap-2 w-full px-2 py-1 text-xs text-sp_green/60 dark:text-sp_eggshell/70 hover:text-sp_green dark:hover:text-sp_eggshell transition-colors"
+                    className="flex items-center gap-2 w-full px-2 py-1 text-xs text-sp_darkgreen dark:text-sp_eggshell/70 hover:text-sp_green dark:hover:text-sp_eggshell transition-colors"
                   >
                     <ChevronDown
                       className={`w-3 h-3 transition-transform ${
@@ -345,7 +345,7 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
                                     ? "bg-sp_lightgreen"
                                     : event.status === "ended"
                                       ? "bg-sp_green/50"
-                                      : "bg-sp_midgreen/50"
+                                      : "bg-sp_darkgreen/50"
                                 }`}
                               />
                               <span className="truncate">{event.name}</span>
@@ -364,7 +364,7 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
                 <div className="px-2 mt-6">
                   <button
                     onClick={() => toggleSection("recent")}
-                    className="flex items-center gap-2 w-full px-2 py-1 text-xs text-sp_green/60 dark:text-sp_eggshell/70 hover:text-sp_green dark:hover:text-sp_eggshell transition-colors"
+                    className="flex items-center gap-2 w-full px-2 py-1 text-xs text-sp_darkgreen dark:text-sp_eggshell/70 hover:text-sp_green dark:hover:text-sp_eggshell transition-colors"
                   >
                     <ChevronDown
                       className={`w-3 h-3 transition-transform ${
@@ -432,7 +432,7 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
                         className="w-7 h-7 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="w-7 h-7 bg-gradient-to-br from-sp_midgreen to-sp_green rounded-full flex items-center justify-center text-sm font-medium text-white">
+                      <div className="w-7 h-7 bg-gradient-to-br from-sp_lightgreen to-sp_green rounded-full flex items-center justify-center text-sm font-medium text-white">
                         {getInitials()}
                       </div>
                     )}

@@ -2,11 +2,27 @@
 /** @type {import('tailwindcss').Config} */
 const palette = {
   sp_eggshell: "#dad7cd",
-  sp_lightgreen: "#a3b18a",
-  sp_green: "#3a5a40",
+  sp_lightgreen: "#3a5a40",
+  sp_green: "#a3b18a",
   sp_midgreen: "#588157",
   sp_darkgreen: "#344e41",
 };
+
+// const palette = {
+//   sp_eggshell: "#dad7cd",
+//   sp_lightgreen: "#a3b18a",
+//   sp_green: "#3a5a40",
+//   sp_midgreen: "#588157",
+//   sp_darkgreen: "#344e41",
+// };
+
+// const palette = {
+//   neutral_bg: "#f8f9fa",         // eggshell-like, clean background
+//   primary: "#3a5a40",            // deep green
+//   secondary: "#a3b18a",          // soft olive green
+//   accent: "#588157",             // a touch of vibrancy for hovers/buttons
+//   dark: "#344e41",               // dark mode or strong contrast
+// };
 
 module.exports = {
   darkMode: ["class"],

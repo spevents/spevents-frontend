@@ -57,7 +57,7 @@ export default function SlideshowQRCode() {
     return (
       <div className="flex px-4 py-3 justify-end">
         <div className="bg-white rounded-lg overflow-hidden flex flex-col">
-          <div className="bg-[#101827] w-full flex items-center justify-center px-6 py-2">
+          <div className="min-h-screen flex items-center justify-center bg-sp_darkgreen dark:bg-sp_eggshell">
             <span className="text-white text-sm">Loading...</span>
           </div>
           <div className="w-full flex items-center justify-center p-3">
