@@ -1,8 +1,7 @@
-// src/pages/HostRoutes/EventDashboard.tsx
+// src/pages/HostRoutes/LibraryPage.tsx
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import { Menu } from "lucide-react";
 
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -10,18 +9,15 @@ import { useEvent } from "@/contexts/EventContext";
 import { useSidebar } from "@/hooks/useSideBar";
 
 import SidebarNav from "@/components/dashboard/SidebarNav";
-import HomeContent from "@/components/dashboard/HomeContent";
+import LibraryContent from "@/components/dashboard/LibraryContent";
 import CreateEventModal from "@/components/dashboard/CreateEventModal";
 
-export function EventDashboard() {
-  const navigate = useNavigate();
+export function LibraryPage() {
   const { user } = useAuth();
   const { createEvent, selectEvent } = useEvent();
-
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Sidebar width management
   const sidebarRef = useRef<HTMLDivElement>(null);
 
   const sidebar = useSidebar();
@@ -50,7 +46,6 @@ export function EventDashboard() {
       });
       setShowCreateModal(false);
       selectEvent(newEvent.id);
-      navigate(`/host/event/${newEvent.id}/gallery`);
     } catch (error) {
       console.error("Failed to create event:", error);
     }
@@ -93,7 +88,7 @@ export function EventDashboard() {
               isMobile ? "pt-16" : ""
             }`}
           >
-            <HomeContent onCreateEvent={() => setShowCreateModal(true)} />
+            <LibraryContent onCreateEvent={() => setShowCreateModal(true)} />
           </div>
         </main>
       </div>

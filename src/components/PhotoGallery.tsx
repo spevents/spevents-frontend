@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { QrCode, Trash2, RefreshCw, CheckCircle } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { getPhotoUrl, listPhotos, deleteMultipleFiles } from "../services/api";
+import { getPhotoUrl, listPhotos, deleteMultipleFiles } from "@/services/api";
 import { QRCodeModal } from "./QRCodeModal";
 
 interface StoragePhoto {

@@ -1,6 +1,6 @@
 // src/pages/HostRoutes/EventGallery.tsx
 import { useParams, useNavigate, Navigate } from "react-router-dom";
-import { useEvent } from "../../contexts/EventContext";
+import { useEvent } from "@/contexts/EventContext";
 import { useState, useEffect } from "react";
 import {
   QrCode,
@@ -16,13 +16,13 @@ import {
   getEventPhotoUrl,
   deleteMultipleFiles,
   EventPhoto,
-} from "../../services/api";
+} from "@/services/api";
 // import {
 //   listAllEventPhotos,
 //   getEventPhotoUrl,
 //   deleteMultipleFiles,
 //   EventPhoto,
-// } from "../../lib/aws";
+// } from "@/lib/aws";
 
 interface DisplayPhoto {
   url: string;
@@ -148,7 +148,7 @@ export function EventGallery() {
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate("/host?tab=library")}
+              onClick={() => navigate("/host/library")}
               className="p-2 hover:bg-white/10 rounded-full transition-colors"
             >
               <ArrowLeft className="w-5 h-5 text-white" />

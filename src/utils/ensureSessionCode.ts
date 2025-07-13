@@ -1,6 +1,6 @@
 // src/utils/ensureSessionCode.ts
 
-import { eventService } from "../services/api";
+import { eventService } from "@/services/api";
 
 export const ensureEventHasSessionCode = async (eventId: string) => {
   try {

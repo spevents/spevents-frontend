@@ -1,7 +1,7 @@
 // src/components/camera/CameraInterface.tsx
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { useNgrok } from "../../contexts/NgrokContext";
+import { useNgrok } from "@/contexts/NgrokContext";
 import { useZoom } from "./hooks/useZoom";
 import { useOrientation } from "./hooks/useOrientation";
 import { ZoomControl } from "./ZoomControl";
@@ -14,7 +14,7 @@ import {
   ExtendedMediaTrackConstraintSet,
 } from "./types/media";
 
-import { storeTempPhotos, getTempPhotos } from "../../services/api";
+import { storeTempPhotos, getTempPhotos } from "@/services/api";
 
 import { useActualEventId } from "../session/SessionValidator";
 

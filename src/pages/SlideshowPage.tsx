@@ -1,4 +1,4 @@
-import { PhotoSlideshow } from "../components";
+import { PhotoSlideshow } from "@/components";
 import SlideshowQRCode from "./SlideshowQRCode";
 
 export default function SlideshowPage() {

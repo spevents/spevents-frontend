@@ -11,12 +11,12 @@ import {
   AlignHorizontalSpaceAround,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-// import { listAllEventPhotos, getEventPhotoUrl, EventPhoto } from "../lib/aws";
+// import { listAllEventPhotos, getEventPhotoUrl, EventPhoto } from "@/lib/aws";
 import {
   listAllEventPhotos,
   getEventPhotoUrl,
   EventPhoto,
-} from "../services/api";
+} from "@/services/api";
 import FunSlideshow from "./slideshow_modes/FunSlideshow";
 import PresenterSlideshow from "./slideshow_modes/PresenterSlideshow";
 import ModelSlideshow from "./slideshow_modes/ModelSlideshow";

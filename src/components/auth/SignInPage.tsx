@@ -8,7 +8,7 @@ import {
 import { useNavigate, Link } from "react-router-dom";
 import { auth } from "../config/firebase";
 import { useAuth } from "./AuthProvider";
-import darkIcon from "../../assets/dark-icon.svg";
+import darkIcon from "@/assets/dark-icon.svg";
 
 export function SignInPage() {
   const [isLoading, setIsLoading] = useState<string | null>(null);

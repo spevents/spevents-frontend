@@ -1,6 +1,6 @@
 // src/services/api.ts
 
-import { auth, db } from "../components/config/firebase";
+import { auth, db } from "@/components/config/firebase";
 import { collection, query, where, limit, getDocs } from "firebase/firestore";
 
 const BACKEND_URL = "https://api.spevents.live";
@@ -14,7 +14,7 @@ interface CreateEventData {
   description?: string;
 }
 
-import { Event } from "../types/event";
+import { Event } from "@/types/event";
 
 export interface EventPhoto {
   fileName: string;

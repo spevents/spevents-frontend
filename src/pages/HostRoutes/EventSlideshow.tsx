@@ -1,11 +1,11 @@
 // src/pages/HostRoutes/EventSlideshow.tsx
 
 import { useParams, Navigate } from "react-router-dom";
-import { useEvent } from "../../contexts/EventContext";
+import { useEvent } from "@/contexts/EventContext";
 import { useEffect, useState } from "react";
-import { PhotoSlideshow } from "../../components";
+import { PhotoSlideshow } from "@/components";
 import { QRCodeSVG } from "qrcode.react";
-import { eventService, guestService } from "../../services/api";
+import { eventService, guestService } from "@/services/api";
 
 export function EventSlideshow() {
   const { eventId } = useParams<{ eventId: string }>();

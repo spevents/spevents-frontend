@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ChevronLeft, LayoutGrid } from "lucide-react";
-import { getSignedPhotoUrl } from "../../services/api";
+import { getSignedPhotoUrl } from "@/services/api";
 import { AnimatePresence, motion } from "framer-motion";
 import { useActualEventId } from "../session/SessionValidator";
 

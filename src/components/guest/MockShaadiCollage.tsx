@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft, LayoutGrid, Plus, Share2, Type, X } from "lucide-react";
 import { shareToInstagram } from "./utils/collage";
-import { getSignedPhotoUrl } from "../../services/api";
+import { getSignedPhotoUrl } from "@/services/api";
 import { useActualEventId } from "../session/SessionValidator";
 import { AnimatePresence, motion } from "framer-motion";
 

@@ -2,9 +2,9 @@
 import { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { X, RefreshCw, Download, Edit2 } from "lucide-react";
-import { useNgrok } from "../contexts/NgrokContext";
+import { useNgrok } from "@/contexts/NgrokContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSession } from "../contexts/SessionContext";
+import { useSession } from "@/contexts/SessionContext";
 
 interface QRCodeModalProps {
   isOpen: boolean;

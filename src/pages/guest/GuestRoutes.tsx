@@ -9,12 +9,12 @@ import {
 } from "react-router-dom";
 import { useEffect } from "react";
 import { GuestLanding } from "./GuestLanding";
-import CameraInterface from "../../components/camera/CameraInterface";
-import PhotoReview from "../../components/PhotoReview/PhotoReview";
-import { GuestDashboard } from "../../components/guest/GuestDashboard";
-import FeedbackPage from "../../components/guest/FeedbackPage";
-import { CollageCreator } from "../../components/guest/CollageCreator";
-import { SessionValidator } from "../../components/session/SessionValidator";
+import CameraInterface from "@/components/camera/CameraInterface";
+import PhotoReview from "@/components/PhotoReview/PhotoReview";
+import { GuestDashboard } from "@/components/guest/GuestDashboard";
+import FeedbackPage from "@/components/guest/FeedbackPage";
+import { CollageCreator } from "@/components/guest/CollageCreator";
+import { SessionValidator } from "@/components/session/SessionValidator";
 
 const isMobileDevice = () => {
   const userAgent = navigator.userAgent || navigator.vendor;

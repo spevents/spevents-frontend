@@ -1,7 +1,7 @@
 // src/components/debug/SessionDebug.tsx
 
 import React, { useState, useEffect } from "react";
-import { eventService, guestService } from "../../services/api";
+import { eventService, guestService } from "@/services/api";
 
 interface SessionDebugProps {
   eventId: string;

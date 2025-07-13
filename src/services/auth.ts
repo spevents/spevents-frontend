@@ -7,7 +7,7 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged,
 } from "firebase/auth";
-import { auth as firebaseAuth } from "../components/config/firebase";
+import { auth as firebaseAuth } from "@/components/config/firebase";
 
 const provider = new GoogleAuthProvider();
 provider.addScope("email");

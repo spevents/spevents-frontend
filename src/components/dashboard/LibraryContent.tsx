@@ -14,7 +14,7 @@ import {
   Presentation,
 } from "lucide-react";
 
-import { useEvent } from "../../contexts/EventContext";
+import { useEvent } from "@/contexts/EventContext";
 
 interface LibraryContentProps {
   onCreateEvent: () => void;

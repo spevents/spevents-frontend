@@ -1,6 +1,6 @@
 // src/pages/HostRoutes/EventQRCode.tsx
 import { useParams, useNavigate, Navigate } from "react-router-dom";
-import { useEvent } from "../../contexts/EventContext";
+import { useEvent } from "@/contexts/EventContext";
 import { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { ArrowLeft, Download, Copy, Check } from "lucide-react";

@@ -2,9 +2,15 @@
 
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import path from "path";
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "src"),
+    },
+  },
   build: {
     rollupOptions: {
       output: {
@@ -16,7 +22,7 @@ export default defineConfig({
         },
       },
     },
-    // Increase chunk size warning limit to 1MB
+
     chunkSizeWarningLimit: 1000,
     minify: "terser",
     terserOptions: {
@@ -26,7 +32,7 @@ export default defineConfig({
       },
     },
   },
-  // Optimize dependencies
+
   optimizeDeps: {
     include: [
       "react",

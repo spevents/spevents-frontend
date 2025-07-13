@@ -1,6 +1,6 @@
 // src/components/dashboard/SidebarNav.tsx
-
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import { forwardRef, useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Home,
@@ -8,65 +8,36 @@ import {
   Globe,
   Images,
   Users,
-  UserIcon,
+  Plus,
   ChevronDown,
+  Sun,
+  Moon,
+  UserIcon,
   Bell,
   CreditCard,
   LogOut,
-  Sun,
-  Moon,
-  ExternalLink,
-  HelpCircle,
-  Mail,
-  GripVertical,
-  PanelLeftOpen,
-  PanelLeftClose,
-  Plus,
   MoreHorizontal,
 } from "lucide-react";
-import { useSidebar } from "../../hooks/useSideBar";
-import { useDarkMode } from "../../hooks/useDarkMode";
+import { useSidebar } from "@/hooks/useSideBar";
+import { useDarkMode } from "@/hooks/useDarkMode";
 import { useAuth } from "../auth/AuthProvider";
-import lightIcon from "../../assets/light-icon.svg";
-import darkIcon from "../../assets/dark-icon.svg";
+
+import lightIcon from "@/assets/light-icon.svg";
+import darkIcon from "@/assets/dark-icon.svg";
 
 interface SidebarNavProps {
-  activeTab: string;
-  onTabChange: (
-    tab: "home" | "library" | "community" | "photos" | "guests"
-  ) => void;
-  isMobile: boolean;
-  darkMode: ReturnType<typeof useDarkMode>;
-  sidebar: ReturnType<typeof useSidebar>;
-  onCreateEvent?: () => void;
+  onCreateEvent: () => void;
 }
 
-const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
-  ({ activeTab, onTabChange, isMobile, onCreateEvent }, ref) => {
+const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
+  ({ onCreateEvent }, ref) => {
+    const navigate = useNavigate();
+    const location = useLocation();
     const sidebar = useSidebar();
     const darkMode = useDarkMode();
     const { user, signOut } = useAuth();
-
-    const getUserData = () => {
-      if (!user) {
-        return {
-          firstName: "User",
-          lastName: "",
-          email: "user@example.com",
-          company: "",
-        };
-      }
-
-      const nameParts = user.name.trim().split(" ");
-      const firstName = nameParts[0] || "User";
-      const lastName = nameParts.slice(1).join(" ") || "";
-      return { firstName, lastName, email: user.email, company: "" };
-    };
-
-    const userData = getUserData();
-
+    const [isMobile, setIsMobile] = useState(false);
     const [showProfileMenu, setShowProfileMenu] = useState(false);
-    const [showBrandingPanel, setShowBrandingPanel] = useState(false);
     const [expandedSections, setExpandedSections] = useState({
       starred: true,
       recent: true,
@@ -111,16 +82,26 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
       "QR Code Generation Feature",
       "Guest Management System",
       "Photo Gallery Enhancement",
-      "Mobile Responsive Updates",
-      "User Authentication Flow",
-      "Event Analytics Dashboard",
-      "Slideshow Feature Development",
-      "Social Media Integration",
-      "Payment Processing Setup",
-      "Email Notification System",
-      "Backup & Recovery System",
-      "Performance Optimization",
     ];
+
+    // Get user data from Firebase
+    const getUserData = () => {
+      if (!user) {
+        return {
+          firstName: "User",
+          lastName: "",
+          email: "user@example.com",
+          company: "",
+        };
+      }
+
+      const nameParts = user.name?.trim().split(" ") || [];
+      const firstName = nameParts[0] || "User";
+      const lastName = nameParts.slice(1).join(" ") || "";
+      return { firstName, lastName, email: user.email, company: "" };
+    };
+
+    const userData = getUserData();
 
     const toggleSection = useCallback((section: string) => {
       setExpandedSections((prev) => ({
@@ -148,6 +129,21 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
       console.log("Navigate to event:", event);
     }, []);
 
+    // Check mobile on mount and resize
+    useEffect(() => {
+      const checkMobile = () => {
+        const mobile = window.innerWidth < 768;
+        setIsMobile(mobile);
+        if (mobile) {
+          sidebar.setCollapsed(true);
+        }
+      };
+      checkMobile();
+      window.addEventListener("resize", checkMobile);
+      return () => window.removeEventListener("resize", checkMobile);
+    }, [sidebar]);
+
+    // Inline SidebarItem component
     const SidebarItem = ({
       children,
       className = "",
@@ -162,11 +158,9 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
       return (
         <button
           onClick={onClick}
-          //                                                      LIGHT TEXT            DARK TEXT
           className={`flex items-center w-full px-3 py-2 text-sm text-sp_green/70 dark:text-sp_eggshell hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 hover:text-sp_darkgreen dark:hover:text-sp_eggshell rounded-lg transition-all duration-200 group ${
             isActive
-              ? //
-                "bg-sp_lightgreen/20 text-sp_darkgreen dark:text-sp_lightgreen border border-sp_lightgreen/30"
+              ? "bg-sp_lightgreen/20 text-sp_darkgreen dark:text-sp_lightgreen border border-sp_lightgreen/30"
               : ""
           } ${className}`}
         >
@@ -175,12 +169,51 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
       );
     };
 
+    // Determine active route based on current path
+    const getActiveRoute = () => {
+      const path = location.pathname;
+      if (path === "/host" || path === "/host/") return "home";
+      if (path.includes("/host/library")) return "library";
+      if (path.includes("/host/community")) return "community";
+      if (path.includes("/host/photos")) return "photos";
+      if (path.includes("/host/guest")) return "guests";
+      return "home";
+    };
+
+    const currentActiveTab = getActiveRoute();
+
+    const handleNavigation = (route: string) => {
+      switch (route) {
+        case "home":
+          navigate("/host");
+          break;
+        case "library":
+          navigate("/host/library");
+          break;
+        case "community":
+          navigate("/host/community");
+          break;
+        case "photos":
+          navigate("/host/photos");
+          break;
+        case "guests":
+          navigate("/host/guest");
+          break;
+        default:
+          navigate("/host");
+      }
+    };
+
+    if (isMobile && sidebar.collapsed) {
+      return null;
+    }
+
     return (
       <>
-        {/* Mobile Overlay */}
+        {/* Mobile overlay */}
         {isMobile && !sidebar.collapsed && (
           <div
-            className="fixed inset-0 bg-black/50 z-40 md:hidden"
+            className="fixed inset-0 bg-black/50 z-40"
             onClick={() => sidebar.setCollapsed(true)}
           />
         )}
@@ -188,19 +221,15 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
         {/* Sidebar */}
         <div
           ref={ref}
-          className={`${
-            isMobile
-              ? `fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ${
-                  sidebar.collapsed ? "-translate-x-full" : "translate-x-0"
-                }`
-              : "relative h-screen"
-          } bg-white dark:bg-sp_dark_bg border-r border-sp_eggshell/30 dark:border-sp_lightgreen/20 flex flex-col transition-colors`}
+          className={`
+            ${isMobile ? "fixed left-0 top-0 z-50" : "relative"}
+            h-screen bg-white dark:bg-sp_dark_surface border-r border-sp_eggshell/30 dark:border-sp_lightgreen/20 
+            flex flex-col transition-all duration-300 ease-in-out
+            ${sidebar.collapsed && !isMobile ? "w-20" : ""}
+            ${sidebar.iconMode && !isMobile ? "w-20" : ""}
+          `}
           style={{
-            width: isMobile
-              ? "280px"
-              : sidebar.iconMode
-              ? "80px"
-              : `${sidebar.width}px`,
+            width: isMobile ? "280px" : sidebar.iconMode ? "80px" : "280px",
             minWidth: sidebar.iconMode ? "80px" : "200px",
           }}
         >
@@ -230,7 +259,7 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
                     src={darkMode.darkMode ? darkIcon : lightIcon}
                     alt="Spevents"
                     className="w-6 h-6"
-                  />{" "}
+                  />
                 </div>
               </div>
             )}
@@ -266,8 +295,8 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
               ].map((item) => (
                 <div key={item.id} className="relative group">
                   <SidebarItem
-                    onClick={() => onTabChange(item.id as any)}
-                    isActive={activeTab === item.id}
+                    onClick={() => handleNavigation(item.id)}
+                    isActive={currentActiveTab === item.id}
                   >
                     <item.icon className="w-4 h-4 mr-3" />
                     {!sidebar.iconMode && <span>{item.label}</span>}
@@ -315,8 +344,8 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
                                   event.status === "active"
                                     ? "bg-sp_lightgreen"
                                     : event.status === "ended"
-                                    ? "bg-sp_green/50"
-                                    : "bg-sp_midgreen/50"
+                                      ? "bg-sp_green/50"
+                                      : "bg-sp_midgreen/50"
                                 }`}
                               />
                               <span className="truncate">{event.name}</span>
@@ -348,7 +377,7 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
                   </button>
 
                   {expandedSections.recent && (
-                    <div className="mt-2 space-y-px max-h-80 overflow-y-auto">
+                    <div className="mt-2 space-y-px max-h-40 overflow-y-auto">
                       {recentActivities.map((activity, index) => (
                         <div key={index} className="relative group">
                           <SidebarItem className="text-xs pr-8">
@@ -359,12 +388,6 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
                           </button>
                         </div>
                       ))}
-
-                      {/* View All Activities */}
-                      <SidebarItem className="text-xs justify-center text-sp_green/60 dark:text-sp_eggshell/70 hover:text-sp_green dark:hover:text-sp_eggshell">
-                        <MoreHorizontal className="w-4 h-4 mr-2" />
-                        <span>View all activities</span>
-                      </SidebarItem>
                     </div>
                   )}
                 </div>
@@ -372,7 +395,7 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
             )}
           </div>
 
-          {/* Bottom Section*/}
+          {/* Bottom Section */}
           <div className="flex-shrink-0">
             {/* Dark Mode Toggle */}
             {!sidebar.iconMode && (
@@ -420,7 +443,7 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
                             {userData.firstName} {userData.lastName}
                           </div>
                           <div className="text-xs text-sp_green/60 dark:text-sp_eggshell/70">
-                            Pro plan
+                            Free plan
                           </div>
                         </div>
                         <ChevronDown className="w-4 h-4 text-sp_green/60 dark:text-sp_eggshell/70 flex-shrink-0" />
@@ -439,7 +462,7 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
                         sidebar.iconMode ? "left-full ml-2" : "bottom-full mb-2"
                       } ${
                         sidebar.iconMode ? "w-64" : "left-0 right-0"
-                      } bg-white dark:bg-sp_darkgreen border border-sp_eggshell/30 dark:border-sp_lightgreen/20 rounded-xl shadow-lg z-50`}
+                      } bg-white dark:bg-sp_dark_surface border border-sp_eggshell/30 dark:border-sp_lightgreen/20 rounded-xl shadow-lg z-50`}
                     >
                       <div className="p-3 border-b border-sp_eggshell/30 dark:border-sp_lightgreen/20">
                         <p className="font-medium text-sp_darkgreen dark:text-sp_eggshell">
@@ -465,15 +488,6 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
                           <Bell className="w-4 h-4" />
                           Notifications
                         </button>
-                        <button
-                          onClick={() =>
-                            setShowBrandingPanel(!showBrandingPanel)
-                          }
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_eggshell hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg"
-                        >
-                          <HelpCircle className="w-4 h-4" />
-                          Help & Support
-                        </button>
                         <hr className="my-1 border-sp_eggshell/30 dark:border-sp_lightgreen/20" />
                         <button
                           onClick={handleSignOut}
@@ -488,84 +502,11 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
                 </AnimatePresence>
               </div>
             </div>
-
-            {/* Collapse Toggle - Only show when threshold is met */}
-            {!isMobile && sidebar.canCollapse && (
-              <div className="px-4 pb-2">
-                <button
-                  onClick={sidebar.toggleIconMode}
-                  className={`w-full flex items-center gap-3 p-2 rounded-lg hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 transition-colors text-sp_green/70 dark:text-sp_eggshell/70 ${
-                    sidebar.iconMode ? "justify-center" : ""
-                  }`}
-                >
-                  {sidebar.iconMode ? (
-                    <PanelLeftOpen className="w-5 h-5" />
-                  ) : (
-                    <>
-                      <PanelLeftClose className="w-5 h-5" />
-                      <span className="text-sm font-medium">Collapse</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
-
-            {/* Branding Panel */}
-            <AnimatePresence>
-              {showBrandingPanel && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="absolute bottom-20 left-2 right-2 bg-white dark:bg-sp_dark_surface border border-sp_eggshell/30 dark:border-sp_lightgreen/20 rounded-xl shadow-lg z-50"
-                >
-                  <div className="p-3 border-b border-sp_eggshell/30 dark:border-sp_lightgreen/20">
-                    <h3 className="font-semibold text-sp_darkgreen dark:text-sp_eggshell">
-                      spevents
-                    </h3>
-                    <p className="text-sm text-sp_green/70 dark:text-sp_eggshell/70">
-                      Event Management Platform
-                    </p>
-                  </div>
-                  <div className="p-2">
-                    <a
-                      href="https://www.spevents.live"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_eggshell hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      Main Website
-                    </a>
-                    <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_eggshell hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg">
-                      <HelpCircle className="w-4 h-4" />
-                      FAQ
-                    </button>
-                    <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_eggshell hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg">
-                      <Mail className="w-4 h-4" />
-                      Contact Support
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
-
-          {/* Resize Handle - Desktop Only */}
-          {!isMobile && !sidebar.iconMode && (
-            <div
-              className="absolute top-0 right-0 w-1 h-full cursor-col-resize group hover:bg-sp_midgreen/20 transition-colors"
-              onMouseDown={sidebar.handleMouseDown}
-            >
-              <div className="absolute top-1/2 -translate-y-1/2 -right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <GripVertical className="w-3 h-3 text-sp_midgreen" />
-              </div>
-            </div>
-          )}
         </div>
       </>
     );
-  }
+  },
 );
 
 SidebarNav.displayName = "SidebarNav";

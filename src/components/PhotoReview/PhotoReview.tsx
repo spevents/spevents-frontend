@@ -6,7 +6,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useSwipeable } from "react-swipeable";
 
 // Backend API calls
-import { getPresignedUrl } from "../../services/api";
+import { getPresignedUrl } from "@/services/api";
 
 // Local storage utilities for temp photos
 const getTempPhotos = (eventId: string): Photo[] => {
@@ -46,7 +46,7 @@ const storeUploadedPhoto = (
   }
 };
 
-import { useNgrok } from "../../contexts/NgrokContext";
+import { useNgrok } from "@/contexts/NgrokContext";
 import { useActualEventId } from "../session/SessionValidator";
 
 interface Photo {

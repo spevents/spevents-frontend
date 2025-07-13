@@ -1,9 +1,9 @@
 // Navigation.tsx
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
-import darkIcon from "../../assets/dark-icon.svg";
-import lightIcon from "../../assets/light-icon.svg";
-import githubLogo from "../../assets/github-mark.svg";
+import darkIcon from "@/assets/dark-icon.svg";
+import lightIcon from "@/assets/light-icon.svg";
+import githubLogo from "@/assets/github-mark.svg";
 import { motion } from "framer-motion";
 
 export const fadeIn = {

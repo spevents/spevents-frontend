@@ -3,9 +3,9 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { CalendarCheck, Users, Camera, LineChart, Menu, X } from "lucide-react";
 import { ProductPage } from "./minis/ProductPage";
-import githubLogo from "../../assets/github-mark.svg";
-import lightIcon from "../../assets/light-icon.svg";
-import { getDomain } from "../../components/config/routes";
+import githubLogo from "@/assets/github-mark.svg";
+import lightIcon from "@/assets/light-icon.svg";
+import { getDomain } from "@/components/config/routes";
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },

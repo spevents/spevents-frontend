@@ -5,8 +5,8 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Calendar, Camera, Users, Plus, ArrowRight, Zap } from "lucide-react";
 
-import { useEvent } from "../../contexts/EventContext";
-import { useAuth } from "../../components/auth/AuthProvider";
+import { useEvent } from "@/contexts/EventContext";
+import { useAuth } from "@/components/auth/AuthProvider";
 import Carousel from "./Carousel";
 
 interface HomeContentProps {

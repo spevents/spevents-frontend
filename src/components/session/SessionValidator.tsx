@@ -1,8 +1,8 @@
 // src/components/session/SessionValidator.tsx
 
 import React, { useEffect, useState } from "react";
-import { useSession } from "../../contexts/SessionContext";
-import { guestService } from "../../services/api";
+import { useSession } from "@/contexts/SessionContext";
+import { guestService } from "@/services/api";
 
 interface SessionValidatorProps {
   children: React.ReactNode;
@@ -124,4 +124,4 @@ export const SessionValidator: React.FC<SessionValidatorProps> = ({
 };
 
 // Export the useActualEventId hook for components that need it
-export { useActualEventId } from "../../contexts/SessionContext";
+export { useActualEventId } from "@/contexts/SessionContext";

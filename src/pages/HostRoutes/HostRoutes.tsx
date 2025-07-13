@@ -1,20 +1,30 @@
-// file: src/pages/HostRoutes/HostRoutes.tsx
+// src/pages/HostRoutes/HostRoutes.tsx
 import { Routes, Route, Navigate } from "react-router-dom";
-import { EventProvider } from "../../contexts/EventContext";
+import { EventProvider } from "@/contexts/EventContext";
 import { EventDashboard } from "./EventDashboard";
 import { EventGallery } from "./EventGallery";
 import { EventSlideshow } from "./EventSlideshow";
 import { EventQRCode } from "./EventQRCode";
-import { CreateEventPage } from "./CreateEventPage";
+import { LibraryPage } from "./LibraryPage";
+import { CommunityPage } from "./CommunityPage";
+import { PhotosPage } from "./PhotosPage";
+import { GuestPage } from "./GuestPage";
 
 export const HostRoutes = () => {
   return (
     <EventProvider>
       <Routes>
-        {/* Main events dashboard */}
+        {/* Main dashboard route */}
         <Route index element={<EventDashboard />} />
 
-        <Route path="create" element={<CreateEventPage />} />
+        {/* Redirect /dashboard to /host */}
+        <Route path="dashboard" element={<Navigate to="/host" replace />} />
+
+        {/* Main navigation routes */}
+        <Route path="library" element={<LibraryPage />} />
+        <Route path="community" element={<CommunityPage />} />
+        <Route path="photos" element={<PhotosPage />} />
+        <Route path="guest" element={<GuestPage />} />
 
         {/* Event-specific routes */}
         <Route path="event/:eventId/gallery" element={<EventGallery />} />

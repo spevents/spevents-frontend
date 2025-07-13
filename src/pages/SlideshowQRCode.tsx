@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { useSession } from "../contexts/SessionContext";
-import { eventService } from "../services/api";
+import { useSession } from "@/contexts/SessionContext";
+import { eventService } from "@/services/api";
 
 export default function SlideshowQRCode() {
   const eventId = import.meta.env.VITE_EVENT_ID;

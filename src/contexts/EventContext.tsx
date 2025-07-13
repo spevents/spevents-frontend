@@ -7,8 +7,8 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
-import { eventService } from "../services/api";
-import { auth } from "../components/config/firebase";
+import { eventService } from "@/services/api";
+import { auth } from "@/components/config/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 
 // ===============================

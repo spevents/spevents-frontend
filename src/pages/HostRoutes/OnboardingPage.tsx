@@ -8,7 +8,7 @@ import {
   Users,
   CheckCircle,
 } from "lucide-react";
-import { useAuth } from "../../components/auth/AuthProvider";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { useNavigate } from "react-router-dom";
 
 export function OnboardingPage() {
