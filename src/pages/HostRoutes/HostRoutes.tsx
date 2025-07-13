@@ -1,6 +1,6 @@
 // src/pages/HostRoutes/HostRoutes.tsx
 import { Routes, Route, Navigate } from "react-router-dom";
-import { EventProvider } from "@/contexts/EventContext";
+import { EventProvider } from "../../contexts/EventContext";
 import { EventDashboard } from "./EventDashboard";
 import { EventGallery } from "./EventGallery";
 import { EventSlideshow } from "./EventSlideshow";
@@ -9,6 +9,8 @@ import { LibraryPage } from "./LibraryPage";
 import { CommunityPage } from "./CommunityPage";
 import { PhotosPage } from "./PhotosPage";
 import { GuestPage } from "./GuestPage";
+import { CreateEventSimplePage } from "./CreateEventPageSimple";
+import { CreateEventPage } from "./CreateEventPage";
 
 export const HostRoutes = () => {
   return (
@@ -19,6 +21,10 @@ export const HostRoutes = () => {
 
         {/* Redirect /dashboard to /host */}
         <Route path="dashboard" element={<Navigate to="/host" replace />} />
+
+        {/* Create event routes */}
+        <Route path="create" element={<CreateEventSimplePage />} />
+        <Route path="create/advanced" element={<CreateEventPage />} />
 
         {/* Main navigation routes */}
         <Route path="library" element={<LibraryPage />} />

@@ -2,25 +2,22 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Menu } from "lucide-react";
 
 import { useAuth } from "@/components/auth/AuthProvider";
-import { useEvent } from "@/contexts/EventContext";
 import { useSidebar } from "@/hooks/useSideBar";
 
 import SidebarNav from "@/components/dashboard/SidebarNav";
 import CommunityContent from "@/components/dashboard/CommunityContent";
-import CreateEventModal from "@/components/dashboard/CreateEventModal";
 
 export function CommunityPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
-  const { createEvent, selectEvent } = useEvent();
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
+  // Sidebar width management
   const sidebarRef = useRef<HTMLDivElement>(null);
-
-  // const darkMode = useDarkMode();
   const sidebar = useSidebar();
 
   useEffect(() => {
@@ -36,20 +33,8 @@ export function CommunityPage() {
     return () => window.removeEventListener("resize", checkMobile);
   }, [sidebar]);
 
-  const handleCreateEvent = async (data: {
-    name: string;
-    description?: string;
-  }) => {
-    try {
-      const newEvent = await createEvent({
-        name: data.name,
-        description: data.description || "",
-      });
-      setShowCreateModal(false);
-      selectEvent(newEvent.id);
-    } catch (error) {
-      console.error("Failed to create event:", error);
-    }
+  const handleCreateEvent = () => {
+    navigate("/host/create");
   };
 
   if (!user) {
@@ -77,10 +62,7 @@ export function CommunityPage() {
         </button>
       )}
 
-      <SidebarNav
-        ref={sidebarRef}
-        onCreateEvent={() => setShowCreateModal(true)}
-      />
+      <SidebarNav ref={sidebarRef} onCreateEvent={handleCreateEvent} />
 
       <div className="flex-1 overflow-hidden">
         <main className="h-full overflow-y-auto">
@@ -93,12 +75,6 @@ export function CommunityPage() {
           </div>
         </main>
       </div>
-
-      <CreateEventModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onSubmit={handleCreateEvent}
-      />
     </div>
   );
 }
