@@ -1,8 +1,8 @@
 // src/App.tsx
+
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { SessionProvider } from "./contexts/SessionContext";
 import { AuthProvider } from "./components/auth/AuthProvider";
-import { AuthGuard } from "./components/auth/AuthGuard";
 import { HostRoutes } from "./pages/HostRoutes/HostRoutes";
 import { GuestRoutes } from "./pages/guest/GuestRoutes";
 import { LandingPage } from "./pages/landing/LandingPage";
@@ -51,9 +51,9 @@ export default function App() {
               <Route
                 path="/host/*"
                 element={
-                  <AuthGuard>
+                  <RouteGuard requireAuth={true} requireOnboarding={true}>
                     <HostRoutes />
-                  </AuthGuard>
+                  </RouteGuard>
                 }
               />
               <Route path="*" element={<Navigate to="/" replace />} />
@@ -85,9 +85,9 @@ export default function App() {
             <Route
               path="/host/*"
               element={
-                <AuthGuard>
+                <RouteGuard requireAuth={true} requireOnboarding={true}>
                   <HostRoutes />
-                </AuthGuard>
+                </RouteGuard>
               }
             />
             <Route path="*" element={<Navigate to="/" replace />} />

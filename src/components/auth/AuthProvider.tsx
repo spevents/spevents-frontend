@@ -1,4 +1,5 @@
 // src/components/auth/AuthProvider.tsx
+
 import { createContext, useContext, useEffect, useState } from "react";
 import {
   onAuthStateChanged,
@@ -6,13 +7,15 @@ import {
   User as FirebaseUser,
 } from "firebase/auth";
 import { auth } from "../config/firebase";
+import { userService } from "../../lib/userService";
 
 interface User {
   id: string;
   email: string;
   name: string;
   photoURL?: string;
-  onboardingCompleted?: boolean;
+  onboardingCompleted: boolean;
+  isNewUser?: boolean;
 }
 
 interface AuthContextType {
@@ -20,7 +23,7 @@ interface AuthContextType {
   firebaseUser: FirebaseUser | null;
   loading: boolean;
   signOut: () => Promise<void>;
-  markOnboardingComplete: () => void;
+  markOnboardingComplete: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,37 +33,81 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Updated function to check onboarding status from the correct localStorage key
-  const checkOnboardingStatus = () => {
-    const userData = localStorage.getItem("spevents_user_data");
-    if (userData) {
-      const parsedData = JSON.parse(userData);
-      return parsedData.completedOnboarding === true; // Fixed typo: was "completeOnboarding"
-    }
-    return false;
-  };
-
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setFirebaseUser(firebaseUser);
 
       if (firebaseUser) {
-        // Use the updated function to check onboarding status
-        const onboardingCompleted = checkOnboardingStatus();
+        // Check localStorage first for faster response
+        const localData = localStorage.getItem("spevents_user_data");
+        let localOnboardingStatus = false;
 
-        setUser({
-          id: firebaseUser.uid,
-          email: firebaseUser.email || "",
-          name: firebaseUser.displayName || "User",
-          photoURL: firebaseUser.photoURL || undefined,
-          onboardingCompleted,
-        });
+        if (localData) {
+          try {
+            const parsed = JSON.parse(localData);
+            localOnboardingStatus = parsed.completedOnboarding === true;
+          } catch (e) {
+            console.warn("Failed to parse localStorage user data");
+          }
+        }
+
+        // Try Firestore, but fallback to localStorage if it fails
+        try {
+          const { profile, isNewUser } =
+            await userService.createOrGetUserProfile(firebaseUser);
+
+          setUser({
+            id: firebaseUser.uid,
+            email: firebaseUser.email || "",
+            name: firebaseUser.displayName || profile.displayName || "User",
+            photoURL: firebaseUser.photoURL || profile.photoURL,
+            onboardingCompleted:
+              profile.onboardingCompleted || localOnboardingStatus,
+            isNewUser: isNewUser && !localOnboardingStatus, // Don't mark as new if localStorage says completed
+          });
+
+          // Update localStorage with Firestore data
+          const userData = {
+            id: firebaseUser.uid,
+            email: firebaseUser.email,
+            completedOnboarding:
+              profile.onboardingCompleted || localOnboardingStatus,
+          };
+          localStorage.setItem("spevents_user_data", JSON.stringify(userData));
+        } catch (error) {
+          console.warn(
+            "Firestore unavailable, using localStorage fallback:",
+            error
+          );
+
+          // Fallback to localStorage-only mode
+          setUser({
+            id: firebaseUser.uid,
+            email: firebaseUser.email || "",
+            name: firebaseUser.displayName || "User",
+            photoURL: firebaseUser.photoURL || undefined,
+            onboardingCompleted: localOnboardingStatus,
+            isNewUser: !localOnboardingStatus, // New user if localStorage doesn't show completed
+          });
+
+          // Ensure localStorage has user data
+          if (!localData) {
+            const userData = {
+              id: firebaseUser.uid,
+              email: firebaseUser.email,
+              completedOnboarding: false,
+            };
+            localStorage.setItem(
+              "spevents_user_data",
+              JSON.stringify(userData)
+            );
+          }
+        }
       } else {
         setUser(null);
-        // Clean up all localStorage items on sign out
         localStorage.removeItem("spevents-auth");
         localStorage.removeItem("onboarding-completed");
-        localStorage.removeItem("spevents_user_data"); // Add this cleanup
+        localStorage.removeItem("spevents_user_data");
       }
 
       setLoading(false);
@@ -72,10 +119,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       await firebaseSignOut(auth);
-      // Clean up all localStorage items
       localStorage.removeItem("spevents-auth");
       localStorage.removeItem("onboarding-completed");
-      localStorage.removeItem("spevents_user_data"); // Add this cleanup
+      localStorage.removeItem("spevents_user_data");
       setUser(null);
       setFirebaseUser(null);
     } catch (error) {
@@ -83,20 +129,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Updated to also check the new localStorage key
-  const markOnboardingComplete = () => {
+  const markOnboardingComplete = async () => {
+    if (!user) return;
+
+    // Always update local state and localStorage first (fallback)
+    setUser({ ...user, onboardingCompleted: true, isNewUser: false });
+
     localStorage.setItem("onboarding-completed", "true");
+    const userData = {
+      id: user.id,
+      email: user.email,
+      completedOnboarding: true,
+    };
+    localStorage.setItem("spevents_user_data", JSON.stringify(userData));
 
-    // Also update the user data to mark onboarding as complete
-    const userData = localStorage.getItem("spevents_user_data");
-    if (userData) {
-      const parsedData = JSON.parse(userData);
-      parsedData.completedOnboarding = true;
-      localStorage.setItem("spevents_user_data", JSON.stringify(parsedData));
-    }
-
-    if (user) {
-      setUser({ ...user, onboardingCompleted: true });
+    // Try to update Firestore, but don't fail if it doesn't work
+    try {
+      await userService.markOnboardingComplete(user.id);
+      console.log("Onboarding completion saved to Firestore");
+    } catch (error) {
+      console.warn(
+        "Failed to save onboarding completion to Firestore, using localStorage fallback:",
+        error
+      );
     }
   };
 
