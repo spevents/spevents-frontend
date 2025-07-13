@@ -527,7 +527,7 @@ export function CreateEventPage() {
                                     (v) =>
                                       v.id === view.id
                                         ? { ...v, name: e.target.value }
-                                        : v,
+                                        : v
                                   );
                                   setEventData((prev) => ({
                                     ...prev,
@@ -727,7 +727,7 @@ export function CreateEventPage() {
 
                 <div className="flex justify-between pt-6">
                   <button
-                    onClick={() => navigate(-1)}
+                    onClick={handleBack}
                     className="flex items-center gap-2 border border-opacity-30 px-4 py-2 rounded-lg hover:bg-opacity-10 disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{
                       borderColor: colors.lightGreen,

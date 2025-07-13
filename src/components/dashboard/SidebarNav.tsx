@@ -1,5 +1,5 @@
 // src/components/dashboard/SidebarNav.tsx
-import { forwardRef, useState, useEffect, useCallback, useRef } from "react";
+import { forwardRef, useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -16,12 +16,8 @@ import {
   Bell,
   CreditCard,
   LogOut,
-  MoreHorizontal,
-  Star,
-  Clock,
   PanelLeft,
   PanelLeftOpen,
-  Search,
 } from "lucide-react";
 import { useSidebar } from "@/hooks/useSideBar";
 import { useDarkMode } from "@/hooks/useDarkMode";
@@ -43,11 +39,6 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
     const { user, signOut } = useAuth();
     const [isMobile, setIsMobile] = useState(false);
     const [showProfileMenu, setShowProfileMenu] = useState(false);
-    const [expandedSections, setExpandedSections] = useState({
-      starred: true,
-      recent: true,
-    });
-    const [searchFocused, setSearchFocused] = useState(false);
 
     // Ref for profile menu click-outside detection
     const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -71,25 +62,6 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
       }
     }, [showProfileMenu]);
 
-    // Mock starred events data
-    const starredEvents = [
-      { name: "Summer Wedding Reception", type: "event", status: "active" },
-      { name: "Corporate Annual Gala", type: "event", status: "ended" },
-      { name: "Birthday Celebration", type: "event", status: "draft" },
-      { name: "Anniversary Party", type: "event", status: "active" },
-      { name: "Graduation Ceremony", type: "event", status: "ended" },
-    ];
-
-    // Mock recent activities
-    const recentActivities = [
-      "Photo Upload Optimization",
-      "Dark Mode Implementation",
-      "Event Dashboard Redesign",
-      "QR Code Generation Feature",
-      "Guest Management System",
-      "Photo Gallery Enhancement",
-    ];
-
     // Get user data from Firebase
     const getUserData = () => {
       if (!user) {
@@ -109,13 +81,6 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
 
     const userData = getUserData();
 
-    const toggleSection = useCallback((section: string) => {
-      setExpandedSections((prev) => ({
-        ...prev,
-        [section]: !prev[section as keyof typeof prev],
-      }));
-    }, []);
-
     const getInitials = () => {
       if (userData?.firstName && userData?.lastName) {
         return `${userData.firstName[0]}${userData.lastName[0]}`.toUpperCase();
@@ -130,10 +95,6 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
         console.error("Sign out error:", error);
       }
     };
-
-    const handleEventClick = useCallback((event: any) => {
-      console.log("Navigate to event:", event);
-    }, []);
 
     // Check mobile on mount and resize
     useEffect(() => {
@@ -236,54 +197,6 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
       },
     ];
 
-    // Sidebar toggle component
-    const SidebarToggle = () => (
-      <button
-        onClick={() => sidebar.setCollapsed(!sidebar.collapsed)}
-        className="h-8 w-8 rounded-md hover:bg-sp_eggshell/20 dark:hover:bg-sp_lightgreen/20 transition-all duration-300 group flex items-center justify-center"
-      >
-        <div className="relative w-4 h-4">
-          <PanelLeft
-            className={`absolute inset-0 transition-all duration-500 ease-out text-sp_darkgreen dark:text-sp_eggshell ${
-              !sidebar.collapsed
-                ? "opacity-0 scale-75 rotate-180"
-                : "opacity-100 scale-100 rotate-0"
-            }`}
-          />
-          <PanelLeftOpen
-            className={`absolute inset-0 transition-all duration-500 ease-out text-sp_darkgreen dark:text-sp_eggshell ${
-              !sidebar.collapsed
-                ? "opacity-100 scale-100 rotate-0"
-                : "opacity-0 scale-75 rotate-180"
-            }`}
-          />
-        </div>
-      </button>
-    );
-
-    // Enhanced search bar
-    const SearchBar = () => (
-      <div
-        className={`relative transition-all duration-500 ease-out ${
-          isIconMode
-            ? "opacity-0 scale-95 pointer-events-none"
-            : "opacity-100 scale-100"
-        }`}
-      >
-        <Search
-          className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-sp_green/60 dark:text-sp_eggshell/60 transition-all duration-300 ${
-            searchFocused ? "text-sp_green dark:text-sp_eggshell scale-110" : ""
-          }`}
-        />
-        <input
-          placeholder="Search..."
-          className="w-full pl-10 h-8 bg-sp_eggshell/50 dark:bg-sp_darkgreen/30 border-0 rounded-md text-sp_darkgreen dark:text-sp_eggshell placeholder:text-sp_green/60 dark:placeholder:text-sp_eggshell/60 focus:outline-none focus:ring-1 focus:ring-sp_green/50 dark:focus:ring-sp_eggshell/50 transition-all duration-300"
-          onFocus={() => setSearchFocused(true)}
-          onBlur={() => setSearchFocused(false)}
-        />
-      </div>
-    );
-
     return (
       <div
         className={`group peer ${isMobile ? "block" : "hidden md:block"}`}
@@ -308,10 +221,10 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
           }}
         />
 
-        {/* Sidebar container */}
+        {/* Sidebar container - FIXED: Removed redundant nested fixed positioning */}
         <div
           className={`
-            fixed inset-y-0 z-40 h-screen transition-[left,width] duration-300 ease-in-out flex
+            fixed inset-y-0 z-40 h-screen transition-[left,width] duration-300 ease-in-out
             ${isMobile && sidebar.collapsed ? "-left-full md:left-0" : "left-0"}
             ${isMobile ? "z-50" : ""}
           `}
@@ -322,443 +235,300 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
             } as React.CSSProperties
           }
         >
+          {/* Sidebar content */}
           <div
-            className={`
-            fixed inset-y-0 left-0 z-40 h-screen transition-[left,width] duration-300 ease-in-out md:flex
-            ${isMobile ? "z-50" : ""}
-          `}
-            style={
-              {
-                width: getSidebarWidth(),
-                "--sidebar-width": getSidebarWidth(),
-              } as React.CSSProperties
-            }
+            ref={ref}
+            data-sidebar="sidebar"
+            className="h-full bg-white dark:bg-sp_darkgreen border-r border-sp_eggshell/30 dark:border-sp_lightgreen/20 flex flex-col w-full"
           >
-            {/* Sidebar content */}
+            {/* Sidebar Header */}
             <div
-              ref={ref}
-              data-sidebar="sidebar"
-              className="h-full bg-white dark:bg-sp_darkgreen border-r border-sp_eggshell/30 dark:border-sp_lightgreen/20 flex flex-col w-full"
+              data-sidebar="header"
+              className="flex flex-col gap-3 p-3 border-b border-sp_eggshell/30 dark:border-sp_lightgreen/20"
             >
-              {/* Sidebar Header */}
-              <div
-                data-sidebar="header"
-                className="flex flex-col gap-3 p-3 border-b border-sp_eggshell/30 dark:border-sp_lightgreen/20"
-              >
-                <div className="flex items-center justify-between">
-                  <SidebarToggle />
-                  {!isIconMode && (
-                    <button
-                      onClick={() => darkMode.setDarkMode(!darkMode.darkMode)}
-                      className="h-8 w-8 rounded-md hover:bg-sp_eggshell/20 dark:hover:bg-sp_lightgreen/20 transition-all duration-300 group flex items-center justify-center"
-                    >
-                      <div className="relative w-4 h-4">
-                        <Sun className="absolute inset-0 h-4 w-4 rotate-0 scale-100 transition-all duration-500 ease-out dark:-rotate-90 dark:scale-0 text-sp_green" />
-                        <Moon className="absolute inset-0 h-4 w-4 rotate-90 scale-0 transition-all duration-500 ease-out dark:rotate-0 dark:scale-100 text-sp_eggshell" />
-                      </div>
-                    </button>
-                  )}
-                </div>
-
-                {/* Logo and Title */}
-                {!isIconMode && (
-                  <div className="flex items-center gap-2 px-2">
-                    <div className="w-6 h-6 rounded-md flex items-center justify-center">
-                      <img
-                        src={darkMode.darkMode ? darkIcon : lightIcon}
-                        alt="Spevents"
-                        className="w-6 h-6"
-                      />
-                    </div>
-                    <span className="text-lg font-bold text-sp_darkgreen dark:text-sp_eggshell">
-                      spevents
-                    </span>
-                  </div>
-                )}
-
-                {isIconMode && (
-                  <div className="w-full flex justify-center">
-                    <div className="w-6 h-6 rounded-md flex items-center justify-center">
-                      <img
-                        src={darkMode.darkMode ? darkIcon : lightIcon}
-                        alt="Spevents"
-                        className="w-6 h-6"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <SearchBar />
-
-                {/* Create Event Button */}
-                <button
-                  onClick={onCreateEvent}
-                  className={`group flex items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm bg-gradient-to-r from-sp_green to-sp_lightgreen hover:from-sp_lightgreen hover:to-sp_darkgreen text-white font-medium transition-all duration-300 ${
-                    isIconMode ? "justify-center" : ""
-                  }`}
-                >
-                  <div
-                    className={`bg-sp_green/20 rounded-full flex items-center justify-center transition-all duration-300 group-hover:rotate-90 ${
-                      isIconMode ? "w-8 h-8" : "w-6 h-6"
-                    }`}
-                  >
-                    <Plus
-                      className={`transition-all duration-300 ${
-                        isIconMode ? "w-5 h-5" : "w-3 h-3"
-                      }`}
+              {/* Logo and Title */}
+              {!isIconMode && (
+                <div className="flex items-center gap-2 px-2">
+                  <div className="w-6 h-6 rounded-md flex items-center justify-center">
+                    <img
+                      src={darkMode.darkMode ? darkIcon : lightIcon}
+                      alt="Spevents"
+                      className="w-6 h-6"
                     />
                   </div>
-                  {!isIconMode && (
-                    <span
-                      className={`transition-all duration-500 ease-out ${
-                        isIconMode
-                          ? "opacity-0 -translate-x-4 scale-95"
-                          : "opacity-100 translate-x-0 scale-100"
-                      }`}
-                    >
-                      Create Event
-                    </span>
-                  )}
+                  <span className="text-lg font-bold text-sp_darkgreen dark:text-sp_eggshell">
+                    spevents
+                  </span>
+                </div>
+              )}
+
+              {isIconMode && (
+                <div className="w-full flex justify-center">
+                  <div className="w-6 h-6 rounded-md flex items-center justify-center">
+                    <img
+                      src={darkMode.darkMode ? darkIcon : lightIcon}
+                      alt="Spevents"
+                      className="w-6 h-6"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Create Event Button */}
+              <button
+                onClick={onCreateEvent}
+                className={`group flex items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm bg-gradient-to-r from-sp_green to-sp_lightgreen hover:from-sp_lightgreen hover:to-sp_darkgreen text-white font-medium transition-all duration-300 ${
+                  isIconMode ? "justify-center" : ""
+                }`}
+              >
+                <div
+                  className={`bg-sp_green/20 rounded-full flex items-center justify-center transition-all duration-300 group-hover:rotate-90 ${
+                    isIconMode ? "w-8 h-8" : "w-6 h-6"
+                  }`}
+                >
+                  <Plus
+                    className={`transition-all duration-300 ${
+                      isIconMode ? "w-5 h-5" : "w-3 h-3"
+                    }`}
+                  />
+                </div>
+                {!isIconMode && (
+                  <span
+                    className={`transition-all duration-500 ease-out ${
+                      isIconMode
+                        ? "opacity-0 -translate-x-4 scale-95"
+                        : "opacity-100 translate-x-0 scale-100"
+                    }`}
+                  >
+                    Create Event
+                  </span>
+                )}
+              </button>
+            </div>
+
+            <div
+              data-sidebar="content"
+              className="flex min-h-0 flex-1 flex-col overflow-auto group-data-[collapsible=icon]:overflow-hidden"
+            >
+              {/* Main Navigation Group */}
+              <div
+                data-sidebar="group"
+                className="relative flex w-full min-w-0 flex-col p-2"
+              >
+                <div data-sidebar="group-content" className="w-full text-sm">
+                  <ul
+                    data-sidebar="menu"
+                    className={`flex w-full min-w-0 flex-col ${
+                      isIconMode ? "gap-3" : "gap-1"
+                    }`}
+                  >
+                    {navItems.map((item, index) => (
+                      <li
+                        key={item.id}
+                        data-sidebar="menu-item"
+                        className="group/menu-item relative"
+                        style={{
+                          animationDelay: `${index * 50}ms`,
+                          animation: !isIconMode
+                            ? "slideInFromLeft 0.5s ease-out forwards"
+                            : undefined,
+                        }}
+                      >
+                        <button
+                          data-sidebar="menu-button"
+                          data-active={currentActiveTab === item.id}
+                          onClick={() => handleNavigation(item.id)}
+                          className={`peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-hidden transition-all duration-300 hover:bg-sp_green dark:hover:bg-sp_eggshell/10 hover:text-sp_darkgreen dark:hover:text-sp_eggshell ${
+                            currentActiveTab === item.id
+                              ? "bg-sp_lightgreen text-sp_eggshell dark:text-sp_eggshell/100 border border-sp_lightgreen/30"
+                              : "text-sp_darkgreen dark:text-sp_eggshell"
+                          } ${isIconMode ? "h-12 justify-center px-0" : "h-9"}`}
+                        >
+                          <div className="relative flex items-center justify-center">
+                            <item.icon
+                              className={`transition-all duration-300 ${
+                                currentActiveTab === item.id
+                                  ? "text-sp_eggshell"
+                                  : `${item.color} dark:text-sp_eggshell group-hover:${item.hoverColor}`
+                              } ${isIconMode ? "w-6 h-6" : "w-4 h-4"}`}
+                            />
+                          </div>
+                          {!isIconMode && (
+                            <span
+                              className={`transition-all duration-500 ease-out ${
+                                isIconMode
+                                  ? "opacity-0 -translate-x-4 scale-95"
+                                  : "opacity-100 translate-x-0 scale-100"
+                              }`}
+                            >
+                              {item.label}
+                            </span>
+                          )}
+                        </button>
+
+                        {/* Tooltip for collapsed mode */}
+                        {isIconMode && (
+                          <div className="absolute left-full ml-2 px-2 py-1 bg-sp_darkgreen dark:bg-sp_dark_surface text-white dark:text-sp_eggshell text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                            {item.label}
+                          </div>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Sidebar Footer */}
+            <div
+              data-sidebar="footer"
+              className="flex flex-col gap-2 flex-shrink-0"
+            >
+              {/* Control buttons section */}
+              <div
+                className={`p-2 border-t border-sp_eggshell/30 dark:border-sp_lightgreen/20 ${
+                  isIconMode
+                    ? "flex flex-col items-center gap-2"
+                    : "flex items-center gap-2"
+                }`}
+              >
+                {/* Sidebar toggle */}
+                <button
+                  onClick={() => sidebar.setCollapsed(!sidebar.collapsed)}
+                  className="h-8 w-8 rounded-md flex items-center justify-center hover:bg-sp_eggshell/20 dark:hover:bg-sp_lightgreen/20 transition-all duration-300"
+                >
+                  {/* 4×4 icon wrapper – keeps SVG centred */}
+                  <div className="relative h-4 w-4">
+                    <PanelLeft
+                      className={`absolute inset-0 h-4 w-4 transition-transform duration-500 ease-out text-sp_darkgreen dark:text-sp_eggshell
+                        ${
+                          sidebar.collapsed
+                            ? "opacity-100 scale-100 rotate-0"
+                            : "opacity-0 -rotate-90 scale-75"
+                        }`}
+                    />
+                    <PanelLeftOpen
+                      className={`absolute inset-0 h-4 w-4 transition-transform duration-500 ease-out text-sp_darkgreen dark:text-sp_eggshell
+                        ${
+                          sidebar.collapsed
+                            ? "opacity-0 rotate-90 scale-75"
+                            : "opacity-100 scale-100 rotate-0"
+                        }`}
+                    />
+                  </div>
+                </button>
+
+                {/* Dark-mode toggle */}
+                <button
+                  onClick={() => darkMode.setDarkMode(!darkMode.darkMode)}
+                  className="h-8 w-8 rounded-md flex items-center justify-center hover:bg-sp_eggshell/20 dark:hover:bg-sp_lightgreen/20 transition-all duration-300"
+                >
+                  {/* same 4×4 wrapper for perfect alignment */}
+                  <div className="relative h-4 w-4">
+                    <Sun
+                      className="absolute inset-0 h-4 w-4 transition-transform duration-500 ease-out text-sp_green
+                        dark:-rotate-90 dark:scale-0"
+                    />
+                    <Moon
+                      className="absolute inset-0 h-4 w-4 transition-transform duration-500 ease-out text-sp_eggshell
+                        rotate-90 scale-0 dark:rotate-0 dark:scale-100"
+                    />
+                  </div>
                 </button>
               </div>
 
-              {/* Sidebar Content */}
-              <div
-                data-sidebar="content"
-                className="flex min-h-0 flex-1 flex-col gap-2 overflow-auto group-data-[collapsible=icon]:overflow-hidden"
-              >
-                {/* Main Navigation Group */}
-                <div
-                  data-sidebar="group"
-                  className="relative flex w-full min-w-0 flex-col p-2"
-                >
-                  <div data-sidebar="group-content" className="w-full text-sm">
-                    <ul
-                      data-sidebar="menu"
-                      className={`flex w-full min-w-0 flex-col ${
-                        isIconMode ? "gap-3" : "gap-1"
+              {/* User Profile */}
+              <div className="p-2 border-t border-sp_eggshell/30 dark:border-sp_lightgreen/20">
+                <div className="relative" ref={profileMenuRef}>
+                  <button
+                    onClick={() => setShowProfileMenu(!showProfileMenu)}
+                    className="flex items-center w-full px-3 py-3 text-sm text-sp_darkgreen dark:text-sp_eggshell hover:bg-sp_green dark:hover:bg-sp_eggshell/10 hover:text-sp_darkgreen dark:hover:text-sp_eggshell rounded-lg transition-all duration-200"
+                  >
+                    <div
+                      className={`flex items-center w-full ${
+                        isIconMode ? "justify-center" : "gap-3"
                       }`}
                     >
-                      {navItems.map((item, index) => (
-                        <li
-                          key={item.id}
-                          data-sidebar="menu-item"
-                          className="group/menu-item relative"
-                          style={{
-                            animationDelay: `${index * 50}ms`,
-                            animation: !isIconMode
-                              ? "slideInFromLeft 0.5s ease-out forwards"
-                              : undefined,
-                          }}
-                        >
-                          <button
-                            data-sidebar="menu-button"
-                            data-active={currentActiveTab === item.id}
-                            onClick={() => handleNavigation(item.id)}
-                            className={`peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-hidden transition-all duration-300 hover:bg-sp_green dark:hover:bg-sp_eggshell/10 hover:text-sp_darkgreen dark:hover:text-sp_eggshell ${
-                              currentActiveTab === item.id
-                                ? "bg-sp_lightgreen text-sp_eggshell dark:text-sp_eggshell/100 border border-sp_lightgreen/30"
-                                : "text-sp_darkgreen dark:text-sp_eggshell"
-                            } ${
-                              isIconMode ? "h-12 justify-center px-0" : "h-9"
-                            }`}
-                          >
-                            <div className="relative flex items-center justify-center">
-                              <item.icon
-                                className={`transition-all duration-300 ${
-                                  currentActiveTab === item.id
-                                    ? "text-sp_eggshell"
-                                    : `${item.color} dark:text-sp_eggshell group-hover:${item.hoverColor}`
-                                } ${isIconMode ? "w-6 h-6" : "w-4 h-4"}`}
-                              />
-                            </div>
-                            {!isIconMode && (
-                              <span
-                                className={`transition-all duration-500 ease-out ${
-                                  isIconMode
-                                    ? "opacity-0 -translate-x-4 scale-95"
-                                    : "opacity-100 translate-x-0 scale-100"
-                                }`}
-                              >
-                                {item.label}
-                              </span>
-                            )}
-                          </button>
-
-                          {/* Tooltip for collapsed mode */}
-                          {isIconMode && (
-                            <div className="absolute left-full ml-2 px-2 py-1 bg-sp_darkgreen dark:bg-sp_dark_surface text-white dark:text-sp_eggshell text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-                              {item.label}
-                            </div>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
-                {/* Collapsible sections */}
-                <div
-                  className={`transition-all duration-700 ease-out ${
-                    isIconMode
-                      ? "opacity-0 -translate-y-4 scale-95 pointer-events-none"
-                      : "opacity-100 translate-y-0 scale-100"
-                  }`}
-                >
-                  {/* Starred Events Group */}
-                  <div
-                    data-sidebar="group"
-                    className="relative flex w-full min-w-0 flex-col p-2"
-                  >
-                    <button
-                      data-sidebar="group-label"
-                      onClick={() => toggleSection("starred")}
-                      className="flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium outline-hidden transition-all duration-200 ease-linear focus-visible:ring-2 text-sp_darkgreen dark:text-sp_eggshell/70 hover:text-sp_green dark:hover:text-sp_eggshell gap-2"
-                    >
-                      <Star className="w-3 h-3" />
-                      <ChevronDown
-                        className={`w-3 h-3 transition-transform ${
-                          expandedSections.starred ? "" : "-rotate-90"
-                        }`}
-                      />
-                      <span className="font-medium uppercase tracking-wide">
-                        Starred
-                      </span>
-                    </button>
-
-                    {expandedSections.starred && (
-                      <div
-                        data-sidebar="group-content"
-                        className="w-full text-sm"
-                      >
-                        <ul
-                          data-sidebar="menu"
-                          className="flex w-full min-w-0 flex-col gap-1 mt-2"
-                        >
-                          {starredEvents.map((event, index) => (
-                            <li
-                              key={index}
-                              data-sidebar="menu-item"
-                              className="group/menu-item relative"
-                              style={{
-                                animationDelay: `${
-                                  (index + navItems.length) * 50
-                                }ms`,
-                                animation: !isIconMode
-                                  ? "slideInFromLeft 0.5s ease-out forwards"
-                                  : undefined,
-                              }}
-                            >
-                              <button
-                                data-sidebar="menu-button"
-                                onClick={() => handleEventClick(event)}
-                                className="peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-xs outline-hidden transition-all duration-200 hover:bg-sp_green dark:hover:bg-sp_eggshell/10 hover:text-sp_darkgreen dark:hover:text-sp_eggshell text-sp_darkgreen dark:text-sp_eggshell pr-8"
-                              >
-                                <div
-                                  className={`w-2 h-2 rounded-full flex-shrink-0 transition-all duration-300 ${
-                                    event.status === "active"
-                                      ? "bg-sp_lightgreen animate-pulse"
-                                      : event.status === "ended"
-                                      ? "bg-sp_green/50"
-                                      : "bg-sp_darkgreen/50"
-                                  }`}
-                                />
-                                <span className="truncate">{event.name}</span>
-                              </button>
-                              <button
-                                data-sidebar="menu-action"
-                                className="absolute top-1.5 right-1 flex aspect-square w-5 items-center justify-center rounded-md p-0 outline-hidden transition-all duration-200 opacity-0 group-hover/menu-item:opacity-100 hover:bg-sp_eggshell/20 dark:hover:bg-sp_lightgreen/10"
-                              >
-                                <MoreHorizontal className="w-3 h-3 text-sp_green/60 dark:text-sp_eggshell/70" />
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Recent Activities Group */}
-                  <div
-                    data-sidebar="group"
-                    className="relative flex w-full min-w-0 flex-col p-2"
-                  >
-                    <button
-                      data-sidebar="group-label"
-                      onClick={() => toggleSection("recent")}
-                      className="flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium outline-hidden transition-all duration-200 ease-linear focus-visible:ring-2 text-sp_darkgreen dark:text-sp_eggshell/70 hover:text-sp_green dark:hover:text-sp_eggshell gap-2"
-                    >
-                      <Clock className="w-3 h-3" />
-                      <ChevronDown
-                        className={`w-3 h-3 transition-transform ${
-                          expandedSections.recent ? "" : "-rotate-90"
-                        }`}
-                      />
-                      <span className="font-medium uppercase tracking-wide">
-                        Recents
-                      </span>
-                    </button>
-
-                    {expandedSections.recent && (
-                      <div
-                        data-sidebar="group-content"
-                        className="w-full text-sm"
-                      >
-                        <ul
-                          data-sidebar="menu"
-                          className="flex w-full min-w-0 flex-col gap-1 mt-2 max-h-40 overflow-y-auto"
-                        >
-                          {recentActivities.map((activity, index) => (
-                            <li
-                              key={index}
-                              data-sidebar="menu-item"
-                              className="group/menu-item relative"
-                              style={{
-                                animationDelay: `${
-                                  (index +
-                                    navItems.length +
-                                    starredEvents.length) *
-                                  30
-                                }ms`,
-                                animation: !isIconMode
-                                  ? "slideInFromLeft 0.5s ease-out forwards"
-                                  : undefined,
-                              }}
-                            >
-                              <button
-                                data-sidebar="menu-button"
-                                className="peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-xs outline-hidden transition-all duration-200 hover:bg-sp_green dark:hover:bg-sp_eggshell/10 hover:text-sp_darkgreen dark:hover:text-sp_eggshell text-sp_darkgreen dark:text-sp_eggshell pr-8"
-                              >
-                                <span className="truncate">{activity}</span>
-                              </button>
-                              <button
-                                data-sidebar="menu-action"
-                                className="absolute top-1.5 right-1 flex aspect-square w-5 items-center justify-center rounded-md p-0 outline-hidden transition-all duration-200 opacity-0 group-hover/menu-item:opacity-100 hover:bg-sp_eggshell/20 dark:hover:bg-sp_lightgreen/10"
-                              >
-                                <MoreHorizontal className="w-3 h-3 text-sp_green/60 dark:text-sp_eggshell/70" />
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Sidebar Footer */}
-              <div
-                data-sidebar="footer"
-                className="flex flex-col gap-2 flex-shrink-0"
-              >
-                {/* Dark Mode Toggle for icon mode */}
-                {isIconMode && (
-                  <div className="px-2 pb-2 flex justify-center">
-                    <button
-                      onClick={() => darkMode.setDarkMode(!darkMode.darkMode)}
-                      className="h-8 w-8 rounded-md hover:bg-sp_eggshell/20 dark:hover:bg-sp_lightgreen/20 transition-all duration-300 group flex items-center justify-center"
-                    >
-                      <div className="relative w-4 h-4">
-                        <Sun className="absolute inset-0 h-4 w-4 rotate-0 scale-100 transition-all duration-500 ease-out dark:-rotate-90 dark:scale-0 text-sp_green" />
-                        <Moon className="absolute inset-0 h-4 w-4 rotate-90 scale-0 transition-all duration-500 ease-out dark:rotate-0 dark:scale-100 text-sp_eggshell" />
-                      </div>
-                    </button>
-                  </div>
-                )}
-
-                {/* User Profile */}
-                <div className="p-2 border-t border-sp_eggshell/30 dark:border-sp_lightgreen/20">
-                  <div className="relative" ref={profileMenuRef}>
-                    <button
-                      onClick={() => setShowProfileMenu(!showProfileMenu)}
-                      className="flex items-center w-full px-3 py-3 text-sm text-sp_darkgreen dark:text-sp_eggshell hover:bg-sp_green dark:hover:bg-sp_eggshell/10 hover:text-sp_darkgreen dark:hover:text-sp_eggshell rounded-lg transition-all duration-200"
-                    >
-                      <div
-                        className={`flex items-center w-full ${
-                          isIconMode ? "justify-center" : "gap-3"
-                        }`}
-                      >
-                        {user?.photoURL ? (
-                          <img
-                            src={user.photoURL}
-                            alt="Profile"
-                            className="w-7 h-7 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-7 h-7 bg-gradient-to-br from-sp_lightgreen to-sp_green rounded-full flex items-center justify-center text-sm font-medium text-white">
-                            {getInitials()}
-                          </div>
-                        )}
-                        {!isIconMode && (
-                          <>
-                            <div className="flex-1 min-w-0">
-                              <div className="text-sm font-medium text-sp_darkgreen dark:text-sp_eggshell truncate">
-                                {userData.firstName} {userData.lastName}
-                              </div>
-                              <div className="text-xs text-sp_green/60 dark:text-sp_eggshell/70">
-                                Free plan
-                              </div>
-                            </div>
-                            <ChevronDown
-                              className={`w-4 h-4 text-sp_green/60 dark:text-sp_eggshell/70 flex-shrink-0 transition-transform duration-300 ${
-                                showProfileMenu ? "rotate-180" : ""
-                              }`}
-                            />
-                          </>
-                        )}
-                      </div>
-                    </button>
-
-                    <AnimatePresence>
-                      {showProfileMenu && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 10 }}
-                          transition={{ duration: 0.2 }}
-                          className={`absolute ${
-                            isIconMode ? "left-full ml-2" : "bottom-full mb-2"
-                          } ${
-                            isIconMode ? "w-64" : "left-0 right-0"
-                          } bg-white dark:bg-sp_dark_surface border border-sp_eggshell/30 dark:border-sp_lightgreen/20 rounded-xl shadow-lg z-50`}
-                        >
-                          <div className="p-3 border-b border-sp_eggshell/30 dark:border-sp_lightgreen/20">
-                            <p className="font-medium text-sp_darkgreen dark:text-sp_eggshell">
-                              {userData.firstName} {userData.lastName}
-                            </p>
-                            <p className="text-sm text-sp_green/70 dark:text-sp_eggshell/70">
-                              {userData.email}
-                            </p>
-                            <p className="text-xs text-sp_green/60 dark:text-sp_eggshell/60">
-                              Free plan
-                            </p>
-                          </div>
-                          <div className="p-2">
-                            <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_eggshell hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg transition-colors duration-200">
-                              <UserIcon className="w-4 h-4" />
-                              Profile Settings
-                            </button>
-                            <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_eggshell hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg transition-colors duration-200">
-                              <CreditCard className="w-4 h-4" />
-                              Subscription
-                            </button>
-                            <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_eggshell hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg transition-colors duration-200">
-                              <Bell className="w-4 h-4" />
-                              Notifications
-                            </button>
-                            <hr className="my-1 border-sp_eggshell/30 dark:border-sp_lightgreen/20" />
-                            <button
-                              onClick={handleSignOut}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors duration-200"
-                            >
-                              <LogOut className="w-4 h-4" />
-                              Sign Out
-                            </button>
-                          </div>
-                        </motion.div>
+                      {user?.photoURL ? (
+                        <img
+                          src={user.photoURL}
+                          alt="Profile"
+                          className="w-7 h-7 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-7 h-7 bg-gradient-to-br from-sp_lightgreen to-sp_green rounded-full flex items-center justify-center text-sm font-medium text-white">
+                          {getInitials()}
+                        </div>
                       )}
-                    </AnimatePresence>
-                  </div>
+                      {!isIconMode && (
+                        <>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-sp_darkgreen dark:text-sp_eggshell truncate">
+                              {userData.firstName} {userData.lastName}
+                            </div>
+                            <div className="text-xs text-sp_green/60 dark:text-sp_eggshell/70">
+                              Free plan
+                            </div>
+                          </div>
+                          <ChevronDown
+                            className={`w-4 h-4 text-sp_green/60 dark:text-sp_eggshell/70 flex-shrink-0 transition-transform duration-300 ${
+                              showProfileMenu ? "rotate-180" : ""
+                            }`}
+                          />
+                        </>
+                      )}
+                    </div>
+                  </button>
+
+                  <AnimatePresence>
+                    {showProfileMenu && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        transition={{ duration: 0.2 }}
+                        className={`absolute ${
+                          isIconMode ? "left-full ml-2" : "bottom-full mb-2"
+                        } ${
+                          isIconMode ? "w-64" : "left-0 right-0"
+                        } bg-white dark:bg-sp_dark_surface border border-sp_eggshell/30 dark:border-sp_lightgreen/20 rounded-xl shadow-lg z-50`}
+                      >
+                        <div className="p-3 border-b border-sp_eggshell/30 dark:border-sp_lightgreen/20">
+                          <p className="font-medium text-sp_darkgreen dark:text-sp_eggshell">
+                            {userData.firstName} {userData.lastName}
+                          </p>
+                          <p className="text-sm text-sp_green/70 dark:text-sp_eggshell/70">
+                            {userData.email}
+                          </p>
+                          <p className="text-xs text-sp_green/60 dark:text-sp_eggshell/60">
+                            Free plan
+                          </p>
+                        </div>
+                        <div className="p-2">
+                          <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_eggshell hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg transition-colors duration-200">
+                            <UserIcon className="w-4 h-4" />
+                            Profile Settings
+                          </button>
+                          <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_eggshell hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg transition-colors duration-200">
+                            <CreditCard className="w-4 h-4" />
+                            Subscription
+                          </button>
+                          <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_green dark:text-sp_eggshell hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg transition-colors duration-200">
+                            <Bell className="w-4 h-4" />
+                            Notifications
+                          </button>
+                          <hr className="my-1 border-sp_eggshell/30 dark:border-sp_lightgreen/20" />
+                          <button
+                            onClick={handleSignOut}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors duration-200"
+                          >
+                            <LogOut className="w-4 h-4" />
+                            Sign Out
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
             </div>
