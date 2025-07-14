@@ -152,7 +152,7 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
         "🔵 Navigation clicked:",
         route,
         "Sidebar collapsed:",
-        sidebar.collapsed
+        sidebar.collapsed,
       );
 
       // Simply navigate without changing sidebar state
@@ -641,7 +641,7 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
         </div>
       </div>
     );
-  }
+  },
 );
 
 SidebarNav.displayName = "SidebarNav";

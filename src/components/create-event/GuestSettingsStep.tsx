@@ -5,59 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { EventData, colors } from "@/types/eventTypes";
 
-// Simple Select components
-const Select = ({
-  children,
-}: {
-  value: string;
-  onValueChange: (value: string) => void;
-  children: React.ReactNode;
-}) => {
-  return <div className="relative">{children}</div>;
-};
-
-const SelectTrigger = ({
-  children,
-  className,
-  style,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  style?: React.CSSProperties;
-}) => (
-  <div
-    className={`w-full p-2 border rounded flex items-center justify-between cursor-pointer ${
-      className || ""
-    }`}
-    style={style}
-  >
-    {children}
-  </div>
-);
-
-const SelectValue = ({ placeholder }: { placeholder: string }) => (
-  <span className="text-gray-500">{placeholder}</span>
-);
-
-const SelectContent = ({ children }: { children: React.ReactNode }) => (
-  <div className="absolute top-full left-0 right-0 bg-white border rounded mt-1 shadow-lg z-10">
-    {children}
-  </div>
-);
-
-const SelectItem = ({
-  children,
-  onClick,
-}: {
-  value: string;
-  children: React.ReactNode;
-  onClick?: () => void;
-}) => (
-  <div className="p-2 hover:bg-gray-100 cursor-pointer" onClick={onClick}>
-    {children}
-  </div>
-);
-
 interface GuestSettingsStepProps {
   eventData: EventData;
   setEventData: React.Dispatch<React.SetStateAction<EventData>>;
@@ -74,43 +21,29 @@ export function GuestSettingsStep({
 
   return (
     <div className="space-y-6">
-      <div>
-        <Label className="text-sm font-medium" style={{ color: colors.green }}>
-          Expected Number of Guests
-        </Label>
-        <Select
-          value={eventData.expectedGuests}
-          onValueChange={(value) =>
-            setEventData((prev) => ({
-              ...prev,
-              expectedGuests: value,
-            }))
-          }
+      <div
+        className="text-center p-6 rounded-lg"
+        style={{ backgroundColor: `${colors.lightGreen}10` }}
+      >
+        <h3
+          className="text-xl font-semibold mb-2"
+          style={{ color: colors.green }}
         >
-          <SelectTrigger
-            className="mt-2"
-            style={{
-              borderColor: `${colors.lightGreen}30`,
-              backgroundColor: colors.eggshell,
-            }}
-          >
-            <SelectValue placeholder="Select guest count" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="1-25">1-25 guests</SelectItem>
-            <SelectItem value="26-50">26-50 guests</SelectItem>
-            <SelectItem value="51-100">51-100 guests</SelectItem>
-            <SelectItem value="101-200">101-200 guests</SelectItem>
-            <SelectItem value="200+">200+ guests</SelectItem>
-          </SelectContent>
-        </Select>
+          Let's Set Up Your Event Access
+        </h3>
+        <p className="text-sm" style={{ color: colors.darkGreen }}>
+          Configure how guests will join your event
+        </p>
       </div>
 
       <div>
         <Label className="text-sm font-medium" style={{ color: colors.green }}>
           Session Code
         </Label>
-        <div className="flex gap-2 mt-2">
+        <p className="text-xs text-gray-600 mb-2">
+          Guests will use this code to join your event
+        </p>
+        <div className="flex gap-2">
           <Input
             value={eventData.sessionCode}
             onChange={(e) =>
@@ -120,7 +53,7 @@ export function GuestSettingsStep({
               }))
             }
             placeholder="AUTO-GENERATED"
-            className="flex-1"
+            className="flex-1 text-center text-lg font-mono tracking-wider"
             style={{
               borderColor: `${colors.lightGreen}30`,
               backgroundColor: colors.eggshell,
@@ -139,7 +72,10 @@ export function GuestSettingsStep({
         <Label className="text-sm font-medium" style={{ color: colors.green }}>
           Custom Link (Optional)
         </Label>
-        <div className="flex mt-2">
+        <p className="text-xs text-gray-600 mb-2">
+          Create a memorable URL for your event
+        </p>
+        <div className="flex">
           <span
             className="inline-flex items-center px-3 rounded-l-md border border-r-0 text-sm"
             style={{
@@ -167,6 +103,22 @@ export function GuestSettingsStep({
               backgroundColor: colors.eggshell,
             }}
           />
+        </div>
+      </div>
+
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <span className="text-white text-xs font-bold">i</span>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-blue-900">
+              Guest count and final settings can be configured at the end
+            </p>
+            <p className="text-xs text-blue-700 mt-1">
+              Focus on creating your perfect slideshow experience first!
+            </p>
+          </div>
         </div>
       </div>
     </div>
