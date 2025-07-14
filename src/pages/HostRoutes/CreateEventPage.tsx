@@ -61,18 +61,30 @@ export function CreateEventPage() {
     {
       title: "Event Details",
       subtitle: "Tell us about your event",
+      date: "test",
+      // startTime: string;
+      // endTime: string;
     },
     {
       title: "Guest Settings",
       subtitle: "Configure guest permissions",
+      date: "test",
+      // startTime: string;
+      // endTime: string;
     },
     {
       title: "Display Views",
       subtitle: "Customize slideshow displays",
+      date: "test",
+      // startTime: string;
+      // endTime: string;
     },
     {
       title: "Final Settings",
       subtitle: "Review and launch",
+      date: "test",
+      // startTime: string;
+      // endTime: string;
     },
   ];
 

@@ -18,7 +18,6 @@ import { EventData, colors } from "@/types/eventTypes";
 
 const Badge = ({
   children,
-  variant,
   className,
 }: {
   children: React.ReactNode;

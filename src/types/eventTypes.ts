@@ -44,6 +44,9 @@ export interface SlideshowPreset {
 export interface Step {
   title: string;
   subtitle: string;
+  date: string;
+  // startTime: string;
+  // endTime: string;
 }
 
 // Color palette constants
