@@ -74,7 +74,7 @@ export function SignInPage() {
       }
 
       console.log(
-        "SignInPage: Authentication successful, user data will be processed by AuthProvider",
+        "SignInPage: Authentication successful, user data will be processed by AuthProvider"
       );
       // Don't navigate here - let useEffect handle it after AuthProvider processes the user
     } catch (error: any) {
