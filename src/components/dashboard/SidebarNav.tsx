@@ -43,7 +43,6 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
     const [_showToggleButton, setShowToggleButton] = useState(false);
     const [intentionallyCollapsed, setIntentionallyCollapsed] = useState(false);
 
-    // Debug: Track component renders and sidebar state
     console.log("🔄 SidebarNav render:", {
       pathname: location.pathname,
       collapsed: sidebar.collapsed,
@@ -153,7 +152,7 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
         "🔵 Navigation clicked:",
         route,
         "Sidebar collapsed:",
-        sidebar.collapsed
+        sidebar.collapsed,
       );
 
       // Simply navigate without changing sidebar state
@@ -639,7 +638,7 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
         </div>
       </div>
     );
-  }
+  },
 );
 
 SidebarNav.displayName = "SidebarNav";

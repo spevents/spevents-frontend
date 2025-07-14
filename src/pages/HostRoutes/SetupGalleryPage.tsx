@@ -147,7 +147,7 @@ export function SetupGalleryPage() {
                   className="w-8 h-8 rounded-lg flex items-center justify-center"
                   style={{ backgroundColor: colors.green }}
                 >
-                  <img src="/icon.svg" alt="spevents" className="w-5 h-5" />
+                  <img src="darkIcon" alt="spevents" className="w-5 h-5" />
                 </div>
                 <h1
                   className="text-2xl font-bold"
