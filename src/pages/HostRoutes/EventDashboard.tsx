@@ -7,7 +7,6 @@ import { Menu } from "lucide-react";
 
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useSidebar } from "@/hooks/useSideBar";
-
 import SidebarNav from "@/components/dashboard/SidebarNav";
 import HomeContent from "@/components/dashboard/HomeContent";
 

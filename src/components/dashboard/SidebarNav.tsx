@@ -39,6 +39,8 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
     const { user, signOut } = useAuth();
     const [isMobile, setIsMobile] = useState(false);
     const [showProfileMenu, setShowProfileMenu] = useState(false);
+    const [showToggleButton, setShowToggleButton] = useState(false);
+    const [intentionallyCollapsed, setIntentionallyCollapsed] = useState(false);
 
     // Ref for profile menu click-outside detection
     const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -103,12 +105,28 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
         setIsMobile(mobile);
         if (mobile) {
           sidebar.setCollapsed(true);
+          setIntentionallyCollapsed(true);
         }
       };
       checkMobile();
       window.addEventListener("resize", checkMobile);
       return () => window.removeEventListener("resize", checkMobile);
     }, [sidebar]);
+
+    // Preserve intentionally collapsed state after route changes
+    useEffect(() => {
+      if (intentionallyCollapsed && !sidebar.collapsed) {
+        sidebar.setCollapsed(true);
+      }
+    }, [location.pathname, intentionallyCollapsed, sidebar]);
+
+    // Reset toggle button visibility when sidebar expands
+    useEffect(() => {
+      if (!sidebar.collapsed) {
+        setShowToggleButton(false);
+        setIntentionallyCollapsed(false);
+      }
+    }, [sidebar.collapsed]);
 
     // Determine if sidebar should be in icon mode (collapsed on desktop) or completely hidden (mobile)
     const isIconMode = !isMobile && sidebar.collapsed;
@@ -128,6 +146,9 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
     const currentActiveTab = getActiveRoute();
 
     const handleNavigation = (route: string) => {
+      // Preserve current sidebar state during navigation
+      const currentCollapsedState = sidebar.collapsed;
+
       switch (route) {
         case "home":
           navigate("/host");
@@ -146,6 +167,19 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
           break;
         default:
           navigate("/host");
+      }
+
+      // Ensure sidebar state is preserved after navigation
+      if (currentCollapsedState !== sidebar.collapsed) {
+        sidebar.setCollapsed(currentCollapsedState);
+      }
+    };
+
+    // Handle middle area click in collapsed mode
+    const handleMiddleAreaClick = () => {
+      if (isIconMode) {
+        sidebar.setCollapsed(false);
+        setIntentionallyCollapsed(false);
       }
     };
 
@@ -227,6 +261,11 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
             fixed inset-y-0 z-40 h-screen transition-[left,width] duration-300 ease-in-out
             ${isMobile && sidebar.collapsed ? "-left-full md:left-0" : "left-0"}
             ${isMobile ? "z-50" : ""}
+            ${
+              isIconMode
+                ? "hover:bg-sp_eggshell/5 dark:hover:bg-sp_lightgreen/5 cursor-e-resize"
+                : ""
+            }
           `}
           style={
             {
@@ -282,7 +321,7 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
                 }`}
               >
                 <div
-                  className={`bg-sp_green/20 rounded-full flex items-center justify-center transition-all duration-300 group-hover:rotate-90 ${
+                  className={`bg-sp_green/20 rounded-full flex items-center justify-center transition-all duration-300 hover:rotate-90 ${
                     isIconMode ? "w-8 h-8" : "w-6 h-6"
                   }`}
                 >
@@ -309,6 +348,7 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
             <div
               data-sidebar="content"
               className="flex min-h-0 flex-1 flex-col overflow-auto group-data-[collapsible=icon]:overflow-hidden"
+              onClick={handleMiddleAreaClick}
             >
               {/* Main Navigation Group */}
               <div
@@ -337,7 +377,10 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
                         <button
                           data-sidebar="menu-button"
                           data-active={currentActiveTab === item.id}
-                          onClick={() => handleNavigation(item.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleNavigation(item.id);
+                          }}
                           className={`peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-hidden transition-all duration-300 hover:bg-sp_green dark:hover:bg-sp_eggshell/10 hover:text-sp_darkgreen dark:hover:text-sp_eggshell ${
                             currentActiveTab === item.id
                               ? "bg-sp_lightgreen text-sp_eggshell dark:text-sp_eggshell/100 border border-sp_lightgreen/30"
@@ -377,6 +420,14 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
                   </ul>
                 </div>
               </div>
+
+              {/* Middle area for click detection when collapsed */}
+              {isIconMode && (
+                <div
+                  className="flex-1 min-h-[100px]"
+                  onClick={handleMiddleAreaClick}
+                />
+              )}
             </div>
 
             {/* Sidebar Footer */}
@@ -384,69 +435,25 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
               data-sidebar="footer"
               className="flex flex-col gap-2 flex-shrink-0"
             >
-              {/* Control buttons section */}
-              <div
-                className={`p-2 border-t border-sp_eggshell/30 dark:border-sp_lightgreen/20 ${
-                  isIconMode
-                    ? "flex flex-col items-center gap-2"
-                    : "flex items-center gap-2"
-                }`}
-              >
-                {/* Sidebar toggle */}
-                <button
-                  onClick={() => sidebar.setCollapsed(!sidebar.collapsed)}
-                  className="h-8 w-8 rounded-md flex items-center justify-center hover:bg-sp_eggshell/20 dark:hover:bg-sp_lightgreen/20 transition-all duration-300"
-                >
-                  {/* 4×4 icon wrapper – keeps SVG centred */}
-                  <div className="relative h-4 w-4">
-                    <PanelLeft
-                      className={`absolute inset-0 h-4 w-4 transition-transform duration-500 ease-out text-sp_darkgreen dark:text-sp_eggshell
-                        ${
-                          sidebar.collapsed
-                            ? "opacity-100 scale-100 rotate-0"
-                            : "opacity-0 -rotate-90 scale-75"
-                        }`}
-                    />
-                    <PanelLeftOpen
-                      className={`absolute inset-0 h-4 w-4 transition-transform duration-500 ease-out text-sp_darkgreen dark:text-sp_eggshell
-                        ${
-                          sidebar.collapsed
-                            ? "opacity-0 rotate-90 scale-75"
-                            : "opacity-100 scale-100 rotate-0"
-                        }`}
-                    />
-                  </div>
-                </button>
-
-                {/* Dark-mode toggle */}
-                <button
-                  onClick={() => darkMode.setDarkMode(!darkMode.darkMode)}
-                  className="h-8 w-8 rounded-md flex items-center justify-center hover:bg-sp_eggshell/20 dark:hover:bg-sp_lightgreen/20 transition-all duration-300"
-                >
-                  {/* same 4×4 wrapper for perfect alignment */}
-                  <div className="relative h-4 w-4">
-                    <Sun
-                      className="absolute inset-0 h-4 w-4 transition-transform duration-500 ease-out text-sp_green
-                        dark:-rotate-90 dark:scale-0"
-                    />
-                    <Moon
-                      className="absolute inset-0 h-4 w-4 transition-transform duration-500 ease-out text-sp_eggshell
-                        rotate-90 scale-0 dark:rotate-0 dark:scale-100"
-                    />
-                  </div>
-                </button>
-              </div>
-
-              {/* User Profile */}
+              {/* User Profile with integrated controls */}
               <div className="p-2 border-t border-sp_eggshell/30 dark:border-sp_lightgreen/20">
                 <div className="relative" ref={profileMenuRef}>
-                  <button
-                    onClick={() => setShowProfileMenu(!showProfileMenu)}
-                    className="flex items-center w-full px-3 py-3 text-sm text-sp_darkgreen dark:text-sp_eggshell hover:bg-sp_green dark:hover:bg-sp_eggshell/10 hover:text-sp_darkgreen dark:hover:text-sp_eggshell rounded-lg transition-all duration-200"
+                  {/* Profile section with controls */}
+                  <div
+                    className={`flex items-center gap-2 ${
+                      isIconMode ? "flex-col" : ""
+                    }`}
                   >
-                    <div
-                      className={`flex items-center w-full ${
-                        isIconMode ? "justify-center" : "gap-3"
+                    {/* Profile button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowProfileMenu(!showProfileMenu);
+                      }}
+                      className={`flex items-center text-sm text-sp_darkgreen dark:text-sp_eggshell hover:bg-sp_green dark:hover:bg-sp_eggshell/10 hover:text-sp_darkgreen dark:hover:text-sp_eggshell rounded-lg transition-all duration-200 ${
+                        isIconMode
+                          ? "px-2 py-2 justify-center"
+                          : "flex-1 px-3 py-3 gap-3"
                       }`}
                     >
                       {user?.photoURL ? (
@@ -477,8 +484,67 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
                           />
                         </>
                       )}
+                    </button>
+
+                    {/* Control buttons */}
+                    <div
+                      className={`flex gap-1 ${
+                        isIconMode ? "flex-col" : "flex-row"
+                      }`}
+                    >
+                      {(!isIconMode || showToggleButton) && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const newCollapsedState = !sidebar.collapsed;
+                            sidebar.setCollapsed(newCollapsedState);
+                            setIntentionallyCollapsed(newCollapsedState);
+                            setShowToggleButton(false);
+                          }}
+                          className="h-8 w-8 rounded-md flex items-center justify-center hover:bg-sp_eggshell/20 dark:hover:bg-sp_lightgreen/20 transition-all duration-300"
+                        >
+                          <div className="relative h-4 w-4">
+                            <PanelLeft
+                              className={`absolute inset-0 h-4 w-4 transition-transform duration-500 ease-out text-sp_darkgreen dark:text-sp_eggshell
+                                ${
+                                  sidebar.collapsed
+                                    ? "opacity-100 scale-100 rotate-0"
+                                    : "opacity-0 -rotate-90 scale-75"
+                                }`}
+                            />
+                            <PanelLeftOpen
+                              className={`absolute inset-0 h-4 w-4 transition-transform duration-500 ease-out text-sp_darkgreen dark:text-sp_eggshell
+                                ${
+                                  sidebar.collapsed
+                                    ? "opacity-0 rotate-90 scale-75"
+                                    : "opacity-100 scale-100 rotate-0"
+                                }`}
+                            />
+                          </div>
+                        </button>
+                      )}
+
+                      {/* Dark-mode toggle */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          darkMode.setDarkMode(!darkMode.darkMode);
+                        }}
+                        className="h-8 w-8 rounded-md flex items-center justify-center hover:bg-sp_eggshell/20 dark:hover:bg-sp_lightgreen/20 transition-all duration-300"
+                      >
+                        <div className="relative h-4 w-4">
+                          <Sun
+                            className="absolute inset-0 h-4 w-4 transition-transform duration-500 ease-out text-sp_green
+                              dark:-rotate-90 dark:scale-0"
+                          />
+                          <Moon
+                            className="absolute inset-0 h-4 w-4 transition-transform duration-500 ease-out text-sp_eggshell
+                              rotate-90 scale-0 dark:rotate-0 dark:scale-100"
+                          />
+                        </div>
+                      </button>
                     </div>
-                  </button>
+                  </div>
 
                   <AnimatePresence>
                     {showProfileMenu && (
