@@ -152,7 +152,7 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
         "🔵 Navigation clicked:",
         route,
         "Sidebar collapsed:",
-        sidebar.collapsed,
+        sidebar.collapsed
       );
 
       // Simply navigate without changing sidebar state
@@ -502,16 +502,19 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
                         )}
                       </div>
 
-                      {/* Profile info and chevron */}
+                      {/* Profile info and chevron - FIXED: Better transition handling */}
                       <div
-                        className={`flex items-center overflow-hidden transition-all duration-300 ease-in-out ${
+                        className={`flex items-center justify-between transition-all duration-300 ease-in-out overflow-hidden ${
                           isIconMode
-                            ? "w-0 opacity-0"
-                            : "w-auto opacity-100 gap-3"
+                            ? "w-0 opacity-0 transform scale-x-0"
+                            : "w-full opacity-100 transform scale-x-100"
                         }`}
+                        style={{
+                          transitionDelay: isIconMode ? "0ms" : "100ms",
+                        }}
                       >
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-sp_darkgreen dark:text-sp_eggshell truncate">
+                        <div className="flex-1 min-w-0 whitespace-nowrap">
+                          <div className="text-sm font-medium text-sp_darkgreen dark:text-sp_eggshell">
                             {userData.firstName}
                           </div>
                           <div className="text-xs text-sp_green/60 dark:text-sp_eggshell/70">
@@ -519,7 +522,7 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
                           </div>
                         </div>
                         <ChevronDown
-                          className={`w-4 h-4 text-sp_green/60 dark:text-sp_eggshell/70 flex-shrink-0 transition-transform duration-300 ${
+                          className={`w-4 h-4 text-sp_green/60 dark:text-sp_eggshell/70 flex-shrink-0 ml-2 transition-transform duration-300 ${
                             showProfileMenu ? "rotate-180" : ""
                           }`}
                         />
@@ -638,7 +641,7 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
         </div>
       </div>
     );
-  },
+  }
 );
 
 SidebarNav.displayName = "SidebarNav";
