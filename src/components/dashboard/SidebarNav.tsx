@@ -42,10 +42,17 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
     const [showToggleButton, setShowToggleButton] = useState(false);
     const [intentionallyCollapsed, setIntentionallyCollapsed] = useState(false);
 
-    // Ref for profile menu click-outside detection
+    // Debug: Track component renders and sidebar state
+    console.log("🔄 SidebarNav render:", {
+      pathname: location.pathname,
+      collapsed: sidebar.collapsed,
+      iconMode: sidebar.iconMode,
+      isMobile,
+      intentionallyCollapsed,
+    });
+
     const profileMenuRef = useRef<HTMLDivElement>(null);
 
-    // Close profile menu when clicking outside
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
         if (
@@ -102,8 +109,10 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
     useEffect(() => {
       const checkMobile = () => {
         const mobile = window.innerWidth < 768;
+        const wasIsMobile = isMobile;
         setIsMobile(mobile);
-        if (mobile) {
+        if (mobile && !wasIsMobile) {
+          console.log("📱 Setting collapsed due to mobile");
           sidebar.setCollapsed(true);
           setIntentionallyCollapsed(true);
         }
@@ -111,14 +120,7 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
       checkMobile();
       window.addEventListener("resize", checkMobile);
       return () => window.removeEventListener("resize", checkMobile);
-    }, [sidebar]);
-
-    // Preserve intentionally collapsed state after route changes
-    useEffect(() => {
-      if (intentionallyCollapsed && !sidebar.collapsed) {
-        sidebar.setCollapsed(true);
-      }
-    }, [location.pathname, intentionallyCollapsed, sidebar]);
+    }, [sidebar, isMobile]);
 
     // Reset toggle button visibility when sidebar expands
     useEffect(() => {
@@ -146,9 +148,14 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
     const currentActiveTab = getActiveRoute();
 
     const handleNavigation = (route: string) => {
-      // Preserve current sidebar state during navigation
-      const currentCollapsedState = sidebar.collapsed;
+      console.log(
+        "🔵 Navigation clicked:",
+        route,
+        "Sidebar collapsed:",
+        sidebar.collapsed
+      );
 
+      // Simply navigate without changing sidebar state
       switch (route) {
         case "home":
           navigate("/host");
@@ -169,10 +176,7 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
           navigate("/host");
       }
 
-      // Ensure sidebar state is preserved after navigation
-      if (currentCollapsedState !== sidebar.collapsed) {
-        sidebar.setCollapsed(currentCollapsedState);
-      }
+      console.log("🟢 After navigation, Sidebar collapsed:", sidebar.collapsed);
     };
 
     // Handle middle area click in collapsed mode
@@ -348,7 +352,6 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
             <div
               data-sidebar="content"
               className="flex min-h-0 flex-1 flex-col overflow-auto group-data-[collapsible=icon]:overflow-hidden"
-              onClick={handleMiddleAreaClick}
             >
               {/* Main Navigation Group */}
               <div

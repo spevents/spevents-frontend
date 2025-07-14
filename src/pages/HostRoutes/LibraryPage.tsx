@@ -20,18 +20,39 @@ export function LibraryPage() {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const sidebar = useSidebar();
 
+  // Debug: Track LibraryPage renders and sidebar state
+  console.log("📚 LibraryPage render:", {
+    collapsed: sidebar.collapsed,
+    iconMode: sidebar.iconMode,
+    isMobile,
+  });
+
   useEffect(() => {
+    console.log("📚 LibraryPage useEffect triggered - before checkMobile");
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
+      console.log("📚 LibraryPage checkMobile:", {
+        mobile,
+        currentIsMobile: isMobile,
+        windowWidth: window.innerWidth,
+        sidebarCollapsed: sidebar.collapsed,
+      });
+
       setIsMobile(mobile);
       if (mobile) {
+        console.log("📚 LibraryPage: Setting sidebar collapsed due to mobile");
         sidebar.setCollapsed(true);
+      } else {
+        console.log("📚 LibraryPage: Not mobile, leaving sidebar as is");
       }
     };
     checkMobile();
     window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, [sidebar]);
+    return () => {
+      console.log("📚 LibraryPage: Cleaning up resize listener");
+      window.removeEventListener("resize", checkMobile);
+    };
+  }, [sidebar, isMobile]);
 
   const handleCreateEvent = () => {
     navigate("/host/create");
@@ -55,7 +76,10 @@ export function LibraryPage() {
       {/* Mobile Menu Button */}
       {isMobile && (
         <button
-          onClick={() => sidebar.setCollapsed(false)}
+          onClick={() => {
+            console.log("📚 Mobile menu clicked - opening sidebar");
+            sidebar.setCollapsed(false);
+          }}
           className="fixed top-4 left-4 z-30 p-2 bg-white dark:bg-sp_dark_surface rounded-lg shadow-lg border border-sp_eggshell/30 dark:border-sp_lightgreen/20"
         >
           <Menu className="w-5 h-5 text-sp_green dark:text-sp_dark_text" />

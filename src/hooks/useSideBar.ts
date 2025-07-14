@@ -5,7 +5,15 @@ import { useState, useEffect, useRef, useCallback } from "react";
 const COLLAPSE_THRESHOLD = 1024;
 
 export function useSidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+  // Initialize collapsed state from localStorage
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("sidebarCollapsed");
+      return saved ? JSON.parse(saved) : false;
+    }
+    return false;
+  });
+
   const [iconMode, setIconMode] = useState(false);
   const [width, setWidth] = useState(() => {
     if (typeof window !== "undefined") {
@@ -21,6 +29,11 @@ export function useSidebar() {
     return 1920;
   });
   const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // Persist collapsed state to localStorage
+  useEffect(() => {
+    localStorage.setItem("sidebarCollapsed", JSON.stringify(collapsed));
+  }, [collapsed]);
 
   useEffect(() => {
     const handleResize = () => {
