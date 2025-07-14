@@ -33,6 +33,7 @@ export function CreateEventPage() {
     name: "",
     date: "",
     startTime: "19:00", // Default 7pm
+    endTime: "23:00", // Default 11pm
     duration: 4,
     location: "",
     description: "",
@@ -62,29 +63,21 @@ export function CreateEventPage() {
       title: "Event Details",
       subtitle: "Tell us about your event",
       date: "test",
-      // startTime: string;
-      // endTime: string;
     },
     {
       title: "Guest Settings",
       subtitle: "Configure guest permissions",
       date: "test",
-      // startTime: string;
-      // endTime: string;
     },
     {
       title: "Display Views",
       subtitle: "Customize slideshow displays",
       date: "test",
-      // startTime: string;
-      // endTime: string;
     },
     {
       title: "Final Settings",
       subtitle: "Review and launch",
       date: "test",
-      // startTime: string;
-      // endTime: string;
     },
   ];
 
@@ -98,7 +91,10 @@ export function CreateEventPage() {
   };
 
   const handleBack = () => {
-    if (currentStep > 0) {
+    if (currentStep === 0) {
+      // Go to dashboard on first step
+      navigate("/dashboard");
+    } else {
       setCurrentStep(currentStep - 1);
     }
   };
@@ -132,7 +128,13 @@ export function CreateEventPage() {
     }
   };
 
-  const isNextDisabled = currentStep === 0 && !eventData.name;
+  // Check required fields: Event Name, Date, Start Time, End Time
+  const isNextDisabled =
+    currentStep === 0 &&
+    (!eventData.name ||
+      !eventData.date ||
+      !eventData.startTime ||
+      !eventData.endTime);
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: colors.eggshell }}>

@@ -4,6 +4,7 @@ export interface EventData {
   name: string;
   date: string;
   startTime: string;
+  endTime: string;
   duration: number;
   location: string;
   description: string;
@@ -45,8 +46,6 @@ export interface Step {
   title: string;
   subtitle: string;
   date: string;
-  // startTime: string;
-  // endTime: string;
 }
 
 // Color palette constants

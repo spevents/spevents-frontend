@@ -24,14 +24,13 @@ export function Navigation({
       <Button
         variant="outline"
         onClick={onBack}
-        disabled={currentStep === 0}
         style={{
           borderColor: colors.lightGreen,
           color: colors.darkGreen,
         }}
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
-        Back
+        {currentStep === 0 ? "Dashboard" : "Back"}
       </Button>
       <Button
         onClick={onNext}
