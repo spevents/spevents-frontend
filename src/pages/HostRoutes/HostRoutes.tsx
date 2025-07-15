@@ -11,6 +11,7 @@ import { PhotosPage } from "./PhotosPage";
 import { GuestPage } from "./GuestPage";
 import { CreateEventSimplePage } from "./CreateEventPageSimple";
 import { CreateEventPage } from "./CreateEventPage";
+import { EventBuilderPage } from "./EventBuilderPage";
 
 export const HostRoutes = () => {
   return (
@@ -24,7 +25,8 @@ export const HostRoutes = () => {
 
         {/* Create event routes */}
         <Route path="create" element={<CreateEventSimplePage />} />
-        <Route path="create/advanced" element={<CreateEventPage />} />
+        <Route path="create/advanced" element={<EventBuilderPage />} />
+        <Route path="create/steps" element={<CreateEventPage />} />
 
         {/* Main navigation routes */}
         <Route path="library" element={<LibraryPage />} />

@@ -252,38 +252,42 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
   }, []);
 
   const renderViewMode = () => {
-    const photosForDisplay = convertPhotosForDisplay(displayedPhotos);
+    // For modes that need all photos (marquee, presenter), use the full photos array
+    // For simple/fun/model modes, use the rotating displayedPhotos
+    const allPhotosForDisplay = convertPhotosForDisplay(photos);
+    const displayedPhotosForDisplay = convertPhotosForDisplay(displayedPhotos);
 
     switch (viewMode) {
       case "fun":
         return (
           <FunSlideshow
-            photos={photosForDisplay}
+            photos={displayedPhotosForDisplay}
             containerDimensions={containerDimensions}
           />
         );
       case "presenter":
         return (
           <PresenterSlideshow
-            photos={photosForDisplay}
+            photos={allPhotosForDisplay} // Use all photos
             containerDimensions={containerDimensions}
           />
         );
       case "model":
         return (
           <ModelSlideshow
-            photos={photosForDisplay}
+            photos={displayedPhotosForDisplay}
             containerDimensions={containerDimensions}
           />
         );
       case "marquee":
         return (
           <MarqueeSlideshow
-            photos={photosForDisplay}
+            photos={allPhotosForDisplay} // Use all photos, not displayedPhotos
             containerDimensions={containerDimensions}
           />
         );
       default:
+        // Simple mode continues to use displayedPhotos
         return (
           <div className="relative w-full h-full overflow-hidden bg-gray-900">
             {displayedPhotos.length === 0 && !isLoading && (

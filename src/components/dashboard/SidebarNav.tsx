@@ -10,7 +10,6 @@ import {
   Users,
   Plus,
   ChevronDown,
-  ChevronRight,
   Sun,
   Moon,
   UserIcon,
@@ -278,9 +277,10 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
           {/* Hover overlay with arrow for collapsed state */}
           {isIconMode && (
             <div className="absolute inset-0 bg-sp_darkgreen/10 dark:bg-sp_lightgreen/10 opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 pointer-events-none">
-              <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                <ChevronRight className="w-4 h-4 text-sp_darkgreen dark:text-sp_eggshell opacity-70" />
-              </div>
+              {/* Removed chevron right icon blocking off the Guests icon */}
+              {/* <div className="absolute right-2 top-1/2 -translate-y-1/2"> */}
+              {/* <ChevronRight className="w-4 h-4 text-sp_darkgreen dark:text-sp_eggshell opacity-70" /> */}
+              {/* </div> */}
             </div>
           )}
 

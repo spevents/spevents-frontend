@@ -11,7 +11,7 @@ export function EventSlideshow() {
   const { eventId } = useParams<{ eventId: string }>();
   const { currentEvent, selectEvent } = useEvent();
   const [showQR, setShowQR] = useState(true);
-  const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [_debugInfo, setDebugInfo] = useState<any>(null);
   const [sessionCode, setSessionCode] = useState<string | null>(null);
 
   useEffect(() => {
@@ -95,7 +95,7 @@ export function EventSlideshow() {
       <PhotoSlideshow eventId={eventId} />
 
       {/* Debug Info */}
-      {debugInfo && (
+      {/* {debugInfo && (
         <div className="absolute top-5 left-5 z-50 bg-white rounded-lg p-4 max-w-md text-xs">
           <h3 className="font-bold mb-2">Debug Info</h3>
           <pre className="overflow-auto max-h-40 bg-gray-100 p-2 rounded">
@@ -107,7 +107,7 @@ export function EventSlideshow() {
             </div>
           )}
         </div>
-      )}
+      )} */}
 
       {/* QR Code Panel */}
       {showQR && sessionCode && (

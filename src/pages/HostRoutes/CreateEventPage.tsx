@@ -92,8 +92,7 @@ export function CreateEventPage() {
 
   const handleBack = () => {
     if (currentStep === 0) {
-      // Go to dashboard on first step
-      navigate("/dashboard");
+      navigate("/host/dashboard");
     } else {
       setCurrentStep(currentStep - 1);
     }
