@@ -29,7 +29,7 @@ export interface SlideshowView {
   type: string;
   preset: string;
   isDefault: boolean;
-  settings: SlideshowViewSettings;
+  settings?: SlideshowViewSettings;
 }
 
 export interface SlideshowViewSettings {

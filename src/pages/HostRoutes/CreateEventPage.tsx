@@ -17,7 +17,7 @@ import { Header } from "@/components/create-event/Header";
 import { ProgressBar } from "@/components/create-event/ProgressBar";
 import { EventDetailsStep } from "@/components/create-event/EventDetailsStep";
 import { GuestSettingsStep } from "@/components/create-event/GuestSettingsStep";
-import { DisplayViewsStep } from "@/components/create-event/DisplayViewsStep";
+import { DisplayViewsStep } from "@/components/create-event/DisplayViewsStep/DisplayViewsStep";
 import { FinalSettingsStep } from "@/components/create-event/FinalSettingsStep";
 import { Navigation } from "@/components/create-event/Navigation";
 import { EventData, colors, Step } from "@/types/eventTypes";
