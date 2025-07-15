@@ -16,6 +16,15 @@ export interface SwipeAction {
   timestamp: number;
 }
 
+const samplePhotos = [
+  "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=400",
+  "https://images.unsplash.com/photo-1522770179533-24471fcdba45?w=400",
+  "https://images.unsplash.com/photo-1511578314322-379afb476865?w=400",
+  "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=400",
+  "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=400",
+  "https://images.unsplash.com/photo-1543269865-cbf427effbad?w=400",
+];
+
 export const InteractiveDemo = ({ isDark }: InteractiveDemoProps) => {
   const [demoMode, setDemoMode] = useState("grid");
   const [swipeActions, setSwipeActions] = useState<SwipeAction[]>([]);
@@ -74,8 +83,8 @@ export const InteractiveDemo = ({ isDark }: InteractiveDemoProps) => {
                             ? "bg-sp_lightgreen text-sp_darkgreen"
                             : "bg-white text-sp_darkgreen shadow-sm"
                           : isDark
-                          ? "text-sp_eggshell hover:text-sp_lightgreen"
-                          : "text-sp_darkgreen/70 hover:text-sp_darkgreen"
+                            ? "text-sp_lightgreen/80 hover:text-sp_lightgreen"
+                            : "text-sp_darkgreen/70 hover:text-sp_darkgreen"
                       }`}
                     >
                       {mode.charAt(0).toUpperCase() + mode.slice(1)}
@@ -85,24 +94,19 @@ export const InteractiveDemo = ({ isDark }: InteractiveDemoProps) => {
               </div>
             </div>
 
-            <div className="flex justify-center">
-              <div className="grid lg:grid-cols-5 gap-8 items-center max-w-6xl w-full">
-                <div className="lg:col-span-2 text-center">
-                  <h4
-                    className={`text-lg font-semibold mb-6 ${
-                      isDark ? "text-sp_eggshell" : "text-sp_darkgreen"
-                    }`}
-                  >
-                    Guest Experience
-                  </h4>
-                  <div className="flex justify-start">
+            <div className="grid lg:grid-cols-5 gap-8 items-start">
+              <div className="lg:col-span-2">
+                <div className="space-y-6">
+                  {/* Phone Mockup */}
+                  <div className="mt-8 flex justify-center">
                     <PhoneMockup
                       isDark={isDark}
                       mode={demoMode}
+                      samplePhotos={samplePhotos}
                       onSwipeAction={handleSwipeAction}
                     />
                   </div>
-                  <div className="mt-6 grid grid-cols-3 gap-4 text-xs">
+                  <div className="flex items-center justify-between">
                     <div className="flex flex-col items-center gap-2">
                       <div
                         className={`w-8 h-8 rounded-full flex items-center justify-center ${
@@ -239,8 +243,10 @@ export const InteractiveDemo = ({ isDark }: InteractiveDemoProps) => {
                     </div>
                   </div>
                 </div>
+              </div>
 
-                <div className="lg:col-span-3 text-center">
+              <div className="lg:col-span-3">
+                <div className="text-center">
                   <h4
                     className={`text-lg font-semibold mb-6 ${
                       isDark ? "text-sp_eggshell" : "text-sp_darkgreen"
@@ -248,11 +254,12 @@ export const InteractiveDemo = ({ isDark }: InteractiveDemoProps) => {
                   >
                     Live Display
                   </h4>
-                  <div className="w-full h-80">
+                  <div className="w-full h-96">
                     <LivePhotoWall
                       isDark={isDark}
                       mode={demoMode}
                       swipeActions={swipeActions}
+                      samplePhotos={samplePhotos}
                     />
                   </div>
                   <div className="mt-4 flex items-center justify-center gap-2 text-sm">

@@ -14,6 +14,7 @@ interface LivePhotoWallProps {
   isDark: boolean;
   mode: string;
   swipeActions: SwipeAction[];
+  samplePhotos: string[];
 }
 
 interface DisplayPhoto {
@@ -23,20 +24,11 @@ interface DisplayPhoto {
   timestamp: number;
 }
 
-// Mock photo data for the demo
-const DEMO_PHOTOS = [
-  "/placeholder.svg?height=200&width=200&text=Photo1",
-  "/placeholder.svg?height=200&width=200&text=Photo2",
-  "/placeholder.svg?height=200&width=200&text=Photo3",
-  "/placeholder.svg?height=200&width=200&text=Photo4",
-  "/placeholder.svg?height=200&width=200&text=Photo5",
-  "/placeholder.svg?height=200&width=200&text=Photo6",
-];
-
 export const LivePhotoWall = ({
   isDark,
   mode,
   swipeActions,
+  samplePhotos,
 }: LivePhotoWallProps) => {
   const [displayPhotos, setDisplayPhotos] = useState<DisplayPhoto[]>([]);
   const [currentSetIndex, setCurrentSetIndex] = useState(0);
@@ -47,20 +39,20 @@ export const LivePhotoWall = ({
       .filter((action) => action.action === "upload")
       .map((action) => ({
         id: `photo-${action.photoIndex}-${action.timestamp}`,
-        src: DEMO_PHOTOS[action.photoIndex] || "/placeholder.svg",
+        src: samplePhotos[action.photoIndex] || "/placeholder.svg",
         index: action.photoIndex,
         timestamp: action.timestamp,
       }));
 
     setDisplayPhotos(uploadedPhotos);
-  }, [swipeActions]);
+  }, [swipeActions, samplePhotos]);
 
   // Cycle through photo sets for presenter mode
   useEffect(() => {
     if (mode === "presenter" && displayPhotos.length >= 3) {
       const interval = setInterval(() => {
         setCurrentSetIndex(
-          (prev) => (prev + 1) % Math.ceil(displayPhotos.length / 3)
+          (prev) => (prev + 1) % Math.ceil(displayPhotos.length / 3),
         );
       }, 3000);
       return () => clearInterval(interval);
@@ -69,7 +61,7 @@ export const LivePhotoWall = ({
 
   const renderGridMode = () => (
     <div
-      className={`relative w-full h-80 ${
+      className={`relative w-full h-96 ${
         isDark
           ? "bg-gradient-to-br from-sp_green/30 to-sp_midgreen/30 border-sp_lightgreen/50"
           : "bg-gradient-to-br from-sp_lightgreen/20 to-sp_midgreen/20 border-sp_lightgreen"
@@ -184,7 +176,7 @@ export const LivePhotoWall = ({
 
   const renderFunMode = () => (
     <div
-      className={`relative w-full h-64 ${
+      className={`relative w-full h-96 ${
         isDark
           ? "bg-gradient-to-br from-sp_green/30 to-sp_midgreen/30"
           : "bg-gradient-to-br from-sp_lightgreen/20 to-sp_midgreen/20"
@@ -256,7 +248,7 @@ export const LivePhotoWall = ({
 
     return (
       <div
-        className={`relative w-full h-64 ${
+        className={`relative w-full h-96 ${
           isDark
             ? "bg-gradient-to-br from-sp_green/30 to-sp_midgreen/30"
             : "bg-gradient-to-br from-sp_lightgreen/20 to-sp_midgreen/20"
@@ -311,8 +303,8 @@ export const LivePhotoWall = ({
                       ? "bg-sp_lightgreen"
                       : "bg-sp_green"
                     : isDark
-                    ? "bg-sp_eggshell/30"
-                    : "bg-sp_darkgreen/30"
+                      ? "bg-sp_eggshell/30"
+                      : "bg-sp_darkgreen/30"
                 }`}
               />
             ))}
@@ -327,7 +319,7 @@ export const LivePhotoWall = ({
 
     return (
       <div
-        className={`relative w-full h-64 ${
+        className={`relative w-full h-96 ${
           isDark
             ? "bg-gradient-to-br from-sp_green/30 to-sp_midgreen/30"
             : "bg-gradient-to-br from-sp_lightgreen/20 to-sp_midgreen/20"

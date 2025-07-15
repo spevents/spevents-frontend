@@ -6,6 +6,7 @@ import { CheckCircle, X } from "lucide-react";
 interface PhoneMockupProps {
   isDark: boolean;
   mode: string;
+  samplePhotos: string[];
   onSwipeAction?: (action: SwipeAction) => void;
 }
 
@@ -16,25 +17,20 @@ interface SwipeAction {
   timestamp: number;
 }
 
-const DEMO_PHOTOS = [
-  "/placeholder.svg?height=200&width=200&text=Photo1",
-  "/placeholder.svg?height=200&width=200&text=Photo2",
-  "/placeholder.svg?height=200&width=200&text=Photo3",
-  "/placeholder.svg?height=200&width=200&text=Photo4",
-  "/placeholder.svg?height=200&width=200&text=Photo5",
-  "/placeholder.svg?height=200&width=200&text=Photo6",
-];
-
 type SwipeState = "idle" | "ready" | "swiping" | "transitioning";
 type ActionType = "upload" | "delete";
 type SwipeDirection = "left" | "right";
 
-export const PhoneMockup = ({ isDark, onSwipeAction }: PhoneMockupProps) => {
+export const PhoneMockup = ({
+  isDark,
+  samplePhotos,
+  onSwipeAction,
+}: PhoneMockupProps) => {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [swipeState, setSwipeState] = useState<SwipeState>("idle");
   const [actionType, setActionType] = useState<ActionType | null>(null);
   const [swipeDirection, setSwipeDirection] = useState<SwipeDirection | null>(
-    null
+    null,
   );
   const [_isAnimating, setIsAnimating] = useState(false);
 
@@ -76,7 +72,7 @@ export const PhoneMockup = ({ isDark, onSwipeAction }: PhoneMockupProps) => {
         });
       }
 
-      setCurrentPhotoIndex((prev) => (prev + 1) % DEMO_PHOTOS.length);
+      setCurrentPhotoIndex((prev) => (prev + 1) % samplePhotos.length);
 
       await new Promise((resolve) => setTimeout(resolve, 400));
 
@@ -90,7 +86,7 @@ export const PhoneMockup = ({ isDark, onSwipeAction }: PhoneMockupProps) => {
     sequence();
     const interval = setInterval(sequence, 6000);
     return () => clearInterval(interval);
-  }, []);
+  }, [currentPhotoIndex, onSwipeAction, samplePhotos.length]);
 
   const getSwipeTransform = () => {
     if (swipeState !== "swiping" || !swipeDirection)
@@ -180,7 +176,7 @@ export const PhoneMockup = ({ isDark, onSwipeAction }: PhoneMockupProps) => {
                       }}
                     >
                       <img
-                        src={DEMO_PHOTOS[currentPhotoIndex]}
+                        src={samplePhotos[currentPhotoIndex]}
                         alt="Current photo"
                         className="w-full h-full object-cover"
                       />
@@ -256,7 +252,7 @@ export const PhoneMockup = ({ isDark, onSwipeAction }: PhoneMockupProps) => {
                       }}
                     >
                       <img
-                        src={DEMO_PHOTOS[currentPhotoIndex]}
+                        src={samplePhotos[currentPhotoIndex]}
                         alt="Next photo"
                         className="w-full h-full object-cover"
                       />
@@ -279,7 +275,7 @@ export const PhoneMockup = ({ isDark, onSwipeAction }: PhoneMockupProps) => {
                     isDark ? "text-sp_eggshell" : "text-sp_darkgreen"
                   }`}
                 >
-                  {currentPhotoIndex + 1} of {DEMO_PHOTOS.length}
+                  {currentPhotoIndex + 1} of {samplePhotos.length}
                 </span>
               </div>
 
@@ -295,8 +291,8 @@ export const PhoneMockup = ({ isDark, onSwipeAction }: PhoneMockupProps) => {
                           : "text-sp_green"
                         : "text-red-400"
                       : isDark
-                      ? "text-sp_eggshell/50"
-                      : "text-sp_darkgreen/50"
+                        ? "text-sp_eggshell/50"
+                        : "text-sp_darkgreen/50"
                   }`}
                   animate={{
                     x: swipeState === "idle" ? [-3, 3, -3] : 0,
@@ -336,8 +332,8 @@ export const PhoneMockup = ({ isDark, onSwipeAction }: PhoneMockupProps) => {
                           : "text-sp_green"
                         : "text-red-400"
                       : isDark
-                      ? "text-sp_eggshell/50"
-                      : "text-sp_darkgreen/50"
+                        ? "text-sp_eggshell/50"
+                        : "text-sp_darkgreen/50"
                   }`}
                   animate={{
                     x: swipeState === "idle" ? [3, -3, 3] : 0,

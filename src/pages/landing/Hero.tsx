@@ -17,12 +17,14 @@ const getUrls = () => {
       guest: `${currentOrigin}/${
         import.meta.env.VITE_EVENT_ID || "demo"
       }/guest`,
+      demo: "https://calendly.com/spevents-party/30min",
     };
   }
 
   return {
     host: "https://app.spevents.live",
     guest: "https://join.spevents.live",
+    demo: "https://calendly.com/spevents-party/30min",
   };
 };
 
@@ -49,7 +51,7 @@ export const Hero = ({ isDark }: HeroProps) => {
           >
             Event Photo Sharing
           </motion.h1>
-          <motion.p
+          <motion.h2
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
@@ -58,7 +60,7 @@ export const Hero = ({ isDark }: HeroProps) => {
             }`}
           >
             Live photo walls. Instant guest uploads. No apps required.
-          </motion.p>
+          </motion.h2>
 
           {/* CTA Buttons */}
           <motion.div
@@ -78,14 +80,14 @@ export const Hero = ({ isDark }: HeroProps) => {
               Start Your Event
             </a>
             <a
-              href={urls.guest}
+              href={urls.demo}
               className={`px-8 py-4 text-lg font-medium rounded-xl transform hover:scale-105 transition-all duration-200 shadow-lg border ${
                 isDark
                   ? "bg-sp_green hover:bg-sp_midgreen text-sp_eggshell border-sp_lightgreen"
                   : "bg-white/80 hover:bg-white text-sp_darkgreen border-sp_lightgreen/30"
               }`}
             >
-              Join an Event
+              Book Demo
             </a>
           </motion.div>
         </div>
