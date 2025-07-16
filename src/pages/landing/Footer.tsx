@@ -7,7 +7,7 @@ interface FooterProps {
   setIsDark: (isDark: boolean) => void;
 }
 
-export const Footer = ({ isDark, setIsDark }: FooterProps) => {
+export const Footer = ({ isDark }: FooterProps) => {
   return (
     <footer
       className={`py-12 transition-colors duration-300 ${
