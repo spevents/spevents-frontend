@@ -17,9 +17,8 @@ interface SwipeAction {
   timestamp: number;
 }
 
-type SwipeState = "idle" | "ready" | "swiping" | "transitioning";
+type SwipeState = "idle" | "ready" | "swiping";
 type ActionType = "upload" | "delete";
-type SwipeDirection = "left" | "right";
 
 export const PhoneMockup = ({
   isDark,
@@ -29,29 +28,21 @@ export const PhoneMockup = ({
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [swipeState, setSwipeState] = useState<SwipeState>("idle");
   const [actionType, setActionType] = useState<ActionType | null>(null);
-  const [swipeDirection, setSwipeDirection] = useState<SwipeDirection | null>(
-    null,
-  );
   const [_isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
     const sequence = async () => {
       // Initial delay
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      // Show ready state
-      const actions: ActionType[] = ["upload", "delete"];
-      const directions: SwipeDirection[] = ["left", "right"];
-      const selectedAction =
-        actions[Math.floor(Math.random() * actions.length)];
-      const selectedDirection =
-        directions[Math.floor(Math.random() * directions.length)];
+      // Alternate between upload and delete actions
+      const isUploadTurn = currentPhotoIndex % 3 !== 2; // Upload 2 out of 3 times
+      const selectedAction: ActionType = isUploadTurn ? "upload" : "delete";
 
       setActionType(selectedAction);
-      setSwipeDirection(selectedDirection);
       setSwipeState("ready");
 
-      await new Promise((resolve) => setTimeout(resolve, 1200));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Start swiping
       setSwipeState("swiping");
@@ -59,56 +50,64 @@ export const PhoneMockup = ({
 
       await new Promise((resolve) => setTimeout(resolve, 800));
 
-      // Transition to next photo
-      setSwipeState("transitioning");
-
-      // Notify parent of swipe action
-      if (onSwipeAction) {
+      // Only notify parent for uploads (to sync with LivePhotoWall)
+      if (selectedAction === "upload" && onSwipeAction) {
         onSwipeAction({
           photoIndex: currentPhotoIndex,
           action: selectedAction,
-          direction: selectedDirection,
+          direction: "left", // Direction doesn't matter for demo
           timestamp: Date.now(),
         });
       }
 
+      // Update photo index
       setCurrentPhotoIndex((prev) => (prev + 1) % samplePhotos.length);
 
-      await new Promise((resolve) => setTimeout(resolve, 400));
+      await new Promise((resolve) => setTimeout(resolve, 600));
 
       // Reset state
       setSwipeState("idle");
       setActionType(null);
-      setSwipeDirection(null);
       setIsAnimating(false);
     };
 
     sequence();
-    const interval = setInterval(sequence, 6000);
+    const interval = setInterval(sequence, 5000);
     return () => clearInterval(interval);
   }, [currentPhotoIndex, onSwipeAction, samplePhotos.length]);
 
   const getSwipeTransform = () => {
-    if (swipeState !== "swiping" || !swipeDirection)
+    if (swipeState !== "swiping" || !actionType)
       return { x: 0, y: 0, rotate: 0 };
 
     const isUpload = actionType === "upload";
-    const isLeft = swipeDirection === "left";
 
     return {
-      x: isLeft ? -300 : 300,
-      y: isUpload ? -350 : 250,
-      rotate: isLeft ? -25 : 25,
+      x: 0,
+      y: isUpload ? -400 : 400,
+      rotate: 0,
     };
   };
 
-  const getNextPhotoTransform = () => {
-    if (swipeState !== "transitioning") return { x: 0, y: 0, scale: 0.95 };
-    return { x: 0, y: 0, scale: 1 };
+  const getExitTransform = () => {
+    if (!actionType) return { x: 0, y: 0, rotate: 0 };
+
+    const isUpload = actionType === "upload";
+
+    return {
+      x: 0,
+      y: isUpload ? -500 : 500,
+      rotate: 0,
+    };
   };
+  type SwipeDirection = "left" | "right";
+  const swipeDirection: SwipeDirection | null =
+    actionType === null ? null : actionType === "upload" ? "left" : "right";
 
   return (
-    <div className="relative mx-auto">
+    <div className="relative mx-auto -mt-8">
+      {" "}
+      {/* Moved up with negative margin */}
       <div className="relative w-56 h-[480px] bg-gray-900 rounded-[2.5rem] p-3 shadow-2xl">
         {/* Phone notch */}
         <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-32 h-6 bg-gray-900 rounded-b-2xl z-10"></div>
@@ -155,35 +154,46 @@ export const PhoneMockup = ({
               {/* Photo stack container */}
               <div className="absolute inset-0 z-20">
                 <AnimatePresence mode="wait">
-                  {swipeState !== "transitioning" && (
-                    <motion.div
-                      key={`current-${currentPhotoIndex}`}
-                      className="absolute inset-0 rounded-2xl overflow-hidden shadow-lg border-4 border-white"
-                      initial={{ scale: 0.95, opacity: 0 }}
-                      animate={{
-                        ...getSwipeTransform(),
-                        scale: 1,
-                        opacity: swipeState === "swiping" ? 0.8 : 1,
-                      }}
-                      exit={{
-                        ...getSwipeTransform(),
-                        opacity: 0,
-                        scale: 0.8,
-                      }}
-                      transition={{
-                        duration: swipeState === "swiping" ? 0.8 : 0.4,
-                        ease: [0.25, 0.46, 0.45, 0.94],
-                      }}
-                    >
-                      <img
-                        src={samplePhotos[currentPhotoIndex]}
-                        alt="Current photo"
-                        className="w-full h-full object-cover"
-                      />
+                  <motion.div
+                    key={`photo-${currentPhotoIndex}-${swipeState}`}
+                    className="absolute inset-0 rounded-2xl overflow-hidden shadow-lg border-4 border-white"
+                    initial={{ scale: 0.95, opacity: 0, y: 10 }}
+                    animate={
+                      swipeState === "swiping"
+                        ? {
+                            ...getSwipeTransform(),
+                            scale: 0.9,
+                            opacity: 0.7,
+                          }
+                        : {
+                            x: 0,
+                            y: 0,
+                            rotate: 0,
+                            scale: 1,
+                            opacity: 1,
+                          }
+                    }
+                    exit={{
+                      ...getExitTransform(),
+                      opacity: 0,
+                      scale: 0.7,
+                    }}
+                    transition={{
+                      duration: swipeState === "swiping" ? 0.6 : 0.4,
+                      ease: [0.25, 0.46, 0.45, 0.94],
+                    }}
+                  >
+                    <img
+                      src={samplePhotos[currentPhotoIndex]}
+                      alt="Current photo"
+                      className="w-full h-full object-cover"
+                    />
 
-                      {/* Action overlays */}
-                      <AnimatePresence>
-                        {swipeState === "ready" && actionType && (
+                    {/* Action overlays - only show during ready and swiping states */}
+                    <AnimatePresence>
+                      {(swipeState === "ready" ||
+                        (swipeState === "swiping" && actionType)) &&
+                        actionType && (
                           <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 0.92 }}
@@ -224,40 +234,21 @@ export const PhoneMockup = ({
                               )}
                             </motion.div>
                             <p className="text-white font-semibold text-lg">
-                              Release to{" "}
-                              {actionType === "upload" ? "Upload" : "Delete"}
+                              {swipeState === "ready" ? "Release to" : ""}
+                              {swipeState === "swiping"
+                                ? actionType === "upload"
+                                  ? "Uploading..."
+                                  : "Deleting..."
+                                : ` ${
+                                    actionType === "upload"
+                                      ? "Upload"
+                                      : "Delete"
+                                  }`}
                             </p>
                           </motion.div>
                         )}
-                      </AnimatePresence>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* Next photo (appears during transition) */}
-                <AnimatePresence>
-                  {swipeState === "transitioning" && (
-                    <motion.div
-                      key={`next-${currentPhotoIndex}`}
-                      className="absolute inset-0 rounded-2xl overflow-hidden shadow-lg border-4 border-white"
-                      initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                      animate={{
-                        ...getNextPhotoTransform(),
-                        opacity: 1,
-                        y: 0,
-                      }}
-                      transition={{
-                        duration: 0.5,
-                        ease: [0.25, 0.46, 0.45, 0.94],
-                      }}
-                    >
-                      <img
-                        src={samplePhotos[currentPhotoIndex]}
-                        alt="Next photo"
-                        className="w-full h-full object-cover"
-                      />
-                    </motion.div>
-                  )}
+                    </AnimatePresence>
+                  </motion.div>
                 </AnimatePresence>
               </div>
             </div>

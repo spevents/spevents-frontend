@@ -73,7 +73,7 @@ export const InteractiveDemo = ({ isDark }: InteractiveDemoProps) => {
                     isDark ? "bg-sp_green" : "bg-sp_lightgreen/30"
                   }`}
                 >
-                  {["grid", "fun", "presenter", "slideshow"].map((mode) => (
+                  {["grid", "fun", "presenter"].map((mode) => (
                     <button
                       key={mode}
                       onClick={() => setDemoMode(mode)}
@@ -252,7 +252,7 @@ export const InteractiveDemo = ({ isDark }: InteractiveDemoProps) => {
                       isDark ? "text-sp_eggshell" : "text-sp_darkgreen"
                     }`}
                   >
-                    Live Display
+                    Live cringe
                   </h4>
                   <div className="w-full h-96">
                     <LivePhotoWall
@@ -262,6 +262,7 @@ export const InteractiveDemo = ({ isDark }: InteractiveDemoProps) => {
                       samplePhotos={samplePhotos}
                     />
                   </div>
+
                   <div className="mt-4 flex items-center justify-center gap-2 text-sm">
                     <Play
                       className={`w-4 h-4 ${
