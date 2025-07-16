@@ -385,7 +385,7 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
                             e.stopPropagation();
                             handleNavigation(item.id);
                           }}
-                          className={`peer/menu-button flex w-full items-center overflow-hidden rounded-md p-2 text-left text-sm outline-hidden transition-all duration-300 hover:bg-sp_green dark:hover:bg-sp_eggshell/10 hover:text-sp_darkgreen dark:hover:text-sp_eggshell ${
+                          className={`peer/menu-button flex w-full items-center overflow-hidden rounded-md p-2 text-left text-sm outline-hidden transition-all duration-300 hover:bg-sp_green/20 dark:hover:bg-sp_eggshell/10 hover:text-sp_darkgreen dark:hover:text-sp_eggshell ${
                             currentActiveTab === item.id
                               ? "bg-sp_lightgreen text-sp_eggshell dark:text-sp_eggshell/100 border border-sp_lightgreen/30"
                               : "text-sp_darkgreen dark:text-sp_eggshell"
@@ -422,7 +422,7 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
 
                         {/* Tooltip for collapsed mode */}
                         {isIconMode && (
-                          <div className="absolute left-full ml-2 px-2 py-1 bg-sp_darkgreen dark:bg-sp_dark_surface text-white dark:text-sp_eggshell text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                          <div className="absolute left-full ml-2 px-2 py-1 bg-sp_darkgreen dark:bg-sp_eggshell text-white dark:text-sp_darkgreen text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
                             {item.label}
                           </div>
                         )}
@@ -481,7 +481,7 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
                         e.stopPropagation();
                         setShowProfileMenu(!showProfileMenu);
                       }}
-                      className={`flex items-center text-sm text-sp_darkgreen dark:text-sp_eggshell hover:bg-sp_green dark:hover:bg-sp_eggshell/10 hover:text-sp_darkgreen dark:hover:text-sp_eggshell rounded-lg transition-all duration-200 overflow-hidden ${
+                      className={`flex items-center text-sm text-sp_darkgreen dark:text-sp_eggshell hover:bg-sp_lightgreen dark:hover:bg-sp_eggshell/10 hover:text-sp_darkgreen dark:hover:text-sp_eggshell rounded-lg transition-all duration-200 overflow-hidden ${
                         isIconMode
                           ? "px-2 py-2 justify-center"
                           : "flex-1 px-3 py-3 gap-3"
@@ -596,7 +596,7 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
                           isIconMode ? "left-full ml-2" : "bottom-full mb-2"
                         } ${
                           isIconMode ? "w-64" : "left-0 right-0"
-                        } bg-white dark:bg-sp_dark_surface border border-sp_eggshell/30 dark:border-sp_lightgreen/20 rounded-xl shadow-lg z-50`}
+                        } bg-white dark:bg-sp_midgreen border border-sp_eggshell/30 dark:border-sp_lightgreen/20 rounded-xl shadow-lg z-50`}
                       >
                         <div className="p-3 border-b border-sp_eggshell/30 dark:border-sp_lightgreen/20">
                           <p className="font-medium text-sp_darkgreen dark:text-sp_eggshell">
@@ -609,6 +609,7 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
                             Free plan
                           </p>
                         </div>
+
                         <div className="p-2">
                           <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_darkgreen dark:text-sp_eggshell hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg transition-colors duration-200">
                             <UserIcon className="w-4 h-4" />
