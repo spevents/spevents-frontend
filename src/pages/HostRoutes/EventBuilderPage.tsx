@@ -15,14 +15,13 @@ import {
   X,
   LayoutTemplate,
   Presentation,
-  Hotel,
   AlignHorizontalSpaceAround,
   Trash2,
 } from "lucide-react";
 import { EventData, colors } from "../../types/eventTypes";
 import BuilderFunSlideshow from "./BuilderSlideshows/BuilderFunSlideshow";
 import BuilderPresenterSlideshow from "./BuilderSlideshows/BuilderPresenterSlideshow";
-import BuilderModelSlideshow from "./BuilderSlideshows/BuilderModelSlideshow";
+// import BuilderModelSlideshow from "./BuilderSlideshows/BuilderModelSlideshow";
 import BuilderMarqueeSlideshow from "./BuilderSlideshows/BuilderMarqueeSlideshow";
 
 interface PreviewPhoto {
@@ -59,12 +58,6 @@ const slideshowModes = [
     name: "Presenter",
     icon: Presentation,
     description: "Professional 3-grid layout",
-  },
-  {
-    id: "model",
-    name: "Elegant",
-    icon: Hotel,
-    description: "Sophisticated display",
   },
   {
     id: "marquee",
@@ -293,8 +286,8 @@ export function EventBuilderPage() {
         return <BuilderFunSlideshow {...commonProps} />;
       case "presenter":
         return <BuilderPresenterSlideshow {...commonProps} />;
-      case "model":
-        return <BuilderModelSlideshow {...commonProps} />;
+      // case "model":
+      //   return <BuilderModelSlideshow {...commonProps} />;
       case "marquee":
         return <BuilderMarqueeSlideshow {...commonProps} />;
       default:

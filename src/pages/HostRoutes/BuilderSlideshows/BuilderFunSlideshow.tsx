@@ -5,7 +5,6 @@ import {
   Layout,
   LayoutTemplate,
   Presentation,
-  Hotel,
   AlignHorizontalSpaceAround,
 } from "lucide-react";
 
@@ -42,7 +41,6 @@ const slideshowModes = [
   { id: "simple", name: "Classic", icon: Layout },
   { id: "fun", name: "Dynamic", icon: LayoutTemplate },
   { id: "presenter", name: "Presenter", icon: Presentation },
-  { id: "model", name: "Elegant", icon: Hotel },
   { id: "marquee", name: "Marquee", icon: AlignHorizontalSpaceAround },
 ];
 

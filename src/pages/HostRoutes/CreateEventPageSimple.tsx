@@ -186,7 +186,7 @@ export function CreateEventSimplePage() {
           className="bg-white dark:bg-sp_dark_surface rounded-2xl shadow-lg border border-sp_eggshell/30 dark:border-sp_lightgreen/20 p-8"
         >
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-sp_darkgreen dark:text-sp_dark_text mb-2">
+            <h2 className="text-2xl font-bold text-sp_darkgreen dark:text-sp_darkgreen mb-2">
               Quick Event Setup
             </h2>
             <p className="text-sp_green dark:text-sp_dark_muted">
@@ -206,7 +206,7 @@ export function CreateEventSimplePage() {
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, name: e.target.value }))
                 }
-                className="w-full border border-sp_eggshell/50 dark:border-sp_lightgreen/30 rounded-xl px-4 py-3 bg-white dark:bg-sp_dark_bg text-sp_darkgreen dark:text-sp_dark_text focus:ring-2 focus:ring-sp_midgreen focus:border-transparent transition-all"
+                className="w-full border border-sp_eggshell/50 dark:border-sp_lightgreen/30 rounded-xl px-4 py-3 bg-white dark:bg-sp_darkgreen text-sp_darkgreen dark:text-sp_eggshell focus:ring-2 focus:ring-sp_midgreen focus:border-transparent transition-all"
                 placeholder="Wedding Reception, Company Party, Birthday..."
                 required
               />
@@ -224,7 +224,7 @@ export function CreateEventSimplePage() {
                     description: e.target.value,
                   }))
                 }
-                className="w-full border border-sp_eggshell/50 dark:border-sp_lightgreen/30 rounded-xl px-4 py-3 bg-white dark:bg-sp_dark_bg text-sp_darkgreen dark:text-sp_dark_text focus:ring-2 focus:ring-sp_midgreen focus:border-transparent transition-all"
+                className="w-full border border-sp_eggshell/50 dark:border-sp_lightgreen/30 rounded-xl px-4 py-3 bg-white dark:bg-sp_dark_bg text-sp_darkgreen dark:text-sp_eggshell focus:ring-2 focus:ring-sp_midgreen focus:border-transparent transition-all"
                 placeholder="Brief description of your event..."
                 rows={3}
               />

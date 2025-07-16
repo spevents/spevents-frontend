@@ -162,7 +162,7 @@ export function SignInPage() {
 
         <div className="text-center">
           <Link
-            to="/"
+            to="*"
             className="text-white/70 dark:text-sp_darkgreen/70 hover:text-white dark:hover:text-sp_darkgreen text-sm underline transition-colors"
           >
             ← Back to home
