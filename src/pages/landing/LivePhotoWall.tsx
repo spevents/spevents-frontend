@@ -24,7 +24,7 @@ interface DisplayPhoto {
   timestamp: number;
 }
 
-const MAX_DISPLAY_PHOTOS = 10;
+const MAX_DISPLAY_PHOTOS = 6;
 
 export const LivePhotoWall = ({
   isDark,
@@ -45,7 +45,7 @@ export const LivePhotoWall = ({
         index: action.photoIndex,
         timestamp: action.timestamp,
       }))
-      .slice(-MAX_DISPLAY_PHOTOS); // Limit to max 10 photos, keeping the most recent
+      .slice(-MAX_DISPLAY_PHOTOS); // Limit to max 6 photos, keeping the most recent
 
     setDisplayPhotos(uploadedPhotos);
   }, [swipeActions, samplePhotos]);
@@ -87,9 +87,9 @@ export const LivePhotoWall = ({
 
         {/* Centered grid container */}
         <div className="absolute inset-0 flex items-center justify-center p-8">
-          <div className="grid grid-cols-4 gap-4 max-w-sm mx-auto">
+          <div className="grid grid-cols-3 gap-4 max-w-sm mx-auto">
             <AnimatePresence>
-              {displayPhotos.slice(0, 8).map((photo) => (
+              {displayPhotos.slice(0, 6).map((photo) => (
                 <motion.div
                   key={photo.id}
                   initial={{
@@ -361,93 +361,12 @@ export const LivePhotoWall = ({
     );
   };
 
-  const renderSlideshowMode = () => {
-    const currentPhoto = displayPhotos[displayPhotos.length - 1];
-
-    return (
-      <div>
-        <div
-          className={`relative w-full h-[500px] ${
-            isDark
-              ? "bg-gradient-to-br from-sp_green/30 to-sp_midgreen/30"
-              : "bg-gradient-to-br from-sp_lightgreen/20 to-sp_midgreen/20"
-          } rounded-2xl overflow-hidden`}
-        >
-          {currentPhoto ? (
-            <motion.div
-              key={currentPhoto.id}
-              initial={{ opacity: 0, scale: 0.95, rotateY: 15 }}
-              animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-              transition={{ duration: 0.8 }}
-              className="absolute inset-0 p-8 flex items-center justify-center"
-            >
-              <div className="relative max-w-sm max-h-full aspect-[3/4] rounded-xl overflow-hidden shadow-2xl border-4 border-white">
-                <img
-                  src={currentPhoto.src}
-                  alt="Featured photo"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-
-              {/* Side thumbnails */}
-              {displayPhotos.length > 1 && (
-                <div className="absolute right-4 top-1/2 transform -translate-y-1/2 space-y-2">
-                  {displayPhotos.slice(-5, -1).map((photo, index) => (
-                    <motion.div
-                      key={photo.id}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.3 + index * 0.1 }}
-                      className="w-12 h-12 rounded-lg overflow-hidden border-2 border-white/50 opacity-60"
-                    >
-                      <img
-                        src={photo.src}
-                        alt={`Thumbnail ${index}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </motion.div>
-          ) : (
-            <div
-              className={`absolute inset-0 flex items-center justify-center text-center ${
-                isDark ? "text-sp_eggshell/60" : "text-sp_darkgreen/60"
-              }`}
-            >
-              <div>
-                <Presentation className="w-12 h-12 mx-auto mb-2" />
-                <p className="text-sm">Elegant Slideshow</p>
-                <p className="text-xs mt-1 opacity-75">
-                  Waiting for uploads...
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Live Display label moved below */}
-        <div className="mt-4 flex items-center justify-center gap-2 text-sm">
-          <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-          <span
-            className={isDark ? "text-sp_lightgreen" : "text-sp_darkgreen/70"}
-          >
-            Live Display - Photos appear in real-time
-          </span>
-        </div>
-      </div>
-    );
-  };
-
   const renderDisplay = () => {
     switch (mode) {
       case "fun":
         return renderFunMode();
       case "presenter":
         return renderPresenterMode();
-      case "slideshow":
-        return renderSlideshowMode();
       default:
         return renderGridMode();
     }

@@ -8,6 +8,8 @@ interface PhoneMockupProps {
   mode: string;
   samplePhotos: string[];
   onSwipeAction?: (action: SwipeAction) => void;
+  onComplete?: () => void;
+  shouldReset?: boolean;
 }
 
 interface SwipeAction {
@@ -17,23 +19,42 @@ interface SwipeAction {
   timestamp: number;
 }
 
-type SwipeState = "idle" | "ready" | "swiping";
+type SwipeState = "idle" | "ready" | "swiping" | "completed";
 type ActionType = "upload" | "delete";
 
 export const PhoneMockup = ({
   isDark,
   samplePhotos,
   onSwipeAction,
+  onComplete,
+  shouldReset,
 }: PhoneMockupProps) => {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [swipeState, setSwipeState] = useState<SwipeState>("idle");
   const [actionType, setActionType] = useState<ActionType | null>(null);
   const [_isAnimating, setIsAnimating] = useState(false);
+  const [cycleCount, setCycleCount] = useState(0);
+
+  // Limit to 6 photos max
+  const limitedPhotos = samplePhotos.slice(0, 6);
+
+  // Reset when shouldReset changes
+  useEffect(() => {
+    if (shouldReset) {
+      setCurrentPhotoIndex(0);
+      setSwipeState("idle");
+      setActionType(null);
+      setIsAnimating(false);
+      setCycleCount(0);
+    }
+  }, [shouldReset]);
 
   useEffect(() => {
+    if (swipeState === "completed") return;
+
     const sequence = async () => {
       // Initial delay
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
       // Alternate between upload and delete actions
       const isUploadTurn = currentPhotoIndex % 3 !== 2; // Upload 2 out of 3 times
@@ -42,13 +63,15 @@ export const PhoneMockup = ({
       setActionType(selectedAction);
       setSwipeState("ready");
 
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Ready state
+      await new Promise((resolve) => setTimeout(resolve, 400));
 
       // Start swiping
       setSwipeState("swiping");
       setIsAnimating(true);
 
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      // Swiping animation
+      await new Promise((resolve) => setTimeout(resolve, 400));
 
       // Only notify parent for uploads (to sync with LivePhotoWall)
       if (selectedAction === "upload" && onSwipeAction) {
@@ -60,10 +83,24 @@ export const PhoneMockup = ({
         });
       }
 
-      // Update photo index
-      setCurrentPhotoIndex((prev) => (prev + 1) % samplePhotos.length);
+      // Update photo index and cycle count
+      const nextIndex = (currentPhotoIndex + 1) % limitedPhotos.length;
+      const newCycleCount = nextIndex === 0 ? cycleCount + 1 : cycleCount;
 
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      setCurrentPhotoIndex(nextIndex);
+      setCycleCount(newCycleCount);
+
+      // Reset delay
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
+      // Check if we've completed all 6 photos
+      if (newCycleCount >= 1) {
+        setSwipeState("completed");
+        setActionType(null);
+        setIsAnimating(false);
+        onComplete?.();
+        return;
+      }
 
       // Reset state
       setSwipeState("idle");
@@ -71,10 +108,16 @@ export const PhoneMockup = ({
       setIsAnimating(false);
     };
 
-    sequence();
-    const interval = setInterval(sequence, 5000);
+    const interval = setInterval(sequence, 2500);
     return () => clearInterval(interval);
-  }, [currentPhotoIndex, onSwipeAction, samplePhotos.length]);
+  }, [
+    currentPhotoIndex,
+    onSwipeAction,
+    limitedPhotos.length,
+    cycleCount,
+    swipeState,
+    onComplete,
+  ]);
 
   const getSwipeTransform = () => {
     if (swipeState !== "swiping" || !actionType)
@@ -100,9 +143,6 @@ export const PhoneMockup = ({
       rotate: 0,
     };
   };
-  type SwipeDirection = "left" | "right";
-  const swipeDirection: SwipeDirection | null =
-    actionType === null ? null : actionType === "upload" ? "left" : "right";
 
   return (
     <div className="relative mx-auto -mt-8">
@@ -155,7 +195,7 @@ export const PhoneMockup = ({
               <div className="absolute inset-0 z-20">
                 <AnimatePresence mode="wait">
                   <motion.div
-                    key={`photo-${currentPhotoIndex}-${swipeState}`}
+                    key={`photo-${currentPhotoIndex}`}
                     className="absolute inset-0 rounded-2xl overflow-hidden shadow-lg border-4 border-white"
                     initial={{ scale: 0.95, opacity: 0, y: 10 }}
                     animate={
@@ -179,15 +219,59 @@ export const PhoneMockup = ({
                       scale: 0.7,
                     }}
                     transition={{
-                      duration: swipeState === "swiping" ? 0.6 : 0.4,
+                      duration: swipeState === "swiping" ? 1.0 : 0.6,
                       ease: [0.25, 0.46, 0.45, 0.94],
                     }}
                   >
                     <img
-                      src={samplePhotos[currentPhotoIndex]}
+                      src={limitedPhotos[currentPhotoIndex]}
                       alt="Current photo"
                       className="w-full h-full object-cover"
                     />
+
+                    {/* Completion overlay */}
+                    {swipeState === "completed" && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 0.95 }}
+                        className={`absolute inset-0 flex flex-col items-center justify-center ${
+                          isDark ? "bg-sp_darkgreen" : "bg-sp_eggshell"
+                        }`}
+                      >
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: "spring", bounce: 0.6 }}
+                          className={`w-16 h-16 rounded-full border-4 flex items-center justify-center mb-4 ${
+                            isDark
+                              ? "border-sp_lightgreen bg-sp_green"
+                              : "border-sp_green bg-sp_lightgreen"
+                          }`}
+                        >
+                          <CheckCircle
+                            className={`w-8 h-8 ${
+                              isDark ? "text-sp_lightgreen" : "text-sp_green"
+                            }`}
+                          />
+                        </motion.div>
+                        <p
+                          className={`font-semibold text-lg ${
+                            isDark ? "text-sp_lightgreen" : "text-sp_darkgreen"
+                          }`}
+                        >
+                          Demo Complete!
+                        </p>
+                        <p
+                          className={`text-sm mt-1 ${
+                            isDark
+                              ? "text-sp_eggshell/80"
+                              : "text-sp_darkgreen/70"
+                          }`}
+                        >
+                          All photos processed
+                        </p>
+                      </motion.div>
+                    )}
 
                     {/* Action overlays - only show during ready and swiping states */}
                     <AnimatePresence>
@@ -266,81 +350,8 @@ export const PhoneMockup = ({
                     isDark ? "text-sp_eggshell" : "text-sp_darkgreen"
                   }`}
                 >
-                  {currentPhotoIndex + 1} of {samplePhotos.length}
+                  {currentPhotoIndex + 1} of {limitedPhotos.length}
                 </span>
-              </div>
-
-              {/* Swipe indicators */}
-              <div className="flex items-center gap-6">
-                {/* Left swipe */}
-                <motion.div
-                  className={`flex flex-col items-center gap-1 text-xs transition-colors ${
-                    swipeState === "ready" && swipeDirection === "left"
-                      ? actionType === "upload"
-                        ? isDark
-                          ? "text-sp_lightgreen"
-                          : "text-sp_green"
-                        : "text-red-400"
-                      : isDark
-                        ? "text-sp_eggshell/50"
-                        : "text-sp_darkgreen/50"
-                  }`}
-                  animate={{
-                    x: swipeState === "idle" ? [-3, 3, -3] : 0,
-                    scale:
-                      swipeState === "ready" && swipeDirection === "left"
-                        ? 1.1
-                        : 1,
-                  }}
-                  transition={{
-                    x: { duration: 2, repeat: Number.POSITIVE_INFINITY },
-                    scale: { duration: 0.3 },
-                  }}
-                >
-                  <div className="w-6 h-1 bg-current opacity-50 rounded-full transform -rotate-45"></div>
-                  <span>Swipe</span>
-                </motion.div>
-
-                {/* Center indicator */}
-                <motion.div
-                  className={`flex flex-col items-center gap-1 text-xs ${
-                    isDark ? "text-sp_eggshell/60" : "text-sp_darkgreen/60"
-                  }`}
-                  animate={{ y: swipeState === "idle" ? [0, -8, 0] : 0 }}
-                  transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
-                >
-                  <div className="w-1 h-6 bg-current opacity-50 rounded-full"></div>
-                  <span>to act</span>
-                </motion.div>
-
-                {/* Right swipe */}
-                <motion.div
-                  className={`flex flex-col items-center gap-1 text-xs transition-colors ${
-                    swipeState === "ready" && swipeDirection === "right"
-                      ? actionType === "upload"
-                        ? isDark
-                          ? "text-sp_lightgreen"
-                          : "text-sp_green"
-                        : "text-red-400"
-                      : isDark
-                        ? "text-sp_eggshell/50"
-                        : "text-sp_darkgreen/50"
-                  }`}
-                  animate={{
-                    x: swipeState === "idle" ? [3, -3, 3] : 0,
-                    scale:
-                      swipeState === "ready" && swipeDirection === "right"
-                        ? 1.1
-                        : 1,
-                  }}
-                  transition={{
-                    x: { duration: 2, repeat: Number.POSITIVE_INFINITY },
-                    scale: { duration: 0.3 },
-                  }}
-                >
-                  <div className="w-6 h-1 bg-current opacity-50 rounded-full transform rotate-45"></div>
-                  <span>Swipe</span>
-                </motion.div>
               </div>
             </div>
           </div>

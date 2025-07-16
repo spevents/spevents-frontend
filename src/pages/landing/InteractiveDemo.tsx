@@ -1,7 +1,7 @@
 // src/components/landing/InteractiveDemo.tsx
 import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { QrCode, Play } from "lucide-react";
+import { QrCode, Play, RotateCcw } from "lucide-react";
 import { LivePhotoWall } from "./LivePhotoWall";
 import { PhoneMockup } from "./PhoneMockup";
 
@@ -28,9 +28,23 @@ const samplePhotos = [
 export const InteractiveDemo = ({ isDark }: InteractiveDemoProps) => {
   const [demoMode, setDemoMode] = useState("grid");
   const [swipeActions, setSwipeActions] = useState<SwipeAction[]>([]);
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [shouldReset, setShouldReset] = useState(false);
 
   const handleSwipeAction = useCallback((action: SwipeAction) => {
     setSwipeActions((prev) => [...prev, action]);
+  }, []);
+
+  const handleComplete = useCallback(() => {
+    setIsCompleted(true);
+  }, []);
+
+  const handleReplay = useCallback(() => {
+    setSwipeActions([]);
+    setIsCompleted(false);
+    setShouldReset(true);
+    // Reset the shouldReset flag after a brief moment
+    setTimeout(() => setShouldReset(false), 100);
   }, []);
 
   return (
@@ -92,6 +106,27 @@ export const InteractiveDemo = ({ isDark }: InteractiveDemoProps) => {
                   ))}
                 </div>
               </div>
+
+              {/* Replay Button */}
+              {isCompleted && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-4"
+                >
+                  <button
+                    onClick={handleReplay}
+                    className={`inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
+                      isDark
+                        ? "bg-sp_lightgreen text-sp_darkgreen hover:bg-sp_lightgreen/90"
+                        : "bg-sp_green text-sp_eggshell hover:bg-sp_green/90"
+                    } shadow-lg hover:shadow-xl transform hover:scale-105`}
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Replay Demo
+                  </button>
+                </motion.div>
+              )}
             </div>
 
             <div className="grid lg:grid-cols-5 gap-8 items-start">
@@ -104,6 +139,8 @@ export const InteractiveDemo = ({ isDark }: InteractiveDemoProps) => {
                       mode={demoMode}
                       samplePhotos={samplePhotos}
                       onSwipeAction={handleSwipeAction}
+                      onComplete={handleComplete}
+                      shouldReset={shouldReset}
                     />
                   </div>
                   <div className="flex items-center justify-between">
@@ -252,7 +289,7 @@ export const InteractiveDemo = ({ isDark }: InteractiveDemoProps) => {
                       isDark ? "text-sp_eggshell" : "text-sp_darkgreen"
                     }`}
                   >
-                    Live cringe
+                    Live Display
                   </h4>
                   <div className="w-full h-96">
                     <LivePhotoWall
