@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { Menu, X, Moon, Sun } from "lucide-react";
 import githubLogo from "@/assets/github-mark.svg";
 import lightIcon from "@/assets/light-icon.svg";
+import darkIcon from "@/assets/dark-icon.svg";
+
 import { getDomain } from "@/components/config/routes";
 
 interface HeaderProps {
@@ -48,7 +50,11 @@ export const Header = ({ isDark, setIsDark }: HeaderProps) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center gap-2">
-            <img src={lightIcon} alt="Spevents Logo" className="w-8 h-8" />
+            <img
+              src={`${isDark ? darkIcon : lightIcon}`}
+              alt="Spevents Logo"
+              className="w-8 h-8"
+            />
             <div
               className={`text-2xl font-bold ${
                 isDark ? "text-sp_eggshell" : "text-sp_darkgreen"
@@ -77,7 +83,7 @@ export const Header = ({ isDark, setIsDark }: HeaderProps) => {
             </button>
 
             <a
-              href="https://github.com/fbablu/spevents"
+              href="https://github.com/spevents/spevents-frontend"
               target="_blank"
               rel="noopener noreferrer"
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${

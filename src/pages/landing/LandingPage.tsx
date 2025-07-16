@@ -19,7 +19,7 @@ export const LandingPage = () => {
       <Hero isDark={isDark} />
       <InteractiveDemo isDark={isDark} />
       <Features isDark={isDark} />
-      <Footer />
+      <Footer isDark={isDark} setIsDark={setIsDark} />
     </div>
   );
 };
