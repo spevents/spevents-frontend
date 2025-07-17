@@ -251,8 +251,9 @@ export async function uploadPhoto({
 
 export async function getEventPhotos(eventId: string): Promise<EventPhoto[]> {
   try {
+    // Fixed: Use the correct backend endpoint
     const response = await makeAuthenticatedRequest(
-      `/api/photos?eventId=${eventId}`,
+      `/api/photos/${eventId}/all`,
     );
     const data = await response.json();
     return Array.isArray(data) ? data : data.photos || [];
@@ -279,7 +280,7 @@ export async function deleteMultipleFiles(
   guestId?: string,
 ): Promise<void> {
   try {
-    await makeAuthenticatedRequest("/api/upload", {
+    await makeAuthenticatedRequest("/api/photos/delete", {
       method: "DELETE",
       body: JSON.stringify({ eventId, fileNames, guestId }),
     });

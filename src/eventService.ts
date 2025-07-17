@@ -24,7 +24,7 @@ export class EventService {
 
   private async apiCall<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
   ): Promise<T> {
     const token = await this.getAuthToken();
 
