@@ -1,5 +1,5 @@
-- [ ] Finish aesthetics for Light/Dark mode on LandingPage
-- [ ] Finish aesthetics for Light/Dark mode on GuestDashboard
+- [x] Finish aesthetics for Light/Dark mode on LandingPage
+- [x] Finish aesthetics for Light/Dark mode on GuestDashboard
 - [ ] Fix https://app.spevents.live/host/event/EVENT_ID/gallery page to match aesthetics
 - [ ] Fix https://app.spevents.live/host/events/EVENT_ID/ routing to Event Library
 - [ ] Fix https://app.spevents.live/host/events/EVENT_ID/ routing to Event Library
@@ -18,6 +18,10 @@
       ? Prevent bad photos
 - [ ] Create restrictions NSFW filter for what photos are put onto the
 - [ ] 3D Model, make it where geolocated internally
+- [ ] Change sample photos to be landcape photos, and have sample and other photos
+- [ ] take photo now when adding sample photos
+- [ ] Have photos have the same
+- [ ]
 
 # Marketing and Promotions
 

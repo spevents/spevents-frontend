@@ -1,87 +1,75 @@
-// src/lib/eventService.ts
+// File: src/lib/eventService.ts
+// Updated to call your backend API instead of Firebase directly
 
-import {
-  collection,
-  addDoc,
-  getDocs,
-  query,
-  where,
-  orderBy,
-  doc,
-  updateDoc,
-} from "firebase/firestore";
-import { db, auth } from "./components/config/firebase";
+import { auth } from "./components/config/firebase";
 import { Event, CreateEventData } from "./types/event";
 import { onAuthStateChanged, User } from "firebase/auth";
 
 export class EventService {
   private currentUser: User | null = null;
+  private baseUrl = "https://api.spevents.live";
 
   constructor() {
-    // Listen for auth changes
     onAuthStateChanged(auth, (user: User | null) => {
       this.currentUser = user;
     });
   }
 
-  async createEvent(eventData: CreateEventData): Promise<Event> {
+  private async getAuthToken(): Promise<string> {
     if (!this.currentUser) {
       throw new Error("User not authenticated");
     }
+    return await this.currentUser.getIdToken();
+  }
 
-    const newEvent = {
-      ...eventData,
-      hostEmail: this.currentUser.email!,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      status: "draft",
-      photoCount: 0,
-      sessionCode: Math.random().toString(36).substring(2, 8).toUpperCase(),
-    };
+  private async apiCall<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<T> {
+    const token = await this.getAuthToken();
 
-    const docRef = await addDoc(collection(db, "events"), newEvent);
+    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        ...options.headers,
+      },
+    });
 
-    return {
-      id: docRef.id,
-      eventId: docRef.id,
-      timestamp: Date.now(),
-      ...newEvent,
-    };
+    if (!response.ok) {
+      const error = await response
+        .json()
+        .catch(() => ({ message: "Network error" }));
+      throw new Error(error.message || `HTTP ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  async createEvent(eventData: CreateEventData): Promise<Event> {
+    console.log("🔍 Creating event via API:", eventData);
+
+    return this.apiCall<Event>("/api/events", {
+      method: "POST",
+      body: JSON.stringify(eventData),
+    });
   }
 
   async getUserEvents(): Promise<Event[]> {
-    if (!this.currentUser) {
-      throw new Error("User not authenticated");
-    }
+    console.log("🔍 Getting events via API");
 
-    const q = query(
-      collection(db, "events"),
-      where("hostEmail", "==", this.currentUser.email),
-      orderBy("createdAt", "desc"),
-    );
-
-    const querySnapshot = await getDocs(q);
-    const events: Event[] = [];
-
-    querySnapshot.forEach((doc) => {
-      events.push({
-        id: doc.id,
-        ...doc.data(),
-      } as Event);
+    return this.apiCall<Event[]>("/api/events", {
+      method: "GET",
     });
-
-    return events;
   }
 
-  async updateEvent(eventId: string, updates: Partial<Event>): Promise<void> {
-    if (!this.currentUser) {
-      throw new Error("User not authenticated");
-    }
+  async updateEvent(eventId: string, updates: Partial<Event>): Promise<Event> {
+    console.log("🔍 Updating event via API:", eventId, updates);
 
-    const eventRef = doc(db, "events", eventId);
-    await updateDoc(eventRef, {
-      ...updates,
-      updatedAt: new Date().toISOString(),
+    return this.apiCall<Event>(`/api/events?eventId=${eventId}`, {
+      method: "PATCH",
+      body: JSON.stringify(updates),
     });
   }
 }
