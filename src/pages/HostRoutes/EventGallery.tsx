@@ -48,7 +48,7 @@ export function EventGallery() {
   const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [isDeletingPhotos, setIsDeletingPhotos] = useState(false);
-  const [showBulkActions, setShowBulkActions] = useState(false);
+  const [_showBulkActions, setShowBulkActions] = useState(false);
 
   useEffect(() => {
     if (eventId && (!currentEvent || currentEvent.id !== eventId)) {
@@ -83,13 +83,13 @@ export function EventGallery() {
           fileName: p.fileName,
           url: p.url,
           isGuest: p.isGuestPhoto,
-        }))
+        })),
       );
 
       // Sort by creation time (most recent first)
       const sortedPhotos = displayPhotos.sort(
         (a: DisplayPhoto, b: DisplayPhoto) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       );
 
       setPhotos(sortedPhotos);
@@ -118,7 +118,7 @@ export function EventGallery() {
     if (selectedPhotos.size === 0) return;
 
     const selectedPhotoObjects = photos.filter((p) =>
-      selectedPhotos.has(p.fileName)
+      selectedPhotos.has(p.fileName),
     );
 
     try {
@@ -146,13 +146,13 @@ export function EventGallery() {
           console.log(
             `📥 Adding to zip: ${photo.fileName} (${i + 1}/${
               selectedPhotoObjects.length
-            })`
+            })`,
           );
 
           const response = await fetch(photo.url);
           if (!response.ok) {
             throw new Error(
-              `Failed to fetch ${photo.fileName}: ${response.status}`
+              `Failed to fetch ${photo.fileName}: ${response.status}`,
             );
           }
 
@@ -166,21 +166,21 @@ export function EventGallery() {
 
       // Generate and download zip
       console.log("🔄 Generating zip file...");
-      zip
-        .generateAsync({ type: "blob" })
-        .then(function (content: Blob | MediaSource) {
-          const zipUrl = URL.createObjectURL(content);
-          const link = document.createElement("a");
-          link.href = zipUrl;
-          link.download = `${currentEvent?.name || "event"}-photos-${
-            new Date().toISOString().split("T")[0]
-          }.zip`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(zipUrl);
-          console.log("✅ Zip download complete");
-        });
+      zip.generateAsync({ type: "blob" }).then(function (
+        content: Blob | MediaSource,
+      ) {
+        const zipUrl = URL.createObjectURL(content);
+        const link = document.createElement("a");
+        link.href = zipUrl;
+        link.download = `${currentEvent?.name || "event"}-photos-${
+          new Date().toISOString().split("T")[0]
+        }.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(zipUrl);
+        console.log("✅ Zip download complete");
+      });
     } catch (error) {
       console.error("❌ Zip download error:", error);
       alert("Failed to create zip file. Please try again.");
@@ -189,10 +189,6 @@ export function EventGallery() {
 
   const handleShareSelected = async () => {
     if (selectedPhotos.size === 0) return;
-
-    const selectedPhotoObjects = photos.filter((p) =>
-      selectedPhotos.has(p.fileName)
-    );
 
     try {
       // Create shareable link with selected photos
@@ -250,12 +246,12 @@ export function EventGallery() {
     setIsDeletingPhotos(true);
     try {
       console.log(
-        `🗑️ Deleting ${selectedPhotos.size} photos for event ${eventId}`
+        `🗑️ Deleting ${selectedPhotos.size} photos for event ${eventId}`,
       );
 
       // Group photos by type for deletion
       const selectedPhotoObjects = photos.filter((p) =>
-        selectedPhotos.has(p.fileName)
+        selectedPhotos.has(p.fileName),
       );
 
       console.log(
@@ -264,19 +260,19 @@ export function EventGallery() {
           fileName: p.fileName,
           isGuest: p.isGuestPhoto,
           guestId: p.guestId,
-        }))
+        })),
       );
 
       // Delete guest photos (need guestId)
       const guestPhotos = selectedPhotoObjects.filter(
-        (p) => p.isGuestPhoto && p.guestId
+        (p) => p.isGuestPhoto && p.guestId,
       );
 
       if (guestPhotos.length > 0) {
         console.log(`🔄 Deleting ${guestPhotos.length} guest photos`);
         for (const photo of guestPhotos) {
           console.log(
-            `🗑️ Deleting guest photo: ${photo.fileName} (guest: ${photo.guestId})`
+            `🗑️ Deleting guest photo: ${photo.fileName} (guest: ${photo.guestId})`,
           );
           await deleteMultipleFiles(eventId, [photo.fileName], photo.guestId);
         }
@@ -302,7 +298,7 @@ export function EventGallery() {
       alert(
         `Failed to delete photos: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
       );
     } finally {
       setIsDeletingPhotos(false);
@@ -490,7 +486,7 @@ export function EventGallery() {
                   onLoad={() => {
                     console.log(
                       "✅ Successfully loaded image:",
-                      photo.fileName
+                      photo.fileName,
                     );
                   }}
                 />
