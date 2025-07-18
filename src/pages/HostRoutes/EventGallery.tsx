@@ -1,33 +1,18 @@
-// src/pages/HostRoutes/EventGallery.tsx
-import { useParams, useNavigate, Navigate } from "react-router-dom";
-import { useEvent } from "@/contexts/EventContext";
-import { useState, useEffect } from "react";
-import {
-  QrCode,
-  Trash2,
-  RefreshCw,
-  CheckCircle,
-  ArrowLeft,
-  Play,
-  FolderPlus,
-  Download,
-  Share2,
-} from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+// File: src/pages/HostRoutes/EventGallery.tsx
 
+import { useState, useEffect } from "react";
+import { useParams, Navigate, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { RefreshCw, Download, Share2, Trash2, ArrowLeft } from "lucide-react";
+import JSZip from "jszip";
+import { auth } from "@/components/config/firebase";
+import { useEvent } from "@/contexts/EventContext";
 import {
   listAllEventPhotos,
   getEventPhotoUrl,
   deleteMultipleFiles,
   EventPhoto,
 } from "@/services/api";
-
-// Type declaration for JSZip
-declare global {
-  interface Window {
-    JSZip: any;
-  }
-}
 
 interface DisplayPhoto {
   url: string;
@@ -42,13 +27,12 @@ export function EventGallery() {
   const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
   const { currentEvent, selectEvent } = useEvent();
-
   const [photos, setPhotos] = useState<DisplayPhoto[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
+  const [isLoading, setIsLoading] = useState(true);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [isDeletingPhotos, setIsDeletingPhotos] = useState(false);
-  const [_showBulkActions, setShowBulkActions] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
     if (eventId && (!currentEvent || currentEvent.id !== eventId)) {
@@ -61,6 +45,7 @@ export function EventGallery() {
 
     try {
       console.log("🔍 Loading photos for eventId:", eventId);
+      setIsLoading(true);
 
       // Get all photos (both event and guest photos)
       const eventPhotos: EventPhoto[] = await listAllEventPhotos(eventId);
@@ -75,16 +60,6 @@ export function EventGallery() {
         isGuestPhoto: photo.isGuestPhoto,
         guestId: photo.guestId,
       }));
-
-      console.log("🖼️ Display photos created:", displayPhotos.length);
-      console.log(
-        "📋 Sample photo URLs:",
-        displayPhotos.slice(0, 3).map((p) => ({
-          fileName: p.fileName,
-          url: p.url,
-          isGuest: p.isGuestPhoto,
-        })),
-      );
 
       // Sort by creation time (most recent first)
       const sortedPhotos = displayPhotos.sort(
@@ -106,6 +81,175 @@ export function EventGallery() {
     return () => clearInterval(pollInterval);
   }, [eventId]);
 
+  // CORS-friendly download using your API as proxy
+  const downloadViaProxy = async (photo: DisplayPhoto): Promise<Blob> => {
+    try {
+      // Get Firebase auth token properly
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      const token = await user.getIdToken();
+      const apiUrl =
+        import.meta.env.VITE_API_URL || "https://spevents-backend.vercel.app";
+
+      console.log(`🔗 Downloading via API: ${apiUrl}/api/photos/download`);
+
+      const response = await fetch(`${apiUrl}/api/photos/download`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          eventId,
+          fileName: photo.fileName,
+          guestId: photo.guestId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Download failed: ${response.status} - ${errorText}`);
+      }
+
+      return response.blob();
+    } catch (error) {
+      console.error("Download via proxy failed:", error);
+      throw error;
+    }
+  };
+
+  // Updated download function using API proxy
+  const handleDownloadSelected = async () => {
+    if (selectedPhotos.size === 0) return;
+
+    setIsDownloading(true);
+    try {
+      const selectedPhotoObjects = photos.filter((p) =>
+        selectedPhotos.has(p.fileName),
+      );
+
+      console.log(`🔄 Creating zip with ${selectedPhotoObjects.length} photos`);
+
+      const zip = new JSZip();
+      let successCount = 0;
+      let failCount = 0;
+
+      // Download photos via API proxy to avoid CORS
+      for (let i = 0; i < selectedPhotoObjects.length; i++) {
+        const photo = selectedPhotoObjects[i];
+        try {
+          console.log(
+            `📥 Downloading: ${photo.fileName} (${i + 1}/${
+              selectedPhotoObjects.length
+            })`,
+          );
+
+          // Use API proxy instead of direct fetch
+          const blob = await downloadViaProxy(photo);
+
+          if (blob.size === 0) {
+            throw new Error("Empty response");
+          }
+
+          zip.file(photo.fileName, blob);
+          successCount++;
+
+          console.log(
+            `✅ Added to zip: ${photo.fileName} (${blob.size} bytes)`,
+          );
+        } catch (error) {
+          console.error(`❌ Failed to download ${photo.fileName}:`, error);
+          failCount++;
+        }
+      }
+
+      if (successCount === 0) {
+        throw new Error("No photos could be downloaded");
+      }
+
+      console.log(
+        `📊 Download summary: ${successCount} success, ${failCount} failed`,
+      );
+
+      // Generate and download zip
+      console.log("🔄 Generating zip file...");
+      const zipBlob = await zip.generateAsync({
+        type: "blob",
+        compression: "DEFLATE",
+        compressionOptions: {
+          level: 6,
+        },
+      });
+
+      // Create download link
+      const zipUrl = URL.createObjectURL(zipBlob);
+      const link = document.createElement("a");
+      link.href = zipUrl;
+      link.download = `${currentEvent?.name || "event"}-photos-${
+        new Date().toISOString().split("T")[0]
+      }.zip`;
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setTimeout(() => URL.revokeObjectURL(zipUrl), 1000);
+
+      console.log("✅ Zip download initiated");
+
+      if (failCount > 0) {
+        alert(
+          `Download completed with ${successCount} photos. ${failCount} photos failed to download.`,
+        );
+      }
+    } catch (error) {
+      console.error("❌ Zip download error:", error);
+      alert(
+        `Download failed: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`,
+      );
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  // Updated single photo download using API proxy
+  const handleDownloadSinglePhoto = async (photo: DisplayPhoto) => {
+    try {
+      const blob = await downloadViaProxy(photo);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = photo.fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download failed:", error);
+      alert("Failed to download photo. Please try again.");
+    }
+  };
+
+  // Fallback: Direct link download (opens in new tab)
+  const handleDirectDownload = () => {
+    if (selectedPhotos.size === 0) return;
+
+    const selectedPhotoObjects = photos.filter((p) =>
+      selectedPhotos.has(p.fileName),
+    );
+
+    selectedPhotoObjects.forEach((photo, index) => {
+      setTimeout(() => {
+        window.open(photo.url, "_blank");
+      }, index * 500);
+    });
+  };
+
   const handleSelectAll = () => {
     if (selectedPhotos.size === photos.length) {
       setSelectedPhotos(new Set());
@@ -114,84 +258,10 @@ export function EventGallery() {
     }
   };
 
-  const handleDownloadSelected = async () => {
-    if (selectedPhotos.size === 0) return;
-
-    const selectedPhotoObjects = photos.filter((p) =>
-      selectedPhotos.has(p.fileName),
-    );
-
-    try {
-      // Load JSZip from CDN
-      if (!window.JSZip) {
-        const script = document.createElement("script");
-        script.src =
-          "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
-        script.async = false;
-        document.head.appendChild(script);
-
-        await new Promise((resolve, reject) => {
-          script.onload = resolve;
-          script.onerror = reject;
-        });
-      }
-
-      const zip = new window.JSZip();
-      console.log(`📦 Creating zip with ${selectedPhotoObjects.length} photos`);
-
-      // Add each photo to zip
-      for (let i = 0; i < selectedPhotoObjects.length; i++) {
-        const photo = selectedPhotoObjects[i];
-        try {
-          console.log(
-            `📥 Adding to zip: ${photo.fileName} (${i + 1}/${
-              selectedPhotoObjects.length
-            })`,
-          );
-
-          const response = await fetch(photo.url);
-          if (!response.ok) {
-            throw new Error(
-              `Failed to fetch ${photo.fileName}: ${response.status}`,
-            );
-          }
-
-          // Convert to arrayBuffer for JSZip
-          const arrayBuffer = await response.arrayBuffer();
-          zip.file(photo.fileName, arrayBuffer);
-        } catch (error) {
-          console.error(`❌ Failed to add ${photo.fileName} to zip:`, error);
-        }
-      }
-
-      // Generate and download zip
-      console.log("🔄 Generating zip file...");
-      zip.generateAsync({ type: "blob" }).then(function (
-        content: Blob | MediaSource,
-      ) {
-        const zipUrl = URL.createObjectURL(content);
-        const link = document.createElement("a");
-        link.href = zipUrl;
-        link.download = `${currentEvent?.name || "event"}-photos-${
-          new Date().toISOString().split("T")[0]
-        }.zip`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(zipUrl);
-        console.log("✅ Zip download complete");
-      });
-    } catch (error) {
-      console.error("❌ Zip download error:", error);
-      alert("Failed to create zip file. Please try again.");
-    }
-  };
-
   const handleShareSelected = async () => {
     if (selectedPhotos.size === 0) return;
 
     try {
-      // Create shareable link with selected photos
       const baseUrl = window.location.origin;
       const photoParams = Array.from(selectedPhotos).join(",");
       const shareUrl = `${baseUrl}/guest/${
@@ -204,7 +274,6 @@ export function EventGallery() {
         url: shareUrl,
       };
 
-      // Try native share API first
       if (navigator.share) {
         try {
           await navigator.share(shareData);
@@ -213,23 +282,18 @@ export function EventGallery() {
           if (error instanceof Error && error.name !== "AbortError") {
             console.log("Native share failed, falling back to clipboard");
           } else {
-            return; // User cancelled
+            return;
           }
         }
       }
 
-      // Fallback: copy shareable link to clipboard
       await navigator.clipboard.writeText(shareUrl);
-
-      // Show success message with link preview
       const message = `Shareable link copied to clipboard!\n\n${shareUrl}\n\nAnyone with this link can view the ${
         selectedPhotos.size
       } selected photo${selectedPhotos.size > 1 ? "s" : ""}.`;
       alert(message);
     } catch (error) {
       console.error("Failed to create shareable link:", error);
-
-      // Ultimate fallback: share event gallery URL
       try {
         const eventUrl = `${window.location.origin}/guest/${currentEvent?.sessionCode}`;
         await navigator.clipboard.writeText(eventUrl);
@@ -249,49 +313,29 @@ export function EventGallery() {
         `🗑️ Deleting ${selectedPhotos.size} photos for event ${eventId}`,
       );
 
-      // Group photos by type for deletion
       const selectedPhotoObjects = photos.filter((p) =>
         selectedPhotos.has(p.fileName),
       );
 
-      console.log(
-        "📋 Selected photos:",
-        selectedPhotoObjects.map((p) => ({
-          fileName: p.fileName,
-          isGuest: p.isGuestPhoto,
-          guestId: p.guestId,
-        })),
-      );
-
-      // Delete guest photos (need guestId)
       const guestPhotos = selectedPhotoObjects.filter(
         (p) => p.isGuestPhoto && p.guestId,
       );
 
-      if (guestPhotos.length > 0) {
-        console.log(`🔄 Deleting ${guestPhotos.length} guest photos`);
-        for (const photo of guestPhotos) {
-          console.log(
-            `🗑️ Deleting guest photo: ${photo.fileName} (guest: ${photo.guestId})`,
-          );
-          await deleteMultipleFiles(eventId, [photo.fileName], photo.guestId);
-        }
+      for (const photo of guestPhotos) {
+        await deleteMultipleFiles(eventId, [photo.fileName], photo.guestId);
       }
 
-      // Delete regular event photos
       const eventPhotos = selectedPhotoObjects.filter((p) => !p.isGuestPhoto);
       if (eventPhotos.length > 0) {
-        console.log(`🔄 Deleting ${eventPhotos.length} event photos`);
-        const fileNames = eventPhotos.map((p) => p.fileName);
-        console.log(`🗑️ Deleting event photos:`, fileNames);
-        await deleteMultipleFiles(eventId, fileNames);
+        await deleteMultipleFiles(
+          eventId,
+          eventPhotos.map((p) => p.fileName),
+        );
       }
 
-      console.log("✅ Delete operations completed, reloading photos...");
       await loadPhotosFromStorage();
       setSelectedPhotos(new Set());
       setIsSelectionMode(false);
-
       console.log("✅ Photos deleted successfully");
     } catch (error) {
       console.error("❌ Error deleting photos:", error);
@@ -305,12 +349,6 @@ export function EventGallery() {
     }
   };
 
-  const handleAddFolder = () => {
-    // Navigate to folder creation or show modal
-    console.log("Add folder functionality");
-    // This could open a modal or navigate to a folder creation page
-  };
-
   if (!eventId) {
     return <Navigate to="/host" replace />;
   }
@@ -318,127 +356,99 @@ export function EventGallery() {
   return (
     <div className="min-h-screen bg-gray-900">
       {/* Header */}
-      <div className="sticky top-0 inset-x-0 bg-gray-900/80 backdrop-blur-md z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate("/host/library")}
-              className="p-2 hover:bg-white/10 rounded-full transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-white" />
-            </button>
-            <div>
-              <h1 className="text-white text-lg font-semibold">
-                {currentEvent?.name || "Event Gallery"}
-              </h1>
-              <p className="text-white/60 text-sm">
-                Session: {currentEvent?.sessionCode} • {photos.length} photos
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={() => navigate(`/host/event/${eventId}/qr`)}
-              className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-              title="Show QR Code"
-            >
-              <QrCode className="w-5 h-5 text-white" />
-            </button>
-
-            <button
-              onClick={handleAddFolder}
-              className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-              title="Add Folder"
-            >
-              <FolderPlus className="w-5 h-5 text-white" />
-            </button>
-
-            {photos.length > 0 && (
-              <>
-                <button
-                  onClick={() => navigate(`/host/event/${eventId}/slideshow`)}
-                  className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors"
-                >
-                  <Play className="w-4 h-4" />
-                  Slideshow
-                </button>
-
-                <button
-                  onClick={() => setIsSelectionMode(true)}
-                  className="px-4 py-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors"
-                >
-                  Select Photos
-                </button>
-              </>
-            )}
-          </div>
+      <div className="flex items-center justify-between p-4 border-b border-gray-700">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(`/host/event/${eventId}`)}
+            className="p-2 hover:bg-white/10 rounded-full transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-white" />
+          </button>
+          <h1 className="text-xl font-bold text-white">
+            Event Gallery ({photos.length})
+          </h1>
         </div>
 
-        {/* Selection Mode Controls */}
-        <AnimatePresence>
-          {isSelectionMode && selectedPhotos.size > 0 && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="border-t border-white/10"
-            >
-              <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <span className="text-white/70">
-                    {selectedPhotos.size} of {photos.length} selected
-                  </span>
-                  <button
-                    onClick={handleSelectAll}
-                    className="text-blue-400 hover:text-blue-300 transition-colors"
-                  >
-                    Select All
-                  </button>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <button
-                    onClick={handleDownloadSelected}
-                    className="flex items-center gap-2 p-2 bg-blue-600 rounded-full text-white hover:bg-blue-700 transition-colors"
-                    title="Download Selected"
-                  >
-                    <Download className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={handleShareSelected}
-                    className="flex items-center gap-2 p-2 bg-green-600 rounded-full text-white hover:bg-green-700 transition-colors"
-                    title="Share Selected"
-                  >
-                    <Share2 className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={deleteSelectedPhotos}
-                    disabled={isDeletingPhotos}
-                    className="flex items-center gap-2 p-2 bg-red-600 rounded-full text-white hover:bg-red-700 transition-colors disabled:opacity-50"
-                    title="Delete Selected"
-                  >
-                    {isDeletingPhotos ? (
-                      <RefreshCw className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <Trash2 className="w-5 h-5" />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsSelectionMode(false);
-                      setSelectedPhotos(new Set());
-                      setShowBulkActions(false);
-                    }}
-                    className="px-4 py-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsSelectionMode(!isSelectionMode)}
+            className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            {isSelectionMode ? "Cancel" : "Select"}
+          </button>
+        </div>
       </div>
+
+      {/* Bulk Actions Bar */}
+      <AnimatePresence>
+        {isSelectionMode && selectedPhotos.size > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="bg-blue-600 px-4 py-3"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <span className="text-white">
+                  {selectedPhotos.size} of {photos.length} selected
+                </span>
+                <button
+                  onClick={handleSelectAll}
+                  className="text-blue-200 hover:text-white transition-colors"
+                >
+                  {selectedPhotos.size === photos.length
+                    ? "Deselect All"
+                    : "Select All"}
+                </button>
+              </div>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={handleDownloadSelected}
+                  disabled={isDownloading}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 rounded-lg text-white hover:bg-green-700 transition-colors disabled:opacity-50"
+                  title="Download as ZIP via API"
+                >
+                  {isDownloading ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Download className="w-4 h-4" />
+                  )}
+                  {isDownloading ? "Creating ZIP..." : "Download ZIP"}
+                </button>
+
+                <button
+                  onClick={handleDirectDownload}
+                  className="flex items-center gap-2 px-3 py-2 bg-green-500 rounded-lg text-white hover:bg-green-600 transition-colors"
+                  title="Open photos in new tabs"
+                >
+                  <Download className="w-4 h-4" />
+                  Direct
+                </button>
+
+                <button
+                  onClick={handleShareSelected}
+                  className="flex items-center gap-2 px-3 py-2 bg-blue-500 rounded-lg text-white hover:bg-blue-600 transition-colors"
+                >
+                  <Share2 className="w-4 h-4" />
+                </button>
+
+                <button
+                  onClick={deleteSelectedPhotos}
+                  disabled={isDeletingPhotos}
+                  className="flex items-center gap-2 px-3 py-2 bg-red-600 rounded-lg text-white hover:bg-red-700 transition-colors disabled:opacity-50"
+                >
+                  {isDeletingPhotos ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Gallery Grid */}
       <div className="px-4 pb-20">
@@ -459,37 +469,52 @@ export function EventGallery() {
         ) : (
           <div className="grid grid-cols-3 gap-1">
             {photos.map((photo) => (
-              <motion.button
+              <motion.div
                 key={photo.fileName}
-                onClick={() => {
-                  if (isSelectionMode) {
-                    const newSelection = new Set(selectedPhotos);
-                    if (newSelection.has(photo.fileName)) {
-                      newSelection.delete(photo.fileName);
-                    } else {
-                      newSelection.add(photo.fileName);
-                    }
-                    setSelectedPhotos(newSelection);
-                  }
-                }}
-                className="relative aspect-square group focus:outline-none"
+                className="relative aspect-square group"
               >
                 <img
                   src={photo.url}
                   alt="Event photo"
                   className="w-full h-full object-cover"
                   loading="lazy"
-                  onError={() => {
-                    console.error("❌ Failed to load image:", photo.url);
-                    console.error("Photo details:", photo);
-                  }}
-                  onLoad={() => {
-                    console.log(
-                      "✅ Successfully loaded image:",
-                      photo.fileName,
-                    );
-                  }}
                 />
+
+                {/* Selection overlay */}
+                {isSelectionMode && (
+                  <button
+                    onClick={() => {
+                      const newSelection = new Set(selectedPhotos);
+                      if (newSelection.has(photo.fileName)) {
+                        newSelection.delete(photo.fileName);
+                      } else {
+                        newSelection.add(photo.fileName);
+                      }
+                      setSelectedPhotos(newSelection);
+                    }}
+                    className={`absolute inset-0 transition-colors ${
+                      selectedPhotos.has(photo.fileName)
+                        ? "bg-blue-600/50 border-2 border-blue-400"
+                        : "bg-black/20 hover:bg-black/40"
+                    }`}
+                  >
+                    {selectedPhotos.has(photo.fileName) && (
+                      <div className="absolute top-2 right-2 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+                        <div className="w-3 h-3 bg-white rounded-full" />
+                      </div>
+                    )}
+                  </button>
+                )}
+
+                {/* Individual download button */}
+                {!isSelectionMode && (
+                  <button
+                    onClick={() => handleDownloadSinglePhoto(photo)}
+                    className="absolute top-2 right-2 p-1 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Download className="w-4 h-4 text-white" />
+                  </button>
+                )}
 
                 {/* Guest photo indicator */}
                 {photo.isGuestPhoto && (
@@ -498,23 +523,7 @@ export function EventGallery() {
                     title="Guest photo"
                   />
                 )}
-
-                <div
-                  className={`absolute inset-0 transition-colors ${
-                    isSelectionMode
-                      ? selectedPhotos.has(photo.fileName)
-                        ? "bg-blue-500/30"
-                        : "bg-black/20 hover:bg-black/30"
-                      : "bg-black/0 group-hover:bg-black/20"
-                  }`}
-                />
-
-                {isSelectionMode && selectedPhotos.has(photo.fileName) && (
-                  <div className="absolute top-2 right-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                    <CheckCircle className="w-4 h-4 text-white" />
-                  </div>
-                )}
-              </motion.button>
+              </motion.div>
             ))}
           </div>
         )}
@@ -522,3 +531,5 @@ export function EventGallery() {
     </div>
   );
 }
+
+export default EventGallery;
