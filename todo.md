@@ -1,7 +1,8 @@
 - [x] Finish aesthetics for Light/Dark mode on LandingPage
 - [x] Finish aesthetics for Light/Dark mode on GuestDashboard
+
 - [ ] Fix https://app.spevents.live/host/event/EVENT_ID/gallery page to match aesthetics
-- [ ] Fix https://app.spevents.live/host/events/EVENT_ID/ routing to Event Library
+- [ ] Fix https://app.spevents.live/host/events/EVENT_ID/ routing to Event Library, before galler?
 - [ ] Fix https://app.spevents.live/host/events/EVENT_ID/ routing to Event Library
 - [ ] Fix /gallery routing to match aesthetics
 - [ ] Fix /gallery routing so that it goes back to event_library instead of just /host

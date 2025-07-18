@@ -6,7 +6,7 @@ import {
   GoogleAuthProvider,
   GithubAuthProvider,
 } from "firebase/auth";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { auth } from "../config/firebase";
 import { useAuth } from "./AuthProvider";
 import darkIcon from "@/assets/dark-icon.svg";
@@ -161,12 +161,12 @@ export function SignInPage() {
         </div>
 
         <div className="text-center">
-          <Link
-            to="*"
+          <a
+            href="https://spevents.live"
             className="text-white/70 dark:text-sp_darkgreen/70 hover:text-white dark:hover:text-sp_darkgreen text-sm underline transition-colors"
           >
             ← Back to home
-          </Link>
+          </a>
         </div>
       </div>
     </div>
