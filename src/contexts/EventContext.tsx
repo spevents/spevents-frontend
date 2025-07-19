@@ -7,7 +7,7 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
-import { eventService } from "@/services/api";
+import { eventService, deleteEvent } from "@/services/api";
 import { auth } from "@/components/config/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 
@@ -178,7 +178,7 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({
         setIsLoading(false);
       }
     },
-    [isAuthenticated],
+    [isAuthenticated]
   );
 
   const selectEvent = useCallback(
@@ -189,7 +189,7 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({
         localStorage.setItem("spevents-current-event", eventId);
       }
     },
-    [events],
+    [events]
   );
 
   const updateEvent = useCallback(
@@ -205,7 +205,7 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({
         const updatedEvent = normalizeEvent(apiEvent);
 
         setEvents((prev) =>
-          prev.map((e) => (e.id === eventId ? updatedEvent : e)),
+          prev.map((e) => (e.id === eventId ? updatedEvent : e))
         );
 
         if (currentEvent?.id === eventId) {
@@ -217,46 +217,21 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({
         throw err;
       }
     },
-    [isAuthenticated, currentEvent],
-  );
-
-  const deleteEvent = useCallback(
-    async (eventId: string) => {
-      if (!isAuthenticated) {
-        throw new Error("Not authenticated");
-      }
-
-      setError(null);
-
-      try {
-        await eventService.deleteEvent(eventId);
-        setEvents((prev) => prev.filter((e) => e.id !== eventId));
-
-        if (currentEvent?.id === eventId) {
-          setCurrentEvent(null);
-          localStorage.removeItem("spevents-current-event");
-        }
-      } catch (err) {
-        console.error("Error deleting event:", err);
-        setError(err instanceof Error ? err.message : "Failed to delete event");
-        throw err;
-      }
-    },
-    [isAuthenticated, currentEvent],
+    [isAuthenticated, currentEvent]
   );
 
   const startEvent = useCallback(
     async (eventId: string) => {
       await updateEvent(eventId, { status: "active" });
     },
-    [updateEvent],
+    [updateEvent]
   );
 
   const endEvent = useCallback(
     async (eventId: string) => {
       await updateEvent(eventId, { status: "ended" });
     },
-    [updateEvent],
+    [updateEvent]
   );
 
   const contextValue: EventContextType = {

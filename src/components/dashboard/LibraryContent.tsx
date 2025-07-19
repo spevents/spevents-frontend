@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 
 import { useEvent } from "@/contexts/EventContext";
-import { deleteEvent } from "@/services/api";
 
 interface LibraryContentProps {
   onCreateEvent: () => void;
