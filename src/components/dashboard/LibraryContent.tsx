@@ -37,6 +37,14 @@ const LibraryContent = memo(({ onCreateEvent }: LibraryContentProps) => {
     navigate(`/host/event/${event.id}/gallery`);
   };
 
+  const handleDelete = (event: any) => {
+    console.log("deleteing event: ", {
+      id: event.id,
+      eventId: event.eventId,
+    });
+    deleteEvent(event.id);
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-8">
@@ -223,7 +231,7 @@ const LibraryContent = memo(({ onCreateEvent }: LibraryContentProps) => {
 
                     {/* Delete Button */}
                     <button
-                      onClick={() => deleteEvent(event.id)}
+                      onClick={() => handleDelete(event)}
                       className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 rounded-lg transition-colors"
                       title="Delete Event"
                     >
