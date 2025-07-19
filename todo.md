@@ -22,7 +22,23 @@
 - [ ] Change sample photos to be landcape photos, and have sample and other photos
 - [ ] take photo now when adding sample photos
 - [ ] Have photos have the same
-- [ ]
+- [ ] event gallery options (listed below):
+      Photo quality filtering - auto-hide blurry/dark photos from venue display
+      Real-time moderation - quick remove button for inappropriate photos on live screen
+      Virtual scrolling - handle events with 500+ photos without lag
+      Progressive loading with blur-up - better UX when loading photos
+
+        Host Control During Events:
+
+        Live metrics dashboard - active guests, upload rate, total photos for host monitoring
+        Display controls - pause/resume live display, skip photos, highlight favorites
+        Zoom/pan in modal - better photo review experience
+        Keyboard shortcuts - space to pause, arrows to navigate
+
+        Basic UX Improvements:
+
+        Accessibility - keyboard navigation, screen reader support
+        Mobile optimization - better gallery management on phones
 
 # Marketing and Promotions
 

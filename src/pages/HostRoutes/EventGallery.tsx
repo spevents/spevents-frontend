@@ -4,14 +4,20 @@ import { useState, useEffect } from "react";
 import { useParams, Navigate, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  RefreshCw,
+  ArrowLeft,
   Download,
   Trash2,
-  ArrowLeft,
   Grid3X3,
   Grid2X2,
   X,
+  Check,
+  Calendar,
+  Users,
+  ImageIcon,
+  Share,
   QrCode,
+  RefreshCw,
+  MoreHorizontal,
 } from "lucide-react";
 import JSZip from "jszip";
 import { auth } from "@/components/config/firebase";
@@ -22,6 +28,8 @@ import {
   deleteMultipleFiles,
   EventPhoto,
 } from "@/services/api";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface DisplayPhoto {
   url: string;
@@ -59,11 +67,9 @@ export function EventGallery() {
       console.log("🔍 Loading photos for eventId:", eventId);
       setIsLoading(true);
 
-      // Get all photos (both event and guest photos)
       const eventPhotos: EventPhoto[] = await listAllEventPhotos(eventId);
       console.log("📸 Found photos:", eventPhotos.length);
 
-      // Convert to display format with correct URLs
       const displayPhotos: DisplayPhoto[] = eventPhotos.map((photo) => ({
         url: getEventPhotoUrl(eventId, photo),
         fileName: photo.fileName,
@@ -73,7 +79,6 @@ export function EventGallery() {
         guestId: photo.guestId,
       }));
 
-      // Sort by creation time (most recent first)
       const sortedPhotos = displayPhotos.sort(
         (a: DisplayPhoto, b: DisplayPhoto) =>
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
@@ -93,10 +98,21 @@ export function EventGallery() {
     return () => clearInterval(pollInterval);
   }, [eventId]);
 
-  // CORS-friendly download using your API as proxy
+  // Group photos by date
+  const groupedPhotos = photos.reduce(
+    (groups, photo) => {
+      const date = new Date(photo.created_at).toDateString();
+      if (!groups[date]) {
+        groups[date] = [];
+      }
+      groups[date].push(photo);
+      return groups;
+    },
+    {} as Record<string, DisplayPhoto[]>,
+  );
+
   const downloadViaProxy = async (photo: DisplayPhoto): Promise<Blob> => {
     try {
-      // Get Firebase auth token properly
       const user = auth.currentUser;
       if (!user) {
         throw new Error("User not authenticated");
@@ -105,8 +121,6 @@ export function EventGallery() {
       const token = await user.getIdToken();
       const apiUrl =
         import.meta.env.VITE_API_URL || "https://spevents-backend.vercel.app";
-
-      console.log(`🔗 Downloading via API: ${apiUrl}/api/photos/download`);
 
       const response = await fetch(`${apiUrl}/api/photos/download`, {
         method: "POST",
@@ -133,7 +147,6 @@ export function EventGallery() {
     }
   };
 
-  // Updated download function using API proxy
   const handleDownloadSelected = async () => {
     if (selectedPhotos.size === 0) return;
 
@@ -143,35 +156,19 @@ export function EventGallery() {
         selectedPhotos.has(p.fileName),
       );
 
-      console.log(`🔄 Creating zip with ${selectedPhotoObjects.length} photos`);
-
       const zip = new JSZip();
       let successCount = 0;
       let failCount = 0;
 
-      // Download photos via API proxy to avoid CORS
       for (let i = 0; i < selectedPhotoObjects.length; i++) {
         const photo = selectedPhotoObjects[i];
         try {
-          console.log(
-            `📥 Downloading: ${photo.fileName} (${i + 1}/${
-              selectedPhotoObjects.length
-            })`,
-          );
-
-          // Use API proxy instead of direct fetch
           const blob = await downloadViaProxy(photo);
-
           if (blob.size === 0) {
             throw new Error("Empty response");
           }
-
           zip.file(photo.fileName, blob);
           successCount++;
-
-          console.log(
-            `✅ Added to zip: ${photo.fileName} (${blob.size} bytes)`,
-          );
         } catch (error) {
           console.error(`❌ Failed to download ${photo.fileName}:`, error);
           failCount++;
@@ -182,12 +179,6 @@ export function EventGallery() {
         throw new Error("No photos could be downloaded");
       }
 
-      console.log(
-        `📊 Download summary: ${successCount} success, ${failCount} failed`,
-      );
-
-      // Generate and download zip
-      console.log("🔄 Generating zip file...");
       const zipBlob = await zip.generateAsync({
         type: "blob",
         compression: "DEFLATE",
@@ -196,7 +187,6 @@ export function EventGallery() {
         },
       });
 
-      // Create download link
       const zipUrl = URL.createObjectURL(zipBlob);
       const link = document.createElement("a");
       link.href = zipUrl;
@@ -209,8 +199,6 @@ export function EventGallery() {
       document.body.removeChild(link);
 
       setTimeout(() => URL.revokeObjectURL(zipUrl), 1000);
-
-      console.log("✅ Zip download initiated");
 
       if (failCount > 0) {
         alert(
@@ -226,10 +214,11 @@ export function EventGallery() {
       );
     } finally {
       setIsDownloading(false);
+      setIsSelectionMode(false);
+      setSelectedPhotos(new Set());
     }
   };
 
-  // Updated single photo download using API proxy
   const handleDownloadSinglePhoto = async (photo: DisplayPhoto) => {
     try {
       const blob = await downloadViaProxy(photo);
@@ -260,10 +249,6 @@ export function EventGallery() {
 
     setIsDeletingPhotos(true);
     try {
-      console.log(
-        `🗑️ Deleting ${selectedPhotos.size} photos for event ${eventId}`,
-      );
-
       const selectedPhotoObjects = photos.filter((p) =>
         selectedPhotos.has(p.fileName),
       );
@@ -287,7 +272,6 @@ export function EventGallery() {
       await loadPhotosFromStorage();
       setSelectedPhotos(new Set());
       setIsSelectionMode(false);
-      console.log("✅ Photos deleted successfully");
     } catch (error) {
       console.error("❌ Error deleting photos:", error);
       alert(
@@ -313,7 +297,6 @@ export function EventGallery() {
 
       await loadPhotosFromStorage();
       setSelectedPhoto(null);
-      console.log("✅ Photo deleted successfully");
     } catch (error) {
       console.error("❌ Error deleting photo:", error);
       alert(
@@ -327,212 +310,427 @@ export function EventGallery() {
   };
 
   const handlePhotoClick = (photo: DisplayPhoto) => {
-    if (!isSelectionMode) {
+    if (isSelectionMode) {
+      togglePhotoSelection(photo.fileName);
+    } else {
       setSelectedPhoto(photo);
     }
+  };
+
+  const togglePhotoSelection = (fileName: string) => {
+    const newSelection = new Set(selectedPhotos);
+    if (newSelection.has(fileName)) {
+      newSelection.delete(fileName);
+    } else {
+      newSelection.add(fileName);
+    }
+    setSelectedPhotos(newSelection);
   };
 
   if (!eventId) {
     return <Navigate to="/host" replace />;
   }
 
-  const gridCols = gridSize === "large" ? "grid-cols-3" : "grid-cols-5";
+  const gridCols =
+    gridSize === "large"
+      ? "grid-cols-3 md:grid-cols-4"
+      : "grid-cols-4 md:grid-cols-6";
+  const guestPhotosCount = photos.filter((p) => p.isGuestPhoto).length;
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen" style={{ backgroundColor: "#344e41" }}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-700">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate(`/host/event/${eventId}`)}
-            className="p-2 hover:bg-white/10 rounded-full transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-white" />
-          </button>
-          <h1 className="text-2xl font-bold text-white">
-            {currentEvent?.name || "Event Gallery"}
-
-            <p className="flex text-white/60 text-sm">
-              Session: {currentEvent?.sessionCode} • {photos.length} photos
-            </p>
-          </h1>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={() => navigate(`/host/event/${eventId}/qr`)}
-              className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="sticky top-0 z-40 backdrop-blur-md border-b"
+        style={{
+          backgroundColor: "rgba(52, 78, 65, 0.8)",
+          borderBottomColor: "#588157",
+        }}
+      >
+        <div className="flex items-center justify-between p-4">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full"
+              onClick={() => navigate(`/host/event/${eventId}`)}
             >
-              <QrCode className="w-5 h-5 text-white" />
-            </button>
-
-            {photos.length > 0 && (
-              <>
-                <button
-                  onClick={() => navigate(`/host/event/${eventId}/slideshow`)}
-                  className="px-4 py-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors"
-                >
-                  View Slideshow
-                </button>
-              </>
-            )}
-          </div>
-          <button
-            onClick={() =>
-              setGridSize(gridSize === "large" ? "small" : "large")
-            }
-            className="p-2 hover:bg-white/10 rounded-full transition-colors"
-            title={`Switch to ${gridSize === "large" ? "small" : "large"} grid`}
-          >
-            {gridSize === "large" ? (
-              <Grid2X2 className="w-5 h-5 text-white" />
-            ) : (
-              <Grid3X3 className="w-5 h-5 text-white" />
-            )}
-          </button>
-          <button
-            onClick={() => setIsSelectionMode(!isSelectionMode)}
-            className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            {isSelectionMode ? "Cancel" : "Select"}
-          </button>
-        </div>
-      </div>
-
-      {/* Bulk Actions Bar */}
-      <AnimatePresence>
-        {isSelectionMode && selectedPhotos.size > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -50 }}
-            className="bg-blue-600 px-4 py-3"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <span className="text-white">
-                  {selectedPhotos.size} of {photos.length} selected
-                </span>
-                <button
-                  onClick={handleSelectAll}
-                  className="text-blue-200 hover:text-white transition-colors"
-                >
-                  {selectedPhotos.size === photos.length
-                    ? "Deselect All"
-                    : "Select All"}
-                </button>
-              </div>
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={handleDownloadSelected}
-                  disabled={isDownloading}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 rounded-lg text-white hover:bg-green-700 transition-colors disabled:opacity-50"
-                >
-                  {isDownloading ? (
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Download className="w-4 h-4" />
-                  )}
-                  {isDownloading ? "Creating ZIP..." : "Download ZIP"}
-                </button>
-
-                <button
-                  onClick={deleteSelectedPhotos}
-                  disabled={isDeletingPhotos}
-                  className="flex items-center gap-2 px-3 py-2 bg-red-600 rounded-lg text-white hover:bg-red-700 transition-colors disabled:opacity-50"
-                >
-                  {isDeletingPhotos ? (
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="w-4 h-4" />
-                  )}
-                </button>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div>
+              <h1
+                className="text-2xl font-semibold"
+                style={{ color: "#dad7cd" }}
+              >
+                {currentEvent?.name || "Event Gallery"}
+              </h1>
+              <div
+                className="flex items-center gap-4 text-sm"
+                style={{ color: "#a3b18a" }}
+              >
+                <div className="flex items-center gap-1">
+                  <Calendar className="w-4 h-4" />
+                  {currentEvent?.date
+                    ? new Date(currentEvent.date).toLocaleDateString()
+                    : "Today"}
+                </div>
+                <div className="flex items-center gap-1">
+                  <ImageIcon className="w-4 h-4" />
+                  {photos.length} photos
+                </div>
+                <div className="flex items-center gap-1">
+                  <Users className="w-4 h-4" />
+                  {guestPhotosCount} from guests
+                </div>
               </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
 
-      {/* Gallery Grid */}
-      <div className="px-4 pb-20">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(`/host/event/${eventId}/qr`)}
+              className="rounded-full hover:bg-opacity-20"
+              style={{
+                color: "#dad7cd",
+                backgroundColor: "transparent",
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor =
+                  "rgba(218, 215, 205, 0.1)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "transparent")
+              }
+              title="Show QR Code"
+            >
+              <QrCode className="w-5 h-5" />
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() =>
+                setGridSize(gridSize === "large" ? "small" : "large")
+              }
+              className="rounded-full"
+              style={{
+                color: "#dad7cd",
+                backgroundColor: "transparent",
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor =
+                  "rgba(218, 215, 205, 0.1)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "transparent")
+              }
+            >
+              {gridSize === "large" ? (
+                <Grid2X2 className="w-5 h-5" />
+              ) : (
+                <Grid3X3 className="w-5 h-5" />
+              )}
+            </Button>
+            {photos.length > 0 && (
+              <Button
+                variant="outline"
+                onClick={() => navigate(`/host/event/${eventId}/slideshow`)}
+                className="border-opacity-50 hover:bg-opacity-20"
+                style={{
+                  color: "#dad7cd",
+                  borderColor: "#588157",
+                  backgroundColor: "transparent",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.backgroundColor =
+                    "rgba(88, 129, 87, 0.2)")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.backgroundColor = "transparent")
+                }
+              >
+                Slideshow
+              </Button>
+            )}
+            <Button
+              variant={isSelectionMode ? "default" : "outline"}
+              onClick={() => {
+                setIsSelectionMode(!isSelectionMode);
+                if (isSelectionMode) {
+                  setSelectedPhotos(new Set());
+                }
+              }}
+              className="border-opacity-50"
+              style={{
+                color: isSelectionMode ? "#344e41" : "#dad7cd",
+                backgroundColor: isSelectionMode ? "#a3b18a" : "transparent",
+                borderColor: "#588157",
+              }}
+            >
+              {isSelectionMode ? "Done" : "Select"}
+            </Button>
+          </div>
+        </div>
+
+        {/* Selection Actions Bar */}
+        <AnimatePresence>
+          {isSelectionMode && selectedPhotos.size > 0 && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="border-t"
+              style={{
+                borderTopColor: "#588157",
+                backgroundColor: "#588157",
+              }}
+            >
+              <div className="flex items-center justify-between p-4">
+                <div className="flex items-center gap-4">
+                  <span
+                    className="text-sm font-medium"
+                    style={{ color: "#dad7cd" }}
+                  >
+                    {selectedPhotos.size} of {photos.length} selected
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSelectAll}
+                    style={{ color: "#a3b18a" }}
+                  >
+                    {selectedPhotos.size === photos.length
+                      ? "Deselect All"
+                      : "Select All"}
+                  </Button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => console.log("Share selected")}
+                    style={{
+                      color: "#dad7cd",
+                      borderColor: "#a3b18a",
+                      backgroundColor: "transparent",
+                    }}
+                  >
+                    <Share className="w-4 h-4 mr-2" />
+                    Share
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDownloadSelected}
+                    disabled={isDownloading}
+                    style={{
+                      color: "#dad7cd",
+                      borderColor: "#a3b18a",
+                      backgroundColor: "transparent",
+                    }}
+                  >
+                    {isDownloading ? (
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Download className="w-4 h-4 mr-2" />
+                    )}
+                    {isDownloading ? "Creating ZIP..." : "Download"}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={deleteSelectedPhotos}
+                    disabled={isDeletingPhotos}
+                    style={{
+                      color: "#dad7cd",
+                      backgroundColor: "#3a5a40",
+                      borderColor: "#3a5a40",
+                    }}
+                  >
+                    {isDeletingPhotos ? (
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4 mr-2" />
+                    )}
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+      {/* Photo Gallery */}
+      <div className="p-4 pb-20">
         {isLoading ? (
           <div className="flex items-center justify-center h-[60vh]">
-            <RefreshCw className="w-8 h-8 text-white animate-spin" />
+            <RefreshCw
+              className="w-8 h-8 animate-spin"
+              style={{ color: "#a3b18a" }}
+            />
           </div>
         ) : photos.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-            <p className="text-white/60 mb-4">No photos uploaded yet</p>
-            <button
-              onClick={() => navigate(`/host/event/${eventId}/qr`)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center justify-center h-[60vh] text-center"
+          >
+            <ImageIcon
+              className="w-16 h-16 mb-4"
+              style={{ color: "#588157" }}
+            />
+            <h3
+              className="text-xl font-medium mb-2"
+              style={{ color: "#dad7cd" }}
             >
-              Show QR Code to Get Started
-            </button>
-          </div>
+              No photos yet
+            </h3>
+            <p className="mb-4" style={{ color: "#a3b18a" }}>
+              Share your event code to start collecting photos
+            </p>
+            <Button
+              onClick={() => navigate(`/host/event/${eventId}/qr`)}
+              className="gap-2"
+              style={{
+                backgroundColor: "#588157",
+                color: "#dad7cd",
+                borderColor: "#588157",
+              }}
+            >
+              <QrCode className="w-4 h-4" />
+              Show QR Code
+            </Button>
+          </motion.div>
         ) : (
-          <div className={`grid ${gridCols} gap-1`}>
-            {photos.map((photo) => (
-              <motion.div
-                key={photo.fileName}
-                className="relative aspect-square group cursor-pointer"
-                onClick={() => handlePhotoClick(photo)}
-              >
-                <img
-                  src={photo.url}
-                  alt="Event photo"
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
+          Object.entries(groupedPhotos).map(([date, datePhotos]) => (
+            <motion.div
+              key={date}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-8"
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <h2
+                  className="text-lg font-medium"
+                  style={{ color: "#dad7cd" }}
+                >
+                  {new Date(date).toLocaleDateString("en-US", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </h2>
+                <Badge
+                  variant="secondary"
+                  className="text-xs"
+                  style={{
+                    backgroundColor: "#588157",
+                    color: "#dad7cd",
+                  }}
+                >
+                  {datePhotos.length} photos
+                </Badge>
+              </div>
 
-                {/* Selection overlay */}
-                {isSelectionMode && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const newSelection = new Set(selectedPhotos);
-                      if (newSelection.has(photo.fileName)) {
-                        newSelection.delete(photo.fileName);
-                      } else {
-                        newSelection.add(photo.fileName);
-                      }
-                      setSelectedPhotos(newSelection);
-                    }}
-                    className={`absolute inset-0 transition-colors ${
-                      selectedPhotos.has(photo.fileName)
-                        ? "bg-blue-600/50 border-2 border-blue-400"
-                        : "bg-black/20 hover:bg-black/40"
-                    }`}
+              <div className={`grid ${gridCols} gap-2`}>
+                {datePhotos.map((photo, index) => (
+                  <motion.div
+                    key={photo.fileName}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="relative aspect-square group cursor-pointer overflow-hidden rounded-lg"
+                    onClick={() => handlePhotoClick(photo)}
                   >
-                    {selectedPhotos.has(photo.fileName) && (
-                      <div className="absolute top-2 right-2 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
-                        <div className="w-3 h-3 bg-white rounded-full" />
+                    <img
+                      src={photo.url}
+                      alt={photo.fileName}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      loading="lazy"
+                    />
+
+                    {/* Selection Overlay */}
+                    {isSelectionMode && (
+                      <div
+                        className={`absolute inset-0 transition-all duration-200 ${
+                          selectedPhotos.has(photo.fileName)
+                            ? "border-2"
+                            : "hover:bg-black/10"
+                        }`}
+                        style={{
+                          backgroundColor: selectedPhotos.has(photo.fileName)
+                            ? "rgba(163, 177, 138, 0.3)"
+                            : "transparent",
+                          borderColor: selectedPhotos.has(photo.fileName)
+                            ? "#a3b18a"
+                            : "transparent",
+                        }}
+                      >
+                        <div className="absolute top-2 right-2">
+                          <div
+                            className="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all"
+                            style={{
+                              backgroundColor: selectedPhotos.has(
+                                photo.fileName,
+                              )
+                                ? "#a3b18a"
+                                : "rgba(218, 215, 205, 0.8)",
+                              borderColor: selectedPhotos.has(photo.fileName)
+                                ? "#a3b18a"
+                                : "#dad7cd",
+                            }}
+                          >
+                            {selectedPhotos.has(photo.fileName) && (
+                              <Check
+                                className="w-4 h-4"
+                                style={{ color: "#344e41" }}
+                              />
+                            )}
+                          </div>
+                        </div>
                       </div>
                     )}
-                  </button>
-                )}
 
-                {/* Guest photo indicator */}
-                {photo.isGuestPhoto && (
-                  <div
-                    className="absolute top-1 left-1 w-3 h-3 bg-green-500 rounded-full"
-                    title="Guest photo"
-                  />
-                )}
-              </motion.div>
-            ))}
-          </div>
+                    {/* Guest Photo Indicator */}
+                    {!isSelectionMode && photo.isGuestPhoto && (
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="absolute bottom-2 right-2">
+                          <Badge
+                            variant="secondary"
+                            className="text-xs"
+                            style={{
+                              backgroundColor: "#a3b18a",
+                              color: "#344e41",
+                            }}
+                          >
+                            Guest
+                          </Badge>
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          ))
         )}
       </div>
 
-      {/* Photo Modal */}
+      {/* Photo Lightbox */}
       <AnimatePresence>
         {selectedPhoto && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ backgroundColor: "rgba(52, 78, 65, 0.95)" }}
             onClick={() => setSelectedPhoto(null)}
           >
             <motion.div
@@ -542,50 +740,132 @@ export function EventGallery() {
               className="relative max-w-4xl max-h-full"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Close button */}
-              <button
+              {/* Close Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-4 right-4 z-10 rounded-full"
+                style={{
+                  backgroundColor: "rgba(52, 78, 65, 0.5)",
+                  color: "#dad7cd",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.backgroundColor =
+                    "rgba(52, 78, 65, 0.7)")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.backgroundColor =
+                    "rgba(52, 78, 65, 0.5)")
+                }
                 onClick={() => setSelectedPhoto(null)}
-                className="absolute top-4 right-4 z-10 p-2 bg-black/50 rounded-full text-white hover:bg-black/70 transition-colors"
               >
                 <X className="w-6 h-6" />
-              </button>
+              </Button>
 
               {/* Photo */}
               <img
                 src={selectedPhoto.url}
-                alt="Event photo"
-                className="max-w-full max-h-[80vh] object-contain"
+                alt={selectedPhoto.fileName}
+                className="max-w-full max-h-[80vh] object-contain rounded-lg"
               />
 
-              {/* Action buttons */}
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-3">
-                <button
-                  onClick={() => handleDownloadSinglePhoto(selectedPhoto)}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 rounded-lg text-white hover:bg-green-700 transition-colors"
-                >
-                  <Download className="w-4 h-4" />
-                  Download
-                </button>
-                <button
-                  onClick={() => deleteSinglePhoto(selectedPhoto)}
-                  disabled={isDeletingSingle}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-600 rounded-lg text-white hover:bg-red-700 transition-colors disabled:opacity-50"
-                >
-                  {isDeletingSingle ? (
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="w-4 h-4" />
-                  )}
-                  Delete
-                </button>
+              {/* Photo Info */}
+              <div
+                className="absolute bottom-4 left-4 right-4 rounded-lg p-4"
+                style={{
+                  backgroundColor: "rgba(52, 78, 65, 0.5)",
+                  color: "#dad7cd",
+                }}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-medium">{selectedPhoto.fileName}</h3>
+                  <div className="flex items-center gap-2">
+                    {selectedPhoto.isGuestPhoto && (
+                      <Badge
+                        style={{
+                          backgroundColor: "#a3b18a",
+                          color: "#344e41",
+                        }}
+                      >
+                        Guest Photo
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                <p className="text-sm" style={{ color: "#a3b18a" }}>
+                  {new Date(selectedPhoto.created_at).toLocaleString()}
+                </p>
               </div>
 
-              {/* Guest photo indicator */}
-              {selectedPhoto.isGuestPhoto && (
-                <div className="absolute top-4 left-4 px-2 py-1 bg-green-500 rounded text-white text-sm">
-                  Guest photo
-                </div>
-              )}
+              {/* Action Buttons */}
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => handleDownloadSinglePhoto(selectedPhoto)}
+                  style={{
+                    backgroundColor: "#588157",
+                    color: "#dad7cd",
+                    borderColor: "#588157",
+                  }}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() =>
+                    console.log("Share photo:", selectedPhoto.fileName)
+                  }
+                  style={{
+                    backgroundColor: "#588157",
+                    color: "#dad7cd",
+                    borderColor: "#588157",
+                  }}
+                >
+                  <Share className="w-4 h-4 mr-2" />
+                  Share
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => deleteSinglePhoto(selectedPhoto)}
+                  disabled={isDeletingSingle}
+                  style={{
+                    backgroundColor: "#3a5a40",
+                    color: "#dad7cd",
+                    borderColor: "#3a5a40",
+                  }}
+                >
+                  {isDeletingSingle ? (
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-4 h-4 mr-2" />
+                  )}
+                  Delete
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() =>
+                    console.log("More options:", selectedPhoto.fileName)
+                  }
+                  style={{
+                    color: "#dad7cd",
+                    backgroundColor: "transparent",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor =
+                      "rgba(218, 215, 205, 0.2)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "transparent")
+                  }
+                >
+                  <MoreHorizontal className="w-4 h-4" />
+                </Button>
+              </div>
             </motion.div>
           </motion.div>
         )}

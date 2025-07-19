@@ -28,6 +28,7 @@ export interface Event {
   guestCount: number;
   sessionCode: string;
   timestamp: number;
+  date?: string;
 }
 
 export interface CreateEventData {
