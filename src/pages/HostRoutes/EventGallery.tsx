@@ -3,7 +3,16 @@
 import { useState, useEffect } from "react";
 import { useParams, Navigate, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { RefreshCw, Download, Share2, Trash2, ArrowLeft } from "lucide-react";
+import {
+  RefreshCw,
+  Download,
+  Trash2,
+  ArrowLeft,
+  Grid3X3,
+  Grid2X2,
+  X,
+  QrCode,
+} from "lucide-react";
 import JSZip from "jszip";
 import { auth } from "@/components/config/firebase";
 import { useEvent } from "@/contexts/EventContext";
@@ -33,6 +42,9 @@ export function EventGallery() {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [isDeletingPhotos, setIsDeletingPhotos] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [gridSize, setGridSize] = useState<"large" | "small">("large");
+  const [selectedPhoto, setSelectedPhoto] = useState<DisplayPhoto | null>(null);
+  const [isDeletingSingle, setIsDeletingSingle] = useState(false);
 
   useEffect(() => {
     if (eventId && (!currentEvent || currentEvent.id !== eventId)) {
@@ -235,72 +247,11 @@ export function EventGallery() {
     }
   };
 
-  // Fallback: Direct link download (opens in new tab)
-  const handleDirectDownload = () => {
-    if (selectedPhotos.size === 0) return;
-
-    const selectedPhotoObjects = photos.filter((p) =>
-      selectedPhotos.has(p.fileName),
-    );
-
-    selectedPhotoObjects.forEach((photo, index) => {
-      setTimeout(() => {
-        window.open(photo.url, "_blank");
-      }, index * 500);
-    });
-  };
-
   const handleSelectAll = () => {
     if (selectedPhotos.size === photos.length) {
       setSelectedPhotos(new Set());
     } else {
       setSelectedPhotos(new Set(photos.map((p) => p.fileName)));
-    }
-  };
-
-  const handleShareSelected = async () => {
-    if (selectedPhotos.size === 0) return;
-
-    try {
-      const baseUrl = window.location.origin;
-      const photoParams = Array.from(selectedPhotos).join(",");
-      const shareUrl = `${baseUrl}/guest/${
-        currentEvent?.sessionCode
-      }?photos=${encodeURIComponent(photoParams)}`;
-
-      const shareData = {
-        title: `${currentEvent?.name} - Selected Photos`,
-        text: `Check out these ${selectedPhotos.size} photos from ${currentEvent?.name}!`,
-        url: shareUrl,
-      };
-
-      if (navigator.share) {
-        try {
-          await navigator.share(shareData);
-          return;
-        } catch (error) {
-          if (error instanceof Error && error.name !== "AbortError") {
-            console.log("Native share failed, falling back to clipboard");
-          } else {
-            return;
-          }
-        }
-      }
-
-      await navigator.clipboard.writeText(shareUrl);
-      const message = `Shareable link copied to clipboard!\n\n${shareUrl}\n\nAnyone with this link can view the ${
-        selectedPhotos.size
-      } selected photo${selectedPhotos.size > 1 ? "s" : ""}.`;
-      alert(message);
-    } catch (error) {
-      console.error("Failed to create shareable link:", error);
-      try {
-        const eventUrl = `${window.location.origin}/guest/${currentEvent?.sessionCode}`;
-        await navigator.clipboard.writeText(eventUrl);
-        alert(`Event gallery link copied to clipboard:\n${eventUrl}`);
-      } catch (clipboardError) {
-        alert("Failed to create shareable link. Please try again.");
-      }
     }
   };
 
@@ -349,9 +300,43 @@ export function EventGallery() {
     }
   };
 
+  const deleteSinglePhoto = async (photo: DisplayPhoto) => {
+    if (!eventId) return;
+
+    setIsDeletingSingle(true);
+    try {
+      if (photo.isGuestPhoto && photo.guestId) {
+        await deleteMultipleFiles(eventId, [photo.fileName], photo.guestId);
+      } else {
+        await deleteMultipleFiles(eventId, [photo.fileName]);
+      }
+
+      await loadPhotosFromStorage();
+      setSelectedPhoto(null);
+      console.log("✅ Photo deleted successfully");
+    } catch (error) {
+      console.error("❌ Error deleting photo:", error);
+      alert(
+        `Failed to delete photo: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`,
+      );
+    } finally {
+      setIsDeletingSingle(false);
+    }
+  };
+
+  const handlePhotoClick = (photo: DisplayPhoto) => {
+    if (!isSelectionMode) {
+      setSelectedPhoto(photo);
+    }
+  };
+
   if (!eventId) {
     return <Navigate to="/host" replace />;
   }
+
+  const gridCols = gridSize === "large" ? "grid-cols-3" : "grid-cols-5";
 
   return (
     <div className="min-h-screen bg-gray-900">
@@ -364,12 +349,48 @@ export function EventGallery() {
           >
             <ArrowLeft className="w-5 h-5 text-white" />
           </button>
-          <h1 className="text-xl font-bold text-white">
-            Event Gallery ({photos.length})
+          <h1 className="text-2xl font-bold text-white">
+            {currentEvent?.name || "Event Gallery"}
+
+            <p className="flex text-white/60 text-sm">
+              Session: {currentEvent?.sessionCode} • {photos.length} photos
+            </p>
           </h1>
         </div>
 
         <div className="flex items-center gap-2">
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => navigate(`/host/event/${eventId}/qr`)}
+              className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            >
+              <QrCode className="w-5 h-5 text-white" />
+            </button>
+
+            {photos.length > 0 && (
+              <>
+                <button
+                  onClick={() => navigate(`/host/event/${eventId}/slideshow`)}
+                  className="px-4 py-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors"
+                >
+                  View Slideshow
+                </button>
+              </>
+            )}
+          </div>
+          <button
+            onClick={() =>
+              setGridSize(gridSize === "large" ? "small" : "large")
+            }
+            className="p-2 hover:bg-white/10 rounded-full transition-colors"
+            title={`Switch to ${gridSize === "large" ? "small" : "large"} grid`}
+          >
+            {gridSize === "large" ? (
+              <Grid2X2 className="w-5 h-5 text-white" />
+            ) : (
+              <Grid3X3 className="w-5 h-5 text-white" />
+            )}
+          </button>
           <button
             onClick={() => setIsSelectionMode(!isSelectionMode)}
             className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -407,7 +428,6 @@ export function EventGallery() {
                   onClick={handleDownloadSelected}
                   disabled={isDownloading}
                   className="flex items-center gap-2 px-4 py-2 bg-green-600 rounded-lg text-white hover:bg-green-700 transition-colors disabled:opacity-50"
-                  title="Download as ZIP via API"
                 >
                   {isDownloading ? (
                     <RefreshCw className="w-4 h-4 animate-spin" />
@@ -415,22 +435,6 @@ export function EventGallery() {
                     <Download className="w-4 h-4" />
                   )}
                   {isDownloading ? "Creating ZIP..." : "Download ZIP"}
-                </button>
-
-                <button
-                  onClick={handleDirectDownload}
-                  className="flex items-center gap-2 px-3 py-2 bg-green-500 rounded-lg text-white hover:bg-green-600 transition-colors"
-                  title="Open photos in new tabs"
-                >
-                  <Download className="w-4 h-4" />
-                  Direct
-                </button>
-
-                <button
-                  onClick={handleShareSelected}
-                  className="flex items-center gap-2 px-3 py-2 bg-blue-500 rounded-lg text-white hover:bg-blue-600 transition-colors"
-                >
-                  <Share2 className="w-4 h-4" />
                 </button>
 
                 <button
@@ -467,11 +471,12 @@ export function EventGallery() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-1">
+          <div className={`grid ${gridCols} gap-1`}>
             {photos.map((photo) => (
               <motion.div
                 key={photo.fileName}
-                className="relative aspect-square group"
+                className="relative aspect-square group cursor-pointer"
+                onClick={() => handlePhotoClick(photo)}
               >
                 <img
                   src={photo.url}
@@ -483,7 +488,8 @@ export function EventGallery() {
                 {/* Selection overlay */}
                 {isSelectionMode && (
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       const newSelection = new Set(selectedPhotos);
                       if (newSelection.has(photo.fileName)) {
                         newSelection.delete(photo.fileName);
@@ -506,16 +512,6 @@ export function EventGallery() {
                   </button>
                 )}
 
-                {/* Individual download button */}
-                {!isSelectionMode && (
-                  <button
-                    onClick={() => handleDownloadSinglePhoto(photo)}
-                    className="absolute top-2 right-2 p-1 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <Download className="w-4 h-4 text-white" />
-                  </button>
-                )}
-
                 {/* Guest photo indicator */}
                 {photo.isGuestPhoto && (
                   <div
@@ -528,6 +524,72 @@ export function EventGallery() {
           </div>
         )}
       </div>
+
+      {/* Photo Modal */}
+      <AnimatePresence>
+        {selectedPhoto && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+            onClick={() => setSelectedPhoto(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="relative max-w-4xl max-h-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close button */}
+              <button
+                onClick={() => setSelectedPhoto(null)}
+                className="absolute top-4 right-4 z-10 p-2 bg-black/50 rounded-full text-white hover:bg-black/70 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+
+              {/* Photo */}
+              <img
+                src={selectedPhoto.url}
+                alt="Event photo"
+                className="max-w-full max-h-[80vh] object-contain"
+              />
+
+              {/* Action buttons */}
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-3">
+                <button
+                  onClick={() => handleDownloadSinglePhoto(selectedPhoto)}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 rounded-lg text-white hover:bg-green-700 transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                  Download
+                </button>
+                <button
+                  onClick={() => deleteSinglePhoto(selectedPhoto)}
+                  disabled={isDeletingSingle}
+                  className="flex items-center gap-2 px-4 py-2 bg-red-600 rounded-lg text-white hover:bg-red-700 transition-colors disabled:opacity-50"
+                >
+                  {isDeletingSingle ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
+                  Delete
+                </button>
+              </div>
+
+              {/* Guest photo indicator */}
+              {selectedPhoto.isGuestPhoto && (
+                <div className="absolute top-4 left-4 px-2 py-1 bg-green-500 rounded text-white text-sm">
+                  Guest photo
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
