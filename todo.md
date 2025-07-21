@@ -1,6 +1,9 @@
+- [ ] delete photos within EventGallery.tsx
+- [ ] delete events within LibraryContent.tsx, used in LibraryPage.tsx
+- [ ]
+
 - [x] Finish aesthetics for Light/Dark mode on LandingPage
 - [x] Finish aesthetics for Light/Dark mode on GuestDashboard
-
 - [ ] Fix https://app.spevents.live/host/event/EVENT_ID/gallery page to match aesthetics
 - [ ] Fix https://app.spevents.live/host/events/EVENT_ID/ routing to Event Library, before galler?
 - [ ] Fix https://app.spevents.live/host/events/EVENT_ID/ routing to Event Library

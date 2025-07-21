@@ -8,7 +8,7 @@ import { EventQRCode } from "./EventQRCode";
 import { LibraryPage } from "./LibraryPage";
 import { CommunityPage } from "./CommunityPage";
 import { PhotosPage } from "./PhotosPage";
-import { GuestPage } from "./GuestPage";
+import { MetricsPage } from "./MetricsPage";
 import { CreateEventSimplePage } from "./CreateEventPageSimple";
 import { CreateEventPage } from "./CreateEventPage";
 import { EventBuilderPage } from "./EventBuilderPage";
@@ -32,7 +32,7 @@ export const HostRoutes = () => {
         <Route path="library" element={<LibraryPage />} />
         <Route path="community" element={<CommunityPage />} />
         <Route path="photos" element={<PhotosPage />} />
-        <Route path="guest" element={<GuestPage />} />
+        <Route path="guest" element={<MetricsPage />} />
 
         {/* Event-specific routes */}
         <Route path="event/:eventId/gallery" element={<EventGallery />} />
