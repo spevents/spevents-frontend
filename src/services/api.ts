@@ -274,16 +274,28 @@ export async function listAllEventPhotos(
   }
 }
 
+// ===============================
+// UPDATED DELETE FUNCTION
+// ===============================
+
 export async function deleteMultipleFiles(
   eventId: string,
   fileNames: string[],
   guestId?: string,
 ): Promise<void> {
   try {
-    await makeAuthenticatedRequest("/api/photos/delete", {
+    console.log(`🗑️ Deleting ${fileNames.length} photos for event ${eventId}`);
+
+    // Use the event-specific endpoint for deleting photos
+    await makeAuthenticatedRequest(`/api/photos/${eventId}`, {
       method: "DELETE",
-      body: JSON.stringify({ eventId, fileNames, guestId }),
+      body: JSON.stringify({
+        fileNames,
+        guestId,
+      }),
     });
+
+    console.log(`✅ Successfully deleted ${fileNames.length} photos`);
   } catch (error) {
     console.error("Delete files error:", error);
     throw error;
@@ -413,12 +425,10 @@ export const photoService = {
   },
 
   async deletePhoto(eventId: string, photoKey: string): Promise<void> {
-    await makeAuthenticatedRequest(
-      `/api/photos?eventId=${eventId}&photoKey=${photoKey}`,
-      {
-        method: "DELETE",
-      },
-    );
+    await makeAuthenticatedRequest(`/api/photos/${eventId}`, {
+      method: "DELETE",
+      body: JSON.stringify({ fileNames: [photoKey] }),
+    });
   },
 };
 
