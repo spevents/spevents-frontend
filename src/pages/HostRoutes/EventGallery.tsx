@@ -25,7 +25,7 @@ import { useEvent } from "@/contexts/EventContext";
 import {
   listAllEventPhotos,
   getEventPhotoUrl,
-  deleteMultipleFiles,
+  photoService,
   EventPhoto,
 } from "@/services/api";
 
@@ -445,21 +445,9 @@ export function EventGallery() {
         selectedPhotos.has(p.fileName),
       );
 
-      const guestPhotos = selectedPhotoObjects.filter(
-        (p) => p.isGuestPhoto && p.guestId,
-      );
-
-      for (const photo of guestPhotos) {
-        await deleteMultipleFiles(eventId, [photo.fileName], photo.guestId);
-      }
-
-      const eventPhotos = selectedPhotoObjects.filter((p) => !p.isGuestPhoto);
-      if (eventPhotos.length > 0) {
-        await deleteMultipleFiles(
-          eventId,
-          eventPhotos.map((p) => p.fileName),
-        );
-      }
+      // Use photoService.deletePhotos with fullKeys
+      const photoKeys = selectedPhotoObjects.map((p) => p.fullKey);
+      await photoService.deletePhotos(eventId, photoKeys);
 
       await loadPhotosFromStorage();
       setSelectedPhotos(new Set());

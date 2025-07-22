@@ -424,10 +424,13 @@ export const photoService = {
     return response.json();
   },
 
-  async deletePhoto(eventId: string, photoKey: string): Promise<void> {
+  async deletePhotos(eventId: string, photoKeys: string[]): Promise<void> {
+    console.log(`🗑️ Deleting ${photoKeys.length} photos for event: ${eventId}`);
+    console.log("🔑 Photo keys being sent:", photoKeys); // ADD THIS LINE
+
     await makeAuthenticatedRequest(`/api/photos/${eventId}`, {
       method: "DELETE",
-      body: JSON.stringify({ fileNames: [photoKey] }),
+      body: JSON.stringify({ fullKeys: photoKeys }),
     });
   },
 };
