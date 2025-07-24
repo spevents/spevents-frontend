@@ -1,3 +1,5 @@
+"use client";
+
 // File: src/pages/HostRoutes/EventGallery.tsx
 import { useState, useEffect } from "react";
 import { useParams, Navigate, useNavigate } from "react-router-dom";
@@ -13,7 +15,6 @@ import {
   Users,
   ImageIcon,
   Share,
-  Heart,
   Grid3X3,
   Grid2X2,
   X,
@@ -26,7 +27,7 @@ import {
   listAllEventPhotos,
   getEventPhotoUrl,
   photoService,
-  EventPhoto,
+  type EventPhoto,
 } from "@/services/api";
 
 interface DisplayPhoto {
@@ -36,7 +37,6 @@ interface DisplayPhoto {
   fullKey: string;
   isGuestPhoto: boolean;
   guestId?: string;
-  likes?: number;
 }
 
 export function EventGallery() {
@@ -51,6 +51,53 @@ export function EventGallery() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [gridSize, setGridSize] = useState<"large" | "small">("large");
   const [selectedPhoto, setSelectedPhoto] = useState<DisplayPhoto | null>(null);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState<number>(0);
+
+  // Navigation functions for modal
+  const navigateToPhoto = (index: number) => {
+    if (index >= 0 && index < photos.length) {
+      setCurrentPhotoIndex(index);
+      setSelectedPhoto(photos[index]);
+    }
+  };
+
+  const navigateNext = () => {
+    const nextIndex = (currentPhotoIndex + 1) % photos.length;
+    navigateToPhoto(nextIndex);
+  };
+
+  const navigatePrevious = () => {
+    const prevIndex =
+      currentPhotoIndex === 0 ? photos.length - 1 : currentPhotoIndex - 1;
+    navigateToPhoto(prevIndex);
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (!selectedPhoto) return;
+
+      switch (e.key) {
+        case "ArrowLeft":
+          e.preventDefault();
+          navigatePrevious();
+          break;
+        case "ArrowRight":
+          e.preventDefault();
+          navigateNext();
+          break;
+        case "Escape":
+          e.preventDefault();
+          setSelectedPhoto(null);
+          break;
+      }
+    };
+
+    if (selectedPhoto) {
+      document.addEventListener("keydown", handleKeyPress);
+      return () => document.removeEventListener("keydown", handleKeyPress);
+    }
+  }, [selectedPhoto, currentPhotoIndex, photos.length]);
 
   // Force select the event from URL parameter immediately
   useEffect(() => {
@@ -79,7 +126,6 @@ export function EventGallery() {
         fullKey: photo.fullKey,
         isGuestPhoto: photo.isGuestPhoto,
         guestId: photo.guestId,
-        likes: Math.floor(Math.random() * 30) + 1, // Mock likes
       }));
 
       // Sort by creation time (most recent first)
@@ -364,6 +410,8 @@ export function EventGallery() {
     if (isSelectionMode) {
       togglePhotoSelection(photo.fileName);
     } else {
+      const photoIndex = photos.findIndex((p) => p.fileName === photo.fileName);
+      setCurrentPhotoIndex(photoIndex);
       setSelectedPhoto(photo);
     }
   };
@@ -476,26 +524,26 @@ export function EventGallery() {
   const guestPhotos = photos.filter((p) => p.isGuestPhoto).length;
 
   return (
-    <div className="min-h-screen bg-sp-eggshell">
+    <div className="min-h-screen bg-sp_eggshell">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="sticky top-0 z-40 bg-sp-eggshell/90 backdrop-blur-md border-b border-sp-lightgreen/30"
+        className="sticky top-0 z-40 bg-sp_eggshell/95 backdrop-blur-md border-b border-sp_lightgreen/30"
       >
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-4">
             <button
-              className="p-2 rounded-full hover:bg-sp-lightgreen/20 text-sp-darkgreen transition-colors"
+              className="p-2 rounded-full hover:bg-sp_lightgreen/20 text-sp_darkgreen transition-colors"
               onClick={() => navigate("/host")}
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-2xl font-semibold text-sp-darkgreen">
+              <h1 className="text-2xl font-semibold text-sp_darkgreen">
                 {currentEvent?.name || "Event Gallery"}
               </h1>
-              <div className="flex items-center gap-4 text-sm text-sp-green">
+              <div className="flex items-center gap-4 text-sm text-sp_green">
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
                   {currentEvent?.timestamp
@@ -514,73 +562,99 @@ export function EventGallery() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => navigate(`/host/event/${eventId}/qr`)}
-              className="p-2 rounded-full hover:bg-sp-lightgreen/20 text-sp-darkgreen transition-colors"
-            >
-              <QrCode className="w-5 h-5" />
-            </button>
+          <div className="flex items-center gap-3">
+            {/* View Actions Group */}
+            <div className="flex items-center gap-1 p-1 bg-sp_lightgreen/10 rounded-lg border border-sp_lightgreen/20">
+              <button
+                onClick={() => navigate(`/host/event/${eventId}/qr`)}
+                className="p-2 rounded-md hover:bg-sp_lightgreen/30 text-sp_darkgreen transition-colors"
+                title="Show QR Code"
+              >
+                <QrCode className="w-4 h-4" />
+              </button>
 
+              {photos.length > 0 && (
+                <>
+                  <button
+                    onClick={() => navigate(`/host/event/${eventId}/slideshow`)}
+                    className="p-2 rounded-md hover:bg-sp_lightgreen/30 text-sp_darkgreen transition-colors"
+                    title="View Slideshow"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                      <line x1="8" y1="21" x2="16" y2="21" />
+                      <line x1="12" y1="17" x2="12" y2="21" />
+                    </svg>
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      setGridSize(gridSize === "large" ? "small" : "large")
+                    }
+                    className="p-2 rounded-md hover:bg-sp_lightgreen/30 text-sp_darkgreen transition-colors"
+                    title={`Switch to ${
+                      gridSize === "large" ? "small" : "large"
+                    } grid`}
+                  >
+                    {gridSize === "large" ? (
+                      <Grid2X2 className="w-4 h-4" />
+                    ) : (
+                      <Grid3X3 className="w-4 h-4" />
+                    )}
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Primary Actions Group */}
             {photos.length > 0 && (
-              <>
-                <button
-                  onClick={() => navigate(`/host/event/${eventId}/slideshow`)}
-                  className="px-4 py-2 bg-sp-lightgreen/20 rounded-full text-sp-darkgreen hover:bg-sp-lightgreen/40 transition-colors"
-                >
-                  View Slideshow
-                </button>
-
+              <div className="flex items-center gap-2">
                 <button
                   onClick={handleDownloadAll}
                   disabled={isDownloading}
-                  className="flex items-center gap-2 px-4 py-2 bg-sp-green text-white rounded-full hover:bg-sp-darkgreen transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 bg-sp_green text-sp_eggshell rounded-lg hover:bg-sp_darkgreen transition-colors disabled:opacity-50 font-medium"
                 >
                   {isDownloading ? (
                     <RefreshCw className="w-4 h-4 animate-spin" />
                   ) : (
                     <Download className="w-4 h-4" />
                   )}
-                  Download All
+                  <span className="hidden sm:inline">Download All</span>
                 </button>
 
                 <button
-                  onClick={() =>
-                    setGridSize(gridSize === "large" ? "small" : "large")
-                  }
-                  className="p-2 rounded-full hover:bg-sp-lightgreen/20 text-sp-darkgreen transition-colors"
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    isSelectionMode
+                      ? "bg-sp_green hover:bg-sp_darkgreen text-sp_eggshell"
+                      : "border border-sp_green text-sp_green hover:bg-sp_green hover:text-sp_eggshell"
+                  }`}
+                  onClick={() => {
+                    setIsSelectionMode(!isSelectionMode);
+                    if (isSelectionMode) {
+                      setSelectedPhotos(new Set());
+                    }
+                  }}
                 >
-                  {gridSize === "large" ? (
-                    <Grid2X2 className="w-5 h-5" />
-                  ) : (
-                    <Grid3X3 className="w-5 h-5" />
-                  )}
+                  {isSelectionMode ? "Done" : "Select"}
                 </button>
-              </>
+              </div>
             )}
 
-            <button
-              className={`px-4 py-2 rounded-full transition-colors ${
-                isSelectionMode
-                  ? "bg-sp-green hover:bg-sp-darkgreen text-white"
-                  : "border border-sp-green text-sp-green hover:bg-sp-green hover:text-white"
-              }`}
-              onClick={() => {
-                setIsSelectionMode(!isSelectionMode);
-                if (isSelectionMode) {
-                  setSelectedPhotos(new Set());
-                }
-              }}
-            >
-              {isSelectionMode ? "Done" : "Select"}
-            </button>
-
-            <button
-              onClick={loadPhotosFromStorage}
-              className="p-2 rounded-full hover:bg-sp-lightgreen/20 text-sp-darkgreen transition-colors"
-            >
-              <RefreshCw className="w-5 h-5" />
-            </button>
+            {/* Utility Actions */}
+            <div className="flex items-center">
+              <button
+                onClick={loadPhotosFromStorage}
+                className="p-2 rounded-lg hover:bg-sp_lightgreen/20 text-sp_darkgreen transition-colors"
+                title="Refresh photos"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -591,16 +665,16 @@ export function EventGallery() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="border-t border-sp-lightgreen/30 bg-sp-lightgreen/20"
+              className="border-t border-sp_lightgreen/30 bg-sp_lightgreen/20"
             >
               <div className="flex items-center justify-between p-4">
                 <div className="flex items-center gap-4">
-                  <span className="text-sm font-medium text-sp-darkgreen">
+                  <span className="text-sm font-medium text-sp_darkgreen">
                     {selectedPhotos.size} of {photos.length} selected
                   </span>
                   <button
                     onClick={handleSelectAll}
-                    className="text-sm text-sp-green hover:text-sp-darkgreen transition-colors"
+                    className="text-sm text-sp_green hover:text-sp_darkgreen transition-colors"
                   >
                     {selectedPhotos.size === photos.length
                       ? "Deselect All"
@@ -610,7 +684,7 @@ export function EventGallery() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleShareSelected}
-                    className="flex items-center gap-2 px-3 py-2 border border-sp-green text-sp-green hover:bg-sp-green hover:text-white rounded-lg transition-colors"
+                    className="flex items-center gap-2 px-3 py-2 border border-sp_green text-sp_green hover:bg-sp_green hover:text-sp_eggshell rounded-lg transition-colors"
                   >
                     <Share className="w-4 h-4" />
                     Share
@@ -618,7 +692,7 @@ export function EventGallery() {
                   <button
                     onClick={handleDownloadSelected}
                     disabled={isDownloading}
-                    className="flex items-center gap-2 px-3 py-2 border border-sp-midgreen text-sp-midgreen hover:bg-sp-midgreen hover:text-white rounded-lg transition-colors disabled:opacity-50"
+                    className="flex items-center gap-2 px-3 py-2 border border-sp_midgreen text-sp_midgreen hover:bg-sp_midgreen hover:text-sp_eggshell rounded-lg transition-colors disabled:opacity-50"
                   >
                     <Download className="w-4 h-4" />
                     Download
@@ -642,14 +716,14 @@ export function EventGallery() {
       <div className="p-4 pb-20">
         {isLoading ? (
           <div className="flex items-center justify-center h-[60vh]">
-            <RefreshCw className="w-8 h-8 text-sp-darkgreen animate-spin" />
+            <RefreshCw className="w-8 h-8 text-sp_darkgreen animate-spin" />
           </div>
         ) : photos.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-            <p className="text-sp-green mb-4">No photos uploaded yet</p>
+            <p className="text-sp_green mb-4">No photos uploaded yet</p>
             <button
               onClick={() => navigate(`/host/event/${eventId}/qr`)}
-              className="px-4 py-2 bg-sp-green text-white rounded-lg hover:bg-sp-darkgreen transition-colors"
+              className="px-4 py-2 bg-sp_green text-sp_eggshell rounded-lg hover:bg-sp_darkgreen transition-colors"
             >
               Show QR Code to Get Started
             </button>
@@ -663,7 +737,7 @@ export function EventGallery() {
               className="mb-8"
             >
               <div className="flex items-center gap-2 mb-4">
-                <h2 className="text-lg font-medium text-sp-darkgreen">
+                <h2 className="text-lg font-medium text-sp_darkgreen">
                   {new Date(date).toLocaleDateString("en-US", {
                     weekday: "long",
                     year: "numeric",
@@ -671,7 +745,7 @@ export function EventGallery() {
                     day: "numeric",
                   })}
                 </h2>
-                <span className="text-xs px-2 py-1 bg-sp-lightgreen text-sp-darkgreen rounded-full">
+                <span className="text-xs px-2 py-1 bg-sp_lightgreen/30 text-sp_darkgreen rounded-full">
                   {datePhotos.length} photos
                 </span>
               </div>
@@ -683,11 +757,11 @@ export function EventGallery() {
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: index * 0.05 }}
-                    className="relative aspect-square group cursor-pointer overflow-hidden rounded-lg border border-sp-lightgreen/20"
+                    className="relative aspect-square group cursor-pointer overflow-hidden rounded-lg border border-sp_lightgreen/30 bg-white"
                     onClick={() => handlePhotoClick(photo)}
                   >
                     <img
-                      src={photo.url}
+                      src={photo.url || "/placeholder.svg"}
                       alt={photo.fileName}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       loading="lazy"
@@ -698,16 +772,16 @@ export function EventGallery() {
                       <div
                         className={`absolute inset-0 transition-all duration-200 ${
                           selectedPhotos.has(photo.fileName)
-                            ? "bg-sp-green/40 border-2 border-sp-green"
-                            : "bg-black/0 hover:bg-sp-darkgreen/10"
+                            ? "bg-sp_green/40 border-2 border-sp_green"
+                            : "bg-black/0 hover:bg-sp_darkgreen/10"
                         }`}
                       >
                         <div className="absolute top-2 right-2">
                           <div
                             className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
                               selectedPhotos.has(photo.fileName)
-                                ? "bg-sp-green border-sp-green"
-                                : "bg-sp-eggshell/90 border-sp-lightgreen"
+                                ? "bg-sp_green border-sp_green"
+                                : "bg-sp_eggshell/90 border-sp_lightgreen"
                             }`}
                           >
                             {selectedPhotos.has(photo.fileName) && (
@@ -720,14 +794,10 @@ export function EventGallery() {
 
                     {/* Photo Info Overlay */}
                     {!isSelectionMode && (
-                      <div className="absolute inset-0 bg-gradient-to-t from-sp-darkgreen/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
-                          <div className="flex items-center gap-1 text-sp-eggshell text-xs">
-                            <Heart className="w-3 h-3" />
-                            {photo.likes}
-                          </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-sp_darkgreen/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="absolute bottom-2 right-2">
                           {photo.isGuestPhoto && (
-                            <span className="text-xs px-2 py-1 bg-sp-midgreen text-white rounded-full">
+                            <span className="text-xs px-2 py-1 bg-sp_midgreen/90 text-sp_eggshell rounded-full">
                               Guest
                             </span>
                           )}
@@ -749,79 +819,170 @@ export function EventGallery() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-sp-darkgreen/95 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center"
             onClick={() => setSelectedPhoto(null)}
           >
+            {/* Navigation Arrow - Left */}
+            {photos.length > 1 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigatePrevious();
+                }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-black/50 text-white hover:bg-black/70 transition-all duration-200 backdrop-blur-sm group"
+              >
+                <svg
+                  className="w-6 h-6 transition-transform group-hover:-translate-x-0.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+              </button>
+            )}
+
+            {/* Navigation Arrow - Right */}
+            {photos.length > 1 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateNext();
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-black/50 text-white hover:bg-black/70 transition-all duration-200 backdrop-blur-sm group"
+              >
+                <svg
+                  className="w-6 h-6 transition-transform group-hover:translate-x-0.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </button>
+            )}
+
+            {/* Close Button */}
+            <button
+              className="absolute top-6 right-6 z-10 p-3 rounded-full bg-black/50 text-white hover:bg-black/70 transition-all duration-200 backdrop-blur-sm group"
+              onClick={() => setSelectedPhoto(null)}
+            >
+              <X className="w-6 h-6 transition-transform group-hover:scale-110" />
+            </button>
+
+            {/* Photo Counter */}
+            {photos.length > 1 && (
+              <div className="absolute top-6 left-6 z-10 px-3 py-2 bg-black/50 text-white text-sm rounded-full backdrop-blur-sm">
+                {currentPhotoIndex + 1} of {photos.length}
+              </div>
+            )}
+
+            {/* Main Photo Container */}
             <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
+              key={selectedPhoto.fileName}
+              initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              className="relative max-w-4xl max-h-full"
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="relative max-w-[90vw] max-h-[90vh] flex flex-col items-center"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Close Button */}
-              <button
-                className="absolute top-4 right-4 z-10 p-2 rounded-full bg-sp-darkgreen/70 text-sp-eggshell hover:bg-sp-darkgreen/90 transition-colors"
-                onClick={() => setSelectedPhoto(null)}
-              >
-                <X className="w-6 h-6" />
-              </button>
-
               {/* Photo */}
-              <img
-                src={selectedPhoto.url}
-                alt={selectedPhoto.fileName}
-                className="max-w-full max-h-[80vh] object-contain rounded-lg border border-sp-lightgreen/20"
-              />
+              <div className="relative bg-white rounded-lg shadow-2xl overflow-hidden">
+                <img
+                  src={selectedPhoto.url || "/placeholder.svg"}
+                  alt={selectedPhoto.fileName}
+                  className="max-w-[85vw] max-h-[75vh] object-contain"
+                  style={{ minHeight: "200px" }}
+                />
+              </div>
 
-              {/* Photo Info */}
-              <div className="absolute bottom-4 left-4 right-4 bg-sp-darkgreen/80 rounded-lg p-4 text-sp-eggshell border border-sp-lightgreen/20">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-medium">{selectedPhoto.fileName}</h3>
-                  <div className="flex items-center gap-2">
+              {/* Photo Metadata */}
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.1 }}
+                className="mt-4 bg-sp_darkgreen/95 backdrop-blur-md rounded-lg p-4 text-sp_eggshell border border-sp_lightgreen/20 max-w-full min-w-[300px]"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-sp_eggshell text-lg truncate mb-1">
+                      {selectedPhoto.fileName}
+                    </h3>
+                    <p className="text-sm text-sp_lightgreen">
+                      {new Date(selectedPhoto.created_at).toLocaleDateString(
+                        "en-US",
+                        {
+                          weekday: "long",
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        },
+                      )}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 ml-4">
                     {selectedPhoto.isGuestPhoto && (
-                      <span className="px-2 py-1 bg-sp-midgreen text-white rounded-full text-xs">
+                      <span className="px-3 py-1 bg-sp_midgreen text-sp_eggshell rounded-full text-xs font-medium">
                         Guest Photo
                       </span>
                     )}
-                    <div className="flex items-center gap-1">
-                      <Heart className="w-4 h-4" />
-                      {selectedPhoto.likes}
-                    </div>
                   </div>
                 </div>
-                <p className="text-sm text-sp-lightgreen">
-                  {new Date(selectedPhoto.created_at).toLocaleString()}
-                </p>
-              </div>
 
-              {/* Action Buttons */}
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
-                <button
-                  onClick={() => handleDownloadSinglePhoto(selectedPhoto)}
-                  className="flex items-center gap-2 px-4 py-2 bg-sp-green hover:bg-sp-midgreen text-white rounded-lg transition-colors"
+                {/* Action Buttons */}
+                <div className="flex items-center justify-center gap-3 pt-2 border-t border-sp_lightgreen/20">
+                  <button
+                    onClick={() => handleDownloadSinglePhoto(selectedPhoto)}
+                    className="flex items-center gap-2 px-4 py-2 bg-sp_green hover:bg-sp_midgreen text-sp_eggshell rounded-lg transition-colors font-medium"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download
+                  </button>
+                  <button
+                    onClick={() =>
+                      console.log("Share photo:", selectedPhoto.fileName)
+                    }
+                    className="flex items-center gap-2 px-4 py-2 bg-sp_lightgreen/20 hover:bg-sp_lightgreen/30 text-sp_eggshell rounded-lg transition-colors"
+                  >
+                    <Share className="w-4 h-4" />
+                    Share
+                  </button>
+                  <button
+                    onClick={() =>
+                      console.log("More options:", selectedPhoto.fileName)
+                    }
+                    className="p-2 text-sp_eggshell hover:bg-sp_lightgreen/20 rounded-lg transition-colors"
+                    title="More options"
+                  >
+                    <MoreHorizontal className="w-4 h-4" />
+                  </button>
+                </div>
+              </motion.div>
+
+              {/* Keyboard Hints */}
+              {photos.length > 1 && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="mt-3 text-white/60 text-xs text-center"
                 >
-                  <Download className="w-4 h-4" />
-                  Download
-                </button>
-                <button
-                  onClick={() =>
-                    console.log("Share photo:", selectedPhoto.fileName)
-                  }
-                  className="flex items-center gap-2 px-4 py-2 bg-sp-lightgreen hover:bg-sp-midgreen text-sp-darkgreen hover:text-white rounded-lg transition-colors"
-                >
-                  <Share className="w-4 h-4" />
-                  Share
-                </button>
-                <button
-                  onClick={() =>
-                    console.log("More options:", selectedPhoto.fileName)
-                  }
-                  className="p-2 text-sp-eggshell hover:bg-sp-lightgreen/20 rounded-lg transition-colors"
-                >
-                  <MoreHorizontal className="w-4 h-4" />
-                </button>
-              </div>
+                  Use ← → arrow keys to navigate • ESC to close
+                </motion.div>
+              )}
             </motion.div>
           </motion.div>
         )}

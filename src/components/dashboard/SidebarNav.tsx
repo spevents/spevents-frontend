@@ -7,7 +7,7 @@ import {
   Folder,
   Globe,
   Images,
-  Users,
+  TrendingUp,
   Plus,
   ChevronDown,
   Sun,
@@ -228,7 +228,7 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
       {
         id: "guests",
         label: "Guests",
-        icon: Users,
+        icon: TrendingUp,
         color: "text-sp_lightgreen",
         hoverColor: "hover:text-sp_darkgreen",
       },
