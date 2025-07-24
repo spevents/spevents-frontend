@@ -176,15 +176,16 @@ export function EventGallery() {
       const apiUrl =
         import.meta.env.VITE_API_URL || "https://spevents-backend.vercel.app";
 
-      console.log(`🔗 Downloading via API: ${apiUrl}/api/photos/download`);
+      console.log(`🔗 Downloading via API: ${apiUrl}/api/photos`);
 
-      const response = await fetch(`${apiUrl}/api/photos/download`, {
+      const response = await fetch(`${apiUrl}/api/photos`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
+          action: "download",
           eventId,
           fileName: photo.fileName,
           guestId: photo.guestId,
