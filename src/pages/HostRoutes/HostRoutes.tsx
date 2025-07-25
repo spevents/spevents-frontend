@@ -12,6 +12,8 @@ import { MetricsPage } from "./MetricsPage";
 import { CreateEventSimplePage } from "./CreateEventPageSimple";
 import { CreateEventPage } from "./CreateEventPage";
 import { EventBuilderPage } from "./EventBuilderPage";
+import ProfilePage from "../../pages/ProfilePage";
+import SubscriptionPage from "../../pages/SubscriptionPage";
 
 export const HostRoutes = () => {
   return (
@@ -33,6 +35,10 @@ export const HostRoutes = () => {
         <Route path="community" element={<CommunityPage />} />
         <Route path="photos" element={<PhotosPage />} />
         <Route path="guest" element={<MetricsPage />} />
+
+        {/* Account management routes */}
+        <Route path="profile" element={<ProfilePage />} />
+        <Route path="subscription" element={<SubscriptionPage />} />
 
         {/* Event-specific routes */}
         <Route path="event/:eventId/gallery" element={<EventGallery />} />

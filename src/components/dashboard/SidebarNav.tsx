@@ -1,6 +1,6 @@
 // src/components/dashboard/SidebarNav.tsx
 import { forwardRef, useState, useEffect, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, NavLink } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Home,
@@ -611,14 +611,22 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
                         </div>
 
                         <div className="p-2">
-                          <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_darkgreen dark:text-sp_eggshell hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg transition-colors duration-200">
+                          <NavLink
+                            to="/host/profile"
+                            onClick={() => setShowProfileMenu(false)}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sp_darkgreen dark:text-sp_eggshell hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg transition-colors duration-200"
+                          >
                             <UserIcon className="w-4 h-4" />
                             Profile Settings
-                          </button>
-                          <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_darkgreen dark:text-sp_eggshell hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg transition-colors duration-200">
+                          </NavLink>
+                          <NavLink
+                            to="/host/subscription"
+                            onClick={() => setShowProfileMenu(false)}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sp_darkgreen dark:text-sp_eggshell hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg transition-colors duration-200"
+                          >
                             <CreditCard className="w-4 h-4" />
                             Subscription
-                          </button>
+                          </NavLink>
                           <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_darkgreen dark:text-sp_eggshell hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg transition-colors duration-200">
                             <Bell className="w-4 h-4" />
                             Notifications
