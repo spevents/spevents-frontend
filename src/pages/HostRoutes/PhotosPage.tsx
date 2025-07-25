@@ -6,17 +6,15 @@ import { Menu, Images } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { useAuth } from "@/components/auth/AuthProvider";
-import { useEvent } from "@/contexts/EventContext";
 import { useSidebar } from "@/hooks/useSideBar";
 
 import SidebarNav from "@/components/dashboard/SidebarNav";
-import CreateEventModal from "@/components/dashboard/CreateEventModal";
+import { useNavigate } from "react-router-dom";
 
 export function PhotosPage() {
   const { user } = useAuth();
-  const { createEvent, selectEvent } = useEvent();
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const navigate = useNavigate();
 
   const sidebarRef = useRef<HTMLDivElement>(null);
 
@@ -35,20 +33,8 @@ export function PhotosPage() {
     return () => window.removeEventListener("resize", checkMobile);
   }, [sidebar]);
 
-  const handleCreateEvent = async (data: {
-    name: string;
-    description?: string;
-  }) => {
-    try {
-      const newEvent = await createEvent({
-        name: data.name,
-        description: data.description || "",
-      });
-      setShowCreateModal(false);
-      selectEvent(newEvent.id);
-    } catch (error) {
-      console.error("Failed to create event:", error);
-    }
+  const handleCreateEvent = () => {
+    navigate("/host/create");
   };
 
   if (!user) {
@@ -76,10 +62,7 @@ export function PhotosPage() {
         </button>
       )}
 
-      <SidebarNav
-        ref={sidebarRef}
-        onCreateEvent={() => setShowCreateModal(true)}
-      />
+      <SidebarNav ref={sidebarRef} onCreateEvent={handleCreateEvent} />
 
       <div className="flex-1 overflow-hidden">
         <main className="h-full overflow-y-auto">
@@ -112,12 +95,6 @@ export function PhotosPage() {
           </div>
         </main>
       </div>
-
-      <CreateEventModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onSubmit={handleCreateEvent}
-      />
     </div>
   );
 }

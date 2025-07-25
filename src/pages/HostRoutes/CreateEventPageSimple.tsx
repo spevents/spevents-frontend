@@ -165,7 +165,7 @@ export function CreateEventSimplePage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <button
-              onClick={() => navigate("/host")}
+              onClick={() => navigate(-1)}
               className="flex items-center gap-2 text-sp_green dark:text-sp_dark_text hover:text-sp_midgreen dark:hover:text-sp_lightgreen transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
