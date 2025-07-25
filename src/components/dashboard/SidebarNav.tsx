@@ -13,7 +13,6 @@ import {
   Sun,
   Moon,
   UserIcon,
-  Bell,
   CreditCard,
   LogOut,
   PanelLeft,
@@ -201,14 +200,14 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
         id: "home",
         label: "Dashboard",
         icon: Home,
-        color: "text-red",
-        hoverColor: "hover:text-sp_lightgreen",
+        color: "text-sp_green",
+        hoverColor: "hover:text-sp_darkgreen",
       },
       {
         id: "library",
         label: "Event Library",
         icon: Folder,
-        color: "text-sp_lightgreen",
+        color: "text-sp_darkgreen",
         hoverColor: "hover:text-sp_green",
       },
       {
@@ -229,7 +228,7 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
         id: "guests",
         label: "Guests",
         icon: TrendingUp,
-        color: "text-sp_lightgreen",
+        color: "text-sp_darkgreen",
         hoverColor: "hover:text-sp_darkgreen",
       },
     ];
@@ -400,7 +399,7 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
                             <item.icon
                               className={`transition-all duration-300 ${
                                 currentActiveTab === item.id
-                                  ? "text-sp_eggshell"
+                                  ? "text-sp_green"
                                   : `${item.color} dark:text-sp_eggshell group-hover:${item.hoverColor}`
                               } ${isIconMode ? "w-6 h-6" : "w-4 h-4"}`}
                             />
@@ -627,10 +626,6 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
                             <CreditCard className="w-4 h-4" />
                             Subscription
                           </NavLink>
-                          <button className="w-full flex items-center gap-2 px-3 py-2 text-sp_darkgreen dark:text-sp_eggshell hover:bg-sp_eggshell/10 dark:hover:bg-sp_lightgreen/10 rounded-lg transition-colors duration-200">
-                            <Bell className="w-4 h-4" />
-                            Notifications
-                          </button>
                           <hr className="my-1 border-sp_eggshell/30 dark:border-sp_lightgreen/20" />
                           <button
                             onClick={handleSignOut}

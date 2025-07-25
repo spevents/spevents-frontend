@@ -2,14 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import {
-  Crown,
-  Calendar,
-  Camera,
+  ArrowLeft,
   Check,
-  Star,
-  CreditCard,
-  AlertTriangle,
+  Users,
+  Shield,
+  Mail,
+  Zap,
+  Crown,
 } from "lucide-react";
 import { useAuth } from "../components/auth/AuthProvider";
 import { eventService } from "@/eventService";
@@ -17,8 +18,12 @@ import { eventService } from "@/eventService";
 interface PlanLimits {
   eventsLimit: number;
   photosPerEventLimit: number;
+  storageLimit: string;
   price: number;
+  billing: string;
   features: string[];
+  buttonText: string;
+  buttonAction: "upgrade" | "contact" | "current";
 }
 
 interface UsageStats {
@@ -28,54 +33,72 @@ interface UsageStats {
 
 const PRICING_TIERS: Record<string, PlanLimits> = {
   free: {
-    eventsLimit: 3,
-    photosPerEventLimit: 100,
+    eventsLimit: 2,
+    photosPerEventLimit: 50,
+    storageLimit: "500MB",
     price: 0,
+    billing: "Always free",
     features: [
-      "Up to 3 events per month",
-      "100 photos per event",
-      "Basic display modes",
+      "2 events per month",
+      "50 photos per event",
+      "500MB total storage",
       "QR code sharing",
-      "24/7 support",
+      "Basic display modes",
+      "Community support",
     ],
+    buttonText: "Get started",
+    buttonAction: "upgrade",
   },
   pro: {
-    eventsLimit: 25,
-    photosPerEventLimit: 1000,
-    price: 29,
+    eventsLimit: 15,
+    photosPerEventLimit: 500,
+    storageLimit: "5GB",
+    price: 6,
+    billing: "month billed annually",
     features: [
-      "Up to 25 events per month",
-      "1,000 photos per event",
-      "All display modes",
+      "15 events per month",
+      "500 photos per event",
+      "5GB total storage",
       "Custom branding",
-      "Advanced analytics",
-      "Priority support",
+      "All display modes",
+      "Analytics dashboard",
       "Photo collage tools",
+      "Priority support",
+      "Download originals",
     ],
+    buttonText: "Get Pro plan",
+    buttonAction: "upgrade",
   },
   enterprise: {
-    eventsLimit: -1, // unlimited
+    eventsLimit: -1,
     photosPerEventLimit: -1,
-    price: 99,
+    storageLimit: "Unlimited",
+    price: 0,
+    billing: "Custom pricing",
     features: [
-      "Unlimited events",
-      "Unlimited photos",
+      "Everything in Pro, plus:",
+      "Unlimited events & photos",
+      "Unlimited storage",
       "White-label solution",
-      "Custom integrations",
-      "Dedicated support",
-      "Advanced security",
-      "Team management",
+      "Single sign-on (SSO)",
+      "Team management & roles",
+      "Advanced analytics",
       "API access",
+      "Dedicated support",
+      "Custom integrations",
+      "SLA guarantee",
     ],
+    buttonText: "Contact sales",
+    buttonAction: "contact",
   },
 };
 
 export default function SubscriptionPage() {
   const { user } = useAuth();
-  const [currentPlan, setCurrentPlan] = useState<string>("free");
+  const navigate = useNavigate();
+  const [currentPlan, _setCurrentPlan] = useState<string>("free");
   const [usage, setUsage] = useState<UsageStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [upgrading, setUpgrading] = useState<string | null>(null);
 
   useEffect(() => {
     loadUsageData();
@@ -106,9 +129,6 @@ export default function SubscriptionPage() {
         eventsUsed: thisMonthEvents.length,
         currentMonthPhotos: totalPhotosThisMonth,
       });
-
-      // Get current plan from user data (would come from Firestore)
-      // setCurrentPlan(user.subscription?.tier || "free");
     } catch (error) {
       console.error("Failed to load usage data:", error);
     } finally {
@@ -116,34 +136,18 @@ export default function SubscriptionPage() {
     }
   };
 
-  const handleUpgrade = async (planId: string) => {
-    setUpgrading(planId);
-
-    try {
-      // Integrate with Stripe/payment processor here
-      // const session = await createCheckoutSession(planId);
-      // window.location.href = session.url;
-
-      // For demo purposes:
-      setTimeout(() => {
-        setCurrentPlan(planId);
-        setUpgrading(null);
-        // Show success message
-      }, 2000);
-    } catch (error) {
-      console.error("Failed to upgrade:", error);
-      setUpgrading(null);
+  const handlePlanAction = (planId: string, action: string) => {
+    if (action === "contact") {
+      window.location.href =
+        "mailto:sales@spevents.com?subject=Enterprise Plan Inquiry";
+    } else if (action === "upgrade") {
+      // Handle Stripe checkout or upgrade logic
+      console.log("Upgrading to:", planId);
     }
   };
 
-  const getUsagePercentage = (used: number, limit: number): number => {
-    if (limit === -1) return 0; // unlimited
-    return Math.min((used / limit) * 100, 100);
-  };
-
-  const isAtLimit = (used: number, limit: number): boolean => {
-    if (limit === -1) return false; // unlimited
-    return used >= limit;
+  const handleGoBack = () => {
+    navigate("/host");
   };
 
   if (loading) {
@@ -154,290 +158,190 @@ export default function SubscriptionPage() {
     );
   }
 
-  const currentPlanData = PRICING_TIERS[currentPlan];
-
   return (
-    <div className="min-h-screen bg-sp_eggshell dark:bg-sp_darkgreen">
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-sp_darkgreen dark:text-sp_eggshell mb-2">
-            Subscription & Billing
-          </h1>
-          <p className="text-sp_green dark:text-sp_eggshell/70">
-            Manage your spevents subscription and view usage statistics
-          </p>
-        </div>
-
-        {/* Current Plan & Usage */}
-        <div className="grid gap-6 lg:grid-cols-2 mb-8">
-          {/* Current Plan */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white dark:bg-sp_midgreen rounded-xl shadow-lg p-6"
+    <div className="h-screen bg-sp_eggshell dark:bg-sp_darkgreen overflow-hidden">
+      <div className="max-w-5xl mx-auto px-4 py-4 h-full flex flex-col">
+        {/* Header with Back Button */}
+        <div className="mb-4">
+          <button
+            onClick={handleGoBack}
+            className="flex items-center gap-2 text-sp_green hover:text-sp_green/80 mb-3 transition-colors"
           >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-sp_darkgreen dark:text-sp_eggshell">
-                Current Plan
-              </h2>
-              {currentPlan !== "free" && (
-                <Crown className="w-6 h-6 text-yellow-500" />
-              )}
-            </div>
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-sm">Back to Dashboard</span>
+          </button>
 
-            <div className="mb-6">
-              <div className="flex items-center gap-3 mb-2">
-                <h3 className="text-2xl font-bold text-sp_darkgreen dark:text-sp_eggshell capitalize">
-                  {currentPlan}
-                </h3>
-                {currentPlan !== "free" && (
-                  <span className="bg-sp_green text-white px-2 py-1 rounded-full text-sm">
-                    Active
-                  </span>
-                )}
-              </div>
-              <p className="text-3xl font-bold text-sp_green">
-                ${currentPlanData.price}
-                <span className="text-sm font-normal text-sp_green/70">
-                  {currentPlan === "free" ? "" : "/month"}
-                </span>
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              {currentPlanData.features.map((feature, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                  <span className="text-sm text-sp_darkgreen dark:text-sp_eggshell">
-                    {feature}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Usage Stats */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-white dark:bg-sp_midgreen rounded-xl shadow-lg p-6"
-          >
-            <h2 className="text-xl font-semibold text-sp_darkgreen dark:text-sp_eggshell mb-6">
-              Usage This Month
-            </h2>
-
-            <div className="space-y-6">
-              {/* Events Usage */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-sp_green" />
-                    <span className="text-sm font-medium text-sp_darkgreen dark:text-sp_eggshell">
-                      Events
-                    </span>
-                  </div>
-                  <span className="text-sm text-sp_darkgreen dark:text-sp_eggshell">
-                    {usage?.eventsUsed || 0} /{" "}
-                    {currentPlanData.eventsLimit === -1
-                      ? "∞"
-                      : currentPlanData.eventsLimit}
-                  </span>
-                </div>
-
-                <div className="w-full bg-sp_eggshell/50 dark:bg-sp_darkgreen/50 rounded-full h-2">
-                  <div
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      isAtLimit(
-                        usage?.eventsUsed || 0,
-                        currentPlanData.eventsLimit,
-                      )
-                        ? "bg-red-500"
-                        : "bg-sp_green"
-                    }`}
-                    style={{
-                      width: `${getUsagePercentage(
-                        usage?.eventsUsed || 0,
-                        currentPlanData.eventsLimit,
-                      )}%`,
-                    }}
-                  />
-                </div>
-
-                {isAtLimit(
-                  usage?.eventsUsed || 0,
-                  currentPlanData.eventsLimit,
-                ) && (
-                  <div className="flex items-center gap-2 mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                    <AlertTriangle className="w-4 h-4 text-red-500" />
-                    <span className="text-sm text-red-600 dark:text-red-400">
-                      You've reached your event limit
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Photos Usage */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Camera className="w-4 h-4 text-sp_green" />
-                    <span className="text-sm font-medium text-sp_darkgreen dark:text-sp_eggshell">
-                      Photos
-                    </span>
-                  </div>
-                  <span className="text-sm text-sp_darkgreen dark:text-sp_eggshell">
-                    {usage?.currentMonthPhotos || 0} total
-                  </span>
-                </div>
-
-                <p className="text-xs text-sp_green/70 dark:text-sp_eggshell/70">
-                  {currentPlanData.photosPerEventLimit === -1
-                    ? "Unlimited photos per event"
-                    : `Up to ${currentPlanData.photosPerEventLimit} photos per event`}
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Pricing Plans */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-white dark:bg-sp_midgreen rounded-xl shadow-lg p-6"
-        >
-          <h2 className="text-2xl font-bold text-sp_darkgreen dark:text-sp_eggshell mb-6 text-center">
-            Choose Your Plan
-          </h2>
-
-          <div className="grid gap-6 lg:grid-cols-3">
-            {Object.entries(PRICING_TIERS).map(([planId, plan]) => (
-              <div
-                key={planId}
-                className={`relative rounded-xl border-2 p-6 transition-all duration-200 ${
-                  currentPlan === planId
-                    ? "border-sp_green bg-sp_green/5 dark:bg-sp_green/10"
-                    : "border-sp_eggshell/30 dark:border-sp_lightgreen/20 hover:border-sp_green/50"
-                } ${
-                  planId === "pro" ? "ring-2 ring-sp_green ring-opacity-20" : ""
-                }`}
-              >
-                {planId === "pro" && (
-                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-sp_green text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
-                      <Star className="w-3 h-3" />
-                      Most Popular
-                    </span>
-                  </div>
-                )}
-
-                <div className="text-center mb-6">
-                  <h3 className="text-xl font-bold text-sp_darkgreen dark:text-sp_eggshell capitalize mb-2">
-                    {planId}
-                  </h3>
-                  <div className="text-3xl font-bold text-sp_green mb-1">
-                    ${plan.price}
-                    <span className="text-sm font-normal text-sp_green/70">
-                      {planId === "free" ? "" : "/month"}
-                    </span>
-                  </div>
-                  <p className="text-sm text-sp_green/70 dark:text-sp_eggshell/70">
-                    {planId === "free" && "Perfect for trying out spevents"}
-                    {planId === "pro" && "Great for regular event hosts"}
-                    {planId === "enterprise" &&
-                      "For professional event companies"}
-                  </p>
-                </div>
-
-                <ul className="space-y-3 mb-6">
-                  {plan.features.map((feature, index) => (
-                    <li key={index} className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-sp_darkgreen dark:text-sp_eggshell">
-                        {feature}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-
-                <button
-                  onClick={() => handleUpgrade(planId)}
-                  disabled={currentPlan === planId || upgrading === planId}
-                  className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
-                    currentPlan === planId
-                      ? "bg-gray-100 dark:bg-gray-700 text-gray-500 cursor-not-allowed"
-                      : planId === "pro"
-                        ? "bg-sp_green hover:bg-sp_green/90 text-white"
-                        : "border-2 border-sp_green text-sp_green hover:bg-sp_green hover:text-white"
-                  }`}
-                >
-                  {upgrading === planId ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
-                  ) : currentPlan === planId ? (
-                    "Current Plan"
-                  ) : planId === "free" ? (
-                    "Downgrade"
-                  ) : (
-                    <>
-                      <CreditCard className="w-4 h-4" />
-                      Upgrade to {planId}
-                    </>
-                  )}
-                </button>
-              </div>
-            ))}
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-sp_darkgreen dark:text-sp_eggshell mb-1">
+              Plans that grow with you
+            </h1>
+            <p className="text-sp_green dark:text-sp_eggshell/70 text-sm">
+              Choose the perfect plan for your event hosting needs
+            </p>
           </div>
-        </motion.div>
+        </div>
 
-        {/* Billing Info */}
-        {currentPlan !== "free" && (
+        {/* Current Usage Banner */}
+        {usage && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="mt-8 bg-white dark:bg-sp_midgreen rounded-xl shadow-lg p-6"
+            className="bg-white dark:bg-sp_midgreen rounded-lg shadow-sm p-3 mb-4"
           >
-            <h2 className="text-xl font-semibold text-sp_darkgreen dark:text-sp_eggshell mb-4">
-              Billing Information
-            </h2>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <p className="text-sm text-sp_green/70 dark:text-sp_eggshell/70">
-                  Next billing date
-                </p>
-                <p className="font-medium text-sp_darkgreen dark:text-sp_eggshell">
-                  {new Date(
-                    Date.now() + 30 * 24 * 60 * 60 * 1000,
-                  ).toLocaleDateString()}
-                </p>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-sp_darkgreen dark:text-sp_eggshell">
+                Current usage:
+              </span>
+              <div className="flex gap-4 text-xs">
+                <span className="text-sp_green/70 dark:text-sp_eggshell/70">
+                  Events: {usage.eventsUsed}/
+                  {PRICING_TIERS[currentPlan].eventsLimit === -1
+                    ? "∞"
+                    : PRICING_TIERS[currentPlan].eventsLimit}
+                </span>
+                <span className="text-sp_green/70 dark:text-sp_eggshell/70">
+                  Photos: {usage.currentMonthPhotos} total
+                </span>
               </div>
-              <div>
-                <p className="text-sm text-sp_green/70 dark:text-sp_eggshell/70">
-                  Payment method
-                </p>
-                <p className="font-medium text-sp_darkgreen dark:text-sp_eggshell">
-                  •••• •••• •••• 4242
-                </p>
-              </div>
-            </div>
-            <div className="mt-4 pt-4 border-t border-sp_eggshell/30 dark:border-sp_lightgreen/20">
-              <button className="text-sp_green hover:text-sp_green/80 text-sm">
-                Update payment method
-              </button>
-              <span className="mx-2 text-sp_eggshell/30">•</span>
-              <button className="text-sp_green hover:text-sp_green/80 text-sm">
-                Download invoices
-              </button>
-              <span className="mx-2 text-sp_eggshell/30">•</span>
-              <button className="text-red-600 hover:text-red-700 text-sm">
-                Cancel subscription
-              </button>
             </div>
           </motion.div>
         )}
+
+        {/* Pricing Plans */}
+        <div className="grid gap-3 lg:grid-cols-3 flex-1 mb-3">
+          {Object.entries(PRICING_TIERS).map(([planId, plan], index) => (
+            <motion.div
+              key={planId}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className={`relative bg-white dark:bg-sp_midgreen rounded-lg border-2 p-4 transition-all duration-200 ${
+                currentPlan === planId
+                  ? "border-sp_green shadow-md scale-102"
+                  : "border-sp_eggshell/30 dark:border-sp_lightgreen/20 hover:border-sp_green/50 shadow-sm"
+              } ${planId === "pro" ? "ring-1 ring-sp_green/20" : ""}`}
+            >
+              {planId === "pro" && (
+                <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
+                  <span className="bg-sp_green text-white px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1">
+                    <Zap className="w-2.5 h-2.5" />
+                    Popular
+                  </span>
+                </div>
+              )}
+
+              {currentPlan === planId && (
+                <div className="absolute top-3 right-3">
+                  <Crown className="w-4 h-4 text-sp_green" />
+                </div>
+              )}
+
+              {/* Plan Header */}
+              <div className="mb-3">
+                <div className="flex items-center gap-2 mb-1">
+                  {planId === "free" && (
+                    <Users className="w-4 h-4 text-sp_green" />
+                  )}
+                  {planId === "pro" && (
+                    <Zap className="w-4 h-4 text-sp_green" />
+                  )}
+                  {planId === "enterprise" && (
+                    <Shield className="w-4 h-4 text-sp_green" />
+                  )}
+                  <h3 className="text-lg font-bold text-sp_darkgreen dark:text-sp_eggshell capitalize">
+                    {planId}
+                  </h3>
+                </div>
+
+                <p className="text-xs text-sp_green/70 dark:text-sp_eggshell/70 mb-2">
+                  {planId === "free" && "Perfect for trying spevents"}
+                  {planId === "pro" && "For regular event hosts"}
+                  {planId === "enterprise" && "For businesses at scale"}
+                </p>
+
+                <div className="mb-3">
+                  {plan.price === 0 && planId === "free" ? (
+                    <div className="text-2xl font-bold text-sp_green">Free</div>
+                  ) : plan.price === 0 && planId === "enterprise" ? (
+                    <div className="text-xl font-bold text-sp_green">
+                      Custom
+                    </div>
+                  ) : (
+                    <div>
+                      <span className="text-2xl font-bold text-sp_green">
+                        ${plan.price}
+                      </span>
+                      <span className="text-xs text-sp_green/70 ml-1">
+                        / {plan.billing}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Features */}
+              <ul className="space-y-1.5 mb-4 text-xs">
+                {plan.features.slice(0, 6).map((feature, idx) => (
+                  <li key={idx} className="flex items-start gap-1.5">
+                    <Check className="w-3 h-3 text-green-500 flex-shrink-0 mt-0.5" />
+                    <span className="text-sp_darkgreen dark:text-sp_eggshell leading-tight">
+                      {feature}
+                    </span>
+                  </li>
+                ))}
+                {plan.features.length > 6 && (
+                  <li className="text-sp_green/70 dark:text-sp_eggshell/70 text-xs">
+                    +{plan.features.length - 6} more features
+                  </li>
+                )}
+              </ul>
+
+              {/* Action Button */}
+              <button
+                onClick={() => handlePlanAction(planId, plan.buttonAction)}
+                disabled={currentPlan === planId}
+                className={`w-full py-2 px-3 rounded-md font-medium transition-all duration-200 flex items-center justify-center gap-2 text-sm ${
+                  currentPlan === planId
+                    ? "bg-gray-100 dark:bg-gray-700 text-gray-500 cursor-not-allowed"
+                    : planId === "pro"
+                      ? "bg-sp_green hover:bg-sp_green/90 text-white shadow-md"
+                      : planId === "enterprise"
+                        ? "bg-sp_darkgreen hover:bg-sp_darkgreen/90 text-white"
+                        : "border-2 border-sp_green text-sp_green hover:bg-sp_green hover:text-white"
+                }`}
+              >
+                {currentPlan === planId ? (
+                  "Current Plan"
+                ) : planId === "enterprise" ? (
+                  <>
+                    <Mail className="w-3 h-3" />
+                    {plan.buttonText}
+                  </>
+                ) : (
+                  plan.buttonText
+                )}
+              </button>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Bottom Notes */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="text-center text-xs text-sp_green/70 dark:text-sp_eggshell/70"
+        >
+          <p>
+            Prices exclude tax. *Usage limits apply. Need help?{" "}
+            <a
+              href="mailto:spevents.party@gmail.com"
+              className="text-sp_green hover:underline"
+            >
+              Contact us
+            </a>
+          </p>
+        </motion.div>
       </div>
     </div>
   );

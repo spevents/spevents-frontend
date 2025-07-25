@@ -9,7 +9,7 @@ import {
   Settings,
   ArrowLeft,
   Bell,
-  Smartphone,
+  Plus,
   CreditCard,
   HelpCircle,
 } from "lucide-react";
@@ -29,7 +29,7 @@ const sidebarItems = [
   { id: "profile", label: "Profile", icon: User },
   { id: "account", label: "Account", icon: Settings },
   { id: "notifications", label: "Notifications", icon: Bell },
-  { id: "apps", label: "Apps", icon: Smartphone },
+  { id: "apps", label: "Apps", icon: Plus },
   { id: "billing", label: "Billing", icon: CreditCard },
   { id: "help", label: "Help", icon: HelpCircle },
 ];
@@ -65,7 +65,7 @@ export default function ProfilePage() {
       setStats({
         totalEvents: events.length,
         totalPhotos,
-        joinDate: "2024",
+        joinDate: "2025",
       });
     } catch (error) {
       console.error("Failed to load user stats:", error);
@@ -205,7 +205,7 @@ export default function ProfilePage() {
           </div>
           <div>
             <div className="text-xl font-semibold text-sp_darkgreen">
-              {stats?.joinDate || "2024"}
+              {stats?.joinDate || "2025"}
             </div>
             <div className="text-xs text-sp_green">Member since</div>
           </div>
