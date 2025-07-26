@@ -1,4 +1,4 @@
-// src/contexts/EventContext.tsx
+// File: src/contexts/EventContext.tsx
 
 import React, {
   createContext,
@@ -35,6 +35,36 @@ export interface CreateEventData {
   description?: string;
 }
 
+export interface AdvancedCreateEventData {
+  name: string;
+  description?: string;
+  date?: string;
+  startTime?: string;
+  endTime?: string;
+  location?: string;
+  expectedGuests?: string;
+  theme?: string;
+  allowDownloads?: boolean;
+  moderatePhotos?: boolean;
+  customLink?: string;
+  colors?: {
+    primary: string;
+    secondary: string;
+  };
+  customColors?: {
+    primary: string;
+    secondary: string;
+  };
+  slideshowViews?: Array<{
+    id: number;
+    name: string;
+    type: string;
+    preset: string;
+    isDefault: boolean;
+    settings?: any;
+  }>;
+}
+
 interface EventContextType {
   events: Event[];
   currentEvent: Event | null;
@@ -42,6 +72,7 @@ interface EventContextType {
   error: string | null;
   loadEvents: () => Promise<void>;
   createEvent: (data: CreateEventData) => Promise<Event>;
+  createAdvancedEvent: (data: AdvancedCreateEventData) => Promise<Event>;
   selectEvent: (eventId: string) => void;
   updateEvent: (eventId: string, updates: Partial<Event>) => Promise<void>;
   deleteEvent: (eventId: string) => Promise<void>;
@@ -180,6 +211,65 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({
     [isAuthenticated],
   );
 
+  const createAdvancedEvent = useCallback(
+    async (data: AdvancedCreateEventData): Promise<Event> => {
+      if (!isAuthenticated) {
+        throw new Error("Not authenticated");
+      }
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        // For now, create the basic event first
+        const basicEventData = {
+          name: data.name,
+          description: data.description || "",
+        };
+
+        const apiEvent = await eventService.createEvent(basicEventData);
+        const newEvent = normalizeEvent(apiEvent);
+
+        // Store advanced settings in localStorage for now
+        // TODO: Once backend supports it, send all advanced data
+        const advancedData = {
+          eventId: newEvent.id,
+          date: data.date,
+          startTime: data.startTime,
+          endTime: data.endTime,
+          location: data.location,
+          expectedGuests: data.expectedGuests,
+          theme: data.theme,
+          allowDownloads: data.allowDownloads,
+          moderatePhotos: data.moderatePhotos,
+          customLink: data.customLink,
+          colors: data.colors,
+          customColors: data.customColors,
+          slideshowViews: data.slideshowViews,
+        };
+
+        localStorage.setItem(
+          `event-advanced-${newEvent.id}`,
+          JSON.stringify(advancedData),
+        );
+
+        setEvents((prev) => [newEvent, ...prev]);
+        return newEvent;
+      } catch (err) {
+        console.error("Error creating advanced event:", err);
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to create advanced event",
+        );
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [isAuthenticated],
+  );
+
   const selectEvent = useCallback(
     (eventId: string) => {
       const event = events.find((e) => e.id === eventId);
@@ -235,6 +325,9 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({
           setCurrentEvent(null);
           localStorage.removeItem("spevents-current-event");
         }
+
+        // Clean up advanced data
+        localStorage.removeItem(`event-advanced-${eventId}`);
       } catch (err) {
         console.error("Error deleting event:", err);
         setError(err instanceof Error ? err.message : "Failed to delete event");
@@ -265,6 +358,7 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({
     error,
     loadEvents,
     createEvent,
+    createAdvancedEvent,
     selectEvent,
     updateEvent,
     deleteEvent,

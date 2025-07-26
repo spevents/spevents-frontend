@@ -73,8 +73,7 @@ export function CreateEventSimplePage() {
                 onClick={() => navigate("/host")}
                 className="flex items-center gap-2 text-sp_green dark:text-sp_dark_text hover:text-sp_midgreen dark:hover:text-sp_lightgreen transition-colors"
               >
-                <ArrowLeft className="w-5 h-5" />
-                <span>Back to Dashboard</span>
+                <ArrowLeft className="w-5 h-5" />x<span>Back to Dashboard</span>
               </button>
               <h1 className="text-xl font-semibold text-sp_darkgreen dark:text-sp_dark_text">
                 Event Created Successfully

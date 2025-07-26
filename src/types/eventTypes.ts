@@ -18,6 +18,11 @@ export interface EventData {
     primary: string;
     secondary: string;
   };
+
+  customColors: {
+    primary: string;
+    secondary: string;
+  };
   slideshowViews: SlideshowView[];
   liveMetrics?: LiveMetricsConfig;
   venue3D?: Venue3DConfig;

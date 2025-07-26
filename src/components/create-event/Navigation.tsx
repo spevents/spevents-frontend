@@ -1,6 +1,6 @@
 // File: src/components/create-event/Navigation.tsx
 
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { colors, Step } from "@/types/eventTypes";
 
@@ -10,6 +10,7 @@ interface NavigationProps {
   onNext: () => void;
   onBack: () => void;
   isNextDisabled: boolean;
+  isLoading: boolean;
 }
 
 export function Navigation({
@@ -18,12 +19,16 @@ export function Navigation({
   onNext,
   onBack,
   isNextDisabled,
+  isLoading,
 }: NavigationProps) {
+  const isLastStep = currentStep === steps.length - 1;
+
   return (
     <div className="flex justify-between pt-6">
       <Button
         variant="outline"
         onClick={onBack}
+        disabled={isLoading}
         style={{
           borderColor: colors.lightGreen,
           color: colors.darkGreen,
@@ -34,11 +39,14 @@ export function Navigation({
       </Button>
       <Button
         onClick={onNext}
-        disabled={isNextDisabled}
+        disabled={isNextDisabled || isLoading}
         style={{ backgroundColor: colors.green }}
       >
-        {currentStep === steps.length - 1 ? "Create Event" : "Continue"}
-        <ArrowRight className="w-4 h-4 ml-2" />
+        {isLoading && isLastStep ? (
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+        ) : null}
+        {isLastStep ? "Create Event" : "Continue"}
+        {!isLoading && <ArrowRight className="w-4 h-4 ml-2" />}
       </Button>
     </div>
   );
