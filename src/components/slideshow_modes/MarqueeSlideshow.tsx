@@ -1,4 +1,4 @@
-// src/components/slideshow_modes/MarqueeSlideshow.tsx
+// File: src/components/slideshow_modes/MarqueeSlideshow.tsx
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 
@@ -40,8 +40,11 @@ export default function MarqueeSlideshow({ photos }: MarqueeSlideshowProps) {
     // pad / repeat so each column has enough for the loop
     const padded = columns.map((col) => {
       const out: Photo[] = [];
+      // Handle empty columns by using all photos as fallback
+      const sourcePhotos = col.length > 0 ? col : sorted;
+
       for (let i = 0; i < PHOTOS_NEEDED_PER_COLUMN; i++) {
-        out.push(col[i % col.length]);
+        out.push(sourcePhotos[i % sourcePhotos.length]);
       }
       return out;
     });

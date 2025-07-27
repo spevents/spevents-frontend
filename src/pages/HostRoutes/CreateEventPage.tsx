@@ -21,13 +21,17 @@ import { DisplayViewsStep } from "@/components/create-event/DisplayViewsStep/Dis
 import { FinalSettingsStep } from "@/components/create-event/FinalSettingsStep";
 import { Navigation } from "@/components/create-event/Navigation";
 import { EventData, colors, Step } from "@/types/eventTypes";
+import { useEvent } from "@/contexts/EventContext";
+import { CreateEventData } from "@/types/event";
 
 const icons = [CalendarIcon, Users, Palette, Settings];
 
 export function CreateEventPage() {
   const navigate = useNavigate();
+  const { createEvent, selectEvent } = useEvent();
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedDate, _setSelectedDate] = useState<Date>();
+  const [isCreating, setIsCreating] = useState(false);
 
   const [eventData, setEventData] = useState<EventData>({
     name: "",
@@ -58,6 +62,9 @@ export function CreateEventPage() {
     ],
   });
 
+  // Add error state for UI display
+  const [creationError, setCreationError] = useState<string | null>(null);
+
   const steps: Step[] = [
     {
       title: "Event Details",
@@ -81,12 +88,102 @@ export function CreateEventPage() {
     },
   ];
 
-  const handleNext = () => {
+  const handleNext = async () => {
+    console.log(
+      "🔄 handleNext called, currentStep:",
+      currentStep,
+      "totalSteps:",
+      steps.length,
+    );
+
     if (currentStep < steps.length - 1) {
+      console.log("➡️ Moving to next step:", currentStep + 1);
       setCurrentStep(currentStep + 1);
     } else {
-      // Create event and redirect to gallery setup
-      navigate("/host/setup-gallery", { state: { eventData } });
+      console.log("🎯 Final step reached, creating event...");
+      // Final step - create the event with all advanced data
+      await handleCreateEvent();
+    }
+  };
+
+  const handleCreateEvent = async () => {
+    console.log("🏗️ handleCreateEvent started");
+    console.log("📋 Current eventData:", JSON.stringify(eventData, null, 2));
+
+    // Clear previous errors
+    setCreationError(null);
+
+    // Validation check
+    if (
+      !eventData.name ||
+      !eventData.date ||
+      !eventData.startTime ||
+      !eventData.endTime
+    ) {
+      console.error("❌ Validation failed:", {
+        name: !!eventData.name,
+        date: !!eventData.date,
+        startTime: !!eventData.startTime,
+        endTime: !!eventData.endTime,
+      });
+      const error =
+        "Please fill in all required fields: Event Name, Date, Start Time, End Time";
+      setCreationError(error);
+      alert(error);
+      return;
+    }
+
+    console.log("✅ Validation passed, starting creation...");
+    setIsCreating(true);
+
+    try {
+      // Convert EventData to CreateEventData format
+      const createData: CreateEventData = {
+        name: eventData.name,
+        description: eventData.description || "",
+        date: eventData.date,
+        startTime: eventData.startTime,
+        endTime: eventData.endTime,
+        duration: eventData.duration,
+        location: eventData.location || "",
+        expectedGuests: eventData.expectedGuests || "",
+        theme: eventData.theme,
+        allowDownloads: eventData.allowDownloads,
+        moderatePhotos: eventData.moderatePhotos,
+        customLink: eventData.customLink || "",
+        colors: eventData.colors,
+        slideshowViews: eventData.slideshowViews,
+        liveMetrics: eventData.liveMetrics,
+        venue3D: eventData.venue3D,
+      };
+
+      console.log(
+        "🎯 Calling createEvent with advanced data:",
+        JSON.stringify(createData, null, 2),
+      );
+
+      const newEvent = await createEvent(createData);
+
+      console.log("✅ Advanced event created successfully:", newEvent);
+
+      selectEvent(newEvent.id);
+      console.log("🎯 Event selected, navigating to gallery...");
+
+      // Navigate to gallery with the created event
+      navigate(`/host/event/${newEvent.id}/gallery`);
+    } catch (error) {
+      console.error("❌ Failed to create advanced event:", error);
+      console.error("❌ Error details:", {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      setCreationError(errorMessage);
+      alert(`Failed to create event: ${errorMessage}`);
+    } finally {
+      console.log("🏁 Creation process finished, setting isCreating to false");
+      setIsCreating(false);
     }
   };
 
@@ -135,12 +232,21 @@ export function CreateEventPage() {
       !eventData.startTime ||
       !eventData.endTime);
 
+  const isFinalStep = currentStep === steps.length - 1;
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: colors.eggshell }}>
       <Header />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <ProgressBar currentStep={currentStep} totalSteps={steps.length} />
+
+        {/* Error Display */}
+        {creationError && (
+          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+            <strong>Error:</strong> {creationError}
+          </div>
+        )}
 
         <AnimatePresence mode="wait">
           <motion.div
@@ -184,7 +290,14 @@ export function CreateEventPage() {
                   steps={steps}
                   onNext={handleNext}
                   onBack={handleBack}
-                  isNextDisabled={isNextDisabled}
+                  isNextDisabled={isNextDisabled || isCreating}
+                  nextButtonText={
+                    isFinalStep
+                      ? isCreating
+                        ? "Creating..."
+                        : "Create Event"
+                      : undefined
+                  }
                 />
               </CardContent>
             </Card>

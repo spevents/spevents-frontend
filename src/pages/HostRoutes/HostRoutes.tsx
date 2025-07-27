@@ -11,7 +11,6 @@ import { PhotosPage } from "./PhotosPage";
 import { MetricsPage } from "./MetricsPage";
 import { CreateEventSimplePage } from "./CreateEventPageSimple";
 import { CreateEventPage } from "./CreateEventPage";
-import { EventBuilderPage } from "./EventBuilderPage";
 import ProfilePage from "../../pages/ProfilePage";
 import SubscriptionPage from "../../pages/SubscriptionPage";
 
@@ -27,8 +26,7 @@ export const HostRoutes = () => {
 
         {/* Create event routes */}
         <Route path="create" element={<CreateEventSimplePage />} />
-        <Route path="create/advanced" element={<EventBuilderPage />} />
-        <Route path="create/steps" element={<CreateEventPage />} />
+        <Route path="create/advanced" element={<CreateEventPage />} />
 
         {/* Main navigation routes */}
         <Route path="library" element={<LibraryPage />} />

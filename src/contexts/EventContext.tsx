@@ -1,191 +1,156 @@
-// src/contexts/EventContext.tsx
+// File: src/contexts/EventContext.tsx
 
 import React, {
   createContext,
   useContext,
   useState,
-  useEffect,
   useCallback,
+  useEffect,
 } from "react";
-import { eventService } from "@/services/api";
-import { auth } from "@/components/config/firebase";
-import { onAuthStateChanged } from "firebase/auth";
-
-// ===============================
-// TYPES & INTERFACES
-// ===============================
-
-export interface Event {
-  id: string;
-  eventId: string;
-  name: string;
-  description: string;
-  createdAt: string;
-  updatedAt: string;
-  hostEmail: string;
-  status: "draft" | "active" | "paused" | "ended";
-  photoCount: number;
-  guestCount: number;
-  sessionCode: string;
-  timestamp: number;
-}
-
-export interface CreateEventData {
-  name: string;
-  description?: string;
-}
+import { Event, CreateEventData } from "../types/event";
+// import { eventService } from "../lib/eventService";
+import { eventService } from "../services/api";
 
 interface EventContextType {
   events: Event[];
   currentEvent: Event | null;
   isLoading: boolean;
   error: string | null;
-  loadEvents: () => Promise<void>;
+
+  // Event management
   createEvent: (data: CreateEventData) => Promise<Event>;
   selectEvent: (eventId: string) => void;
   updateEvent: (eventId: string, updates: Partial<Event>) => Promise<void>;
   deleteEvent: (eventId: string) => Promise<void>;
+  loadEvents: () => Promise<void>;
+
+  // Event status
   startEvent: (eventId: string) => Promise<void>;
   endEvent: (eventId: string) => Promise<void>;
-  isAuthenticated: boolean;
 }
-
-// ===============================
-// CONTEXT CREATION
-// ===============================
 
 const EventContext = createContext<EventContextType | undefined>(undefined);
 
-export const useEventContext = () => {
-  const context = useContext(EventContext);
-  if (!context) {
-    throw new Error("useEventContext must be used within an EventProvider");
-  }
-  return context;
-};
+// Mock data for bypass mode
+const mockEvents: Event[] = [
+  {
+    id: "mock-event-1",
+    name: "Mock Event 1",
+    description: "Test event for development",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    hostEmail: "dev@spevents.local",
+    status: "active",
+    photoCount: 0,
+    sessionCode: "MOCK01",
+  },
+];
 
-// Legacy alias for backwards compatibility
-export const useEvent = useEventContext;
-
-// ===============================
-// UTILITY FUNCTIONS
-// ===============================
-
-const normalizeEvent = (event: any): Event => {
-  return {
-    id: event.id,
-    eventId: event.eventId || event.id,
-    name: event.name || "",
-    description: event.description || "",
-    createdAt: event.createdAt || new Date().toISOString(),
-    updatedAt: event.updatedAt || new Date().toISOString(),
-    hostEmail: event.hostEmail || "",
-    status: event.status || "draft",
-    photoCount: event.photoCount || 0,
-    guestCount: event.guestCount || 0,
-    sessionCode: event.sessionCode || "",
-    timestamp: event.timestamp || Date.now(),
-  };
-};
-
-// ===============================
-// EVENT PROVIDER COMPONENT
-// ===============================
-
-export const EventProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export function EventProvider({ children }: { children: React.ReactNode }) {
   const [events, setEvents] = useState<Event[]>([]);
   const [currentEvent, setCurrentEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Check authentication status
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setIsAuthenticated(!!user);
-      if (!user) {
-        setEvents([]);
-        setCurrentEvent(null);
-      }
-    });
+  const BYPASS_AUTH = import.meta.env.VITE_BYPASS_AUTH === "true";
 
-    return () => unsubscribe();
-  }, []);
-
-  // Load events when authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadEvents();
-    }
-  }, [isAuthenticated]);
-
-  // Restore current event from localStorage
-  useEffect(() => {
-    const savedEventId = localStorage.getItem("spevents-current-event");
-    if (savedEventId && events.length > 0) {
-      const event = events.find((e) => e.id === savedEventId);
-      if (event) {
-        setCurrentEvent(event);
-      }
-    }
-  }, [events]);
+  console.log("🔧 EventProvider initialized, BYPASS_AUTH:", BYPASS_AUTH);
 
   const loadEvents = useCallback(async () => {
-    if (!isAuthenticated) return;
+    console.log("📂 loadEvents called, BYPASS_AUTH:", BYPASS_AUTH);
 
+    if (BYPASS_AUTH) {
+      console.log("🔧 Using mock events for bypass mode");
+      setEvents(mockEvents);
+      setIsLoading(false);
+      return;
+    }
+
+    console.log("🔄 Loading events from API...");
     setIsLoading(true);
     setError(null);
-
     try {
-      const apiEvents = await eventService.getEvents();
-      const normalizedEvents = apiEvents.map(normalizeEvent);
-      setEvents(normalizedEvents);
+      const userEvents = await eventService.getEvents();
+      console.log("✅ Loaded events:", userEvents);
+      setEvents(userEvents);
     } catch (err) {
-      console.error("Error loading events:", err);
-      setError(err instanceof Error ? err.message : "Failed to load events");
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to load events";
+      console.error("❌ Failed to load events:", errorMessage);
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [BYPASS_AUTH]);
 
   const createEvent = useCallback(
     async (data: CreateEventData): Promise<Event> => {
-      if (!isAuthenticated) {
-        throw new Error("Not authenticated");
+      console.log(
+        "🏗️ EventContext.createEvent called with data:",
+        JSON.stringify(data, null, 2),
+      );
+      console.log("🔧 BYPASS_AUTH:", BYPASS_AUTH);
+
+      if (BYPASS_AUTH) {
+        console.log("🔧 Using mock event creation for bypass mode");
+        const newEvent: Event = {
+          id: `mock-${Date.now()}`,
+          name: data.name,
+          description: data.description || "",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          hostEmail: "dev@spevents.local",
+          status: "draft",
+          photoCount: 0,
+          sessionCode: Math.random().toString(36).substring(2, 8).toUpperCase(),
+          // Include advanced fields if provided
+          ...(data.date && { date: data.date }),
+          ...(data.startTime && { startTime: data.startTime }),
+          ...(data.endTime && { endTime: data.endTime }),
+          ...(data.colors && { colors: data.colors }),
+          ...(data.theme && { theme: data.theme }),
+        };
+        console.log("✅ Mock event created:", newEvent);
+        setEvents((prev) => [newEvent, ...prev]);
+        return newEvent;
       }
 
+      console.log("🌐 Calling eventService.createEvent...");
       setIsLoading(true);
       setError(null);
-
       try {
-        const eventData = {
-          ...data,
-          description: data.description || "",
-        };
-
-        const apiEvent = await eventService.createEvent(eventData);
-        const newEvent = normalizeEvent(apiEvent);
+        const newEvent = await eventService.createEvent(data);
+        console.log("✅ Event created via API:", newEvent);
         setEvents((prev) => [newEvent, ...prev]);
         return newEvent;
       } catch (err) {
-        console.error("Error creating event:", err);
-        setError(err instanceof Error ? err.message : "Failed to create event");
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to create event";
+        console.error("❌ Failed to create event:", errorMessage);
+        console.error("❌ Error object:", err);
+        setError(errorMessage);
         throw err;
       } finally {
         setIsLoading(false);
       }
     },
-    [isAuthenticated],
+    [BYPASS_AUTH],
   );
 
   const selectEvent = useCallback(
     (eventId: string) => {
+      console.log("🎯 selectEvent called with eventId:", eventId);
       const event = events.find((e) => e.id === eventId);
       if (event) {
+        console.log("✅ Event found and selected:", event);
         setCurrentEvent(event);
         localStorage.setItem("spevents-current-event", eventId);
+      } else {
+        console.warn("⚠️ Event not found in events list:", eventId);
+        console.log(
+          "📋 Available events:",
+          events.map((e) => ({ id: e.id, name: e.name })),
+        );
       }
     },
     [events],
@@ -193,59 +158,77 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const updateEvent = useCallback(
     async (eventId: string, updates: Partial<Event>) => {
-      if (!isAuthenticated) {
-        throw new Error("Not authenticated");
+      console.log("📝 updateEvent called:", { eventId, updates });
+
+      if (BYPASS_AUTH) {
+        console.log("🔧 Using mock event update for bypass mode");
+        setEvents((prev) =>
+          prev.map((e) => (e.id === eventId ? { ...e, ...updates } : e)),
+        );
+        if (currentEvent?.id === eventId) {
+          setCurrentEvent({ ...currentEvent, ...updates });
+        }
+        return;
       }
 
-      setError(null);
-
       try {
-        const apiEvent = await eventService.updateEvent(eventId, updates);
-        const updatedEvent = normalizeEvent(apiEvent);
-
+        console.log("🌐 Calling eventService.updateEvent...");
+        const updatedEvent = await eventService.updateEvent(eventId, updates);
+        console.log("✅ Event updated via API:", updatedEvent);
         setEvents((prev) =>
           prev.map((e) => (e.id === eventId ? updatedEvent : e)),
         );
-
         if (currentEvent?.id === eventId) {
           setCurrentEvent(updatedEvent);
         }
       } catch (err) {
-        console.error("Error updating event:", err);
-        setError(err instanceof Error ? err.message : "Failed to update event");
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to update event";
+        console.error("❌ Failed to update event:", errorMessage);
+        setError(errorMessage);
         throw err;
       }
     },
-    [isAuthenticated, currentEvent],
+    [currentEvent, BYPASS_AUTH],
   );
 
   const deleteEvent = useCallback(
     async (eventId: string) => {
-      if (!isAuthenticated) {
-        throw new Error("Not authenticated");
+      console.log("🗑️ deleteEvent called with eventId:", eventId);
+
+      if (BYPASS_AUTH) {
+        console.log("🔧 Using mock event deletion for bypass mode");
+        setEvents((prev) => prev.filter((e) => e.id !== eventId));
+        if (currentEvent?.id === eventId) {
+          setCurrentEvent(null);
+          localStorage.removeItem("spevents-current-event");
+        }
+        return;
       }
 
-      setError(null);
-
       try {
+        console.log("🌐 Calling eventService.deleteEvent...");
         await eventService.deleteEvent(eventId);
+        console.log("✅ Event deleted via API");
         setEvents((prev) => prev.filter((e) => e.id !== eventId));
-
         if (currentEvent?.id === eventId) {
           setCurrentEvent(null);
           localStorage.removeItem("spevents-current-event");
         }
       } catch (err) {
-        console.error("Error deleting event:", err);
-        setError(err instanceof Error ? err.message : "Failed to delete event");
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to delete event";
+        console.error("❌ Failed to delete event:", errorMessage);
+        setError(errorMessage);
         throw err;
       }
     },
-    [isAuthenticated, currentEvent],
+    [currentEvent, BYPASS_AUTH],
   );
 
   const startEvent = useCallback(
     async (eventId: string) => {
+      console.log("▶️ startEvent called with eventId:", eventId);
       await updateEvent(eventId, { status: "active" });
     },
     [updateEvent],
@@ -253,29 +236,75 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const endEvent = useCallback(
     async (eventId: string) => {
+      console.log("⏹️ endEvent called with eventId:", eventId);
       await updateEvent(eventId, { status: "ended" });
     },
     [updateEvent],
   );
 
-  const contextValue: EventContextType = {
-    events,
-    currentEvent,
-    isLoading,
-    error,
-    loadEvents,
-    createEvent,
-    selectEvent,
-    updateEvent,
-    deleteEvent,
-    startEvent,
-    endEvent,
-    isAuthenticated,
-  };
+  // Load events on mount and restore current event
+  useEffect(() => {
+    console.log("🔄 EventProvider useEffect: loading events on mount");
+    loadEvents();
+  }, [loadEvents]);
+
+  useEffect(() => {
+    if (events.length > 0) {
+      const savedEventId = localStorage.getItem("spevents-current-event");
+      if (savedEventId) {
+        console.log(
+          "🔄 EventProvider useEffect: restoring saved event:",
+          savedEventId,
+        );
+        const event = events.find((e) => e.id === savedEventId);
+        if (event) {
+          console.log("✅ Restored saved event:", event);
+          setCurrentEvent(event);
+        } else {
+          console.warn("⚠️ Saved event not found, clearing localStorage");
+          localStorage.removeItem("spevents-current-event");
+        }
+      }
+    }
+  }, [events]);
+
+  // Debug current state
+  useEffect(() => {
+    console.log("📊 EventContext State Update:", {
+      eventsCount: events.length,
+      currentEvent: currentEvent
+        ? { id: currentEvent.id, name: currentEvent.name }
+        : null,
+      isLoading,
+      error,
+    });
+  }, [events, currentEvent, isLoading, error]);
 
   return (
-    <EventContext.Provider value={contextValue}>
+    <EventContext.Provider
+      value={{
+        events,
+        currentEvent,
+        isLoading,
+        error,
+        createEvent,
+        selectEvent,
+        updateEvent,
+        deleteEvent,
+        loadEvents,
+        startEvent,
+        endEvent,
+      }}
+    >
       {children}
     </EventContext.Provider>
   );
-};
+}
+
+export function useEvent() {
+  const context = useContext(EventContext);
+  if (context === undefined) {
+    throw new Error("useEvent must be used within an EventProvider");
+  }
+  return context;
+}
