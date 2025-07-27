@@ -12,11 +12,16 @@ import {
   Grid3X3,
   Grid2X2,
   GalleryHorizontal,
+  Play,
+  Pause,
+  Check,
 } from "lucide-react";
 import type { DisplayPhoto } from "../../types";
+import { useEvent } from "@/contexts/EventContext";
 
 interface EventGalleryHeaderProps {
   eventId: string;
+  status: "draft" | "active" | "paused" | "ended";
   currentEvent: any;
   photos: DisplayPhoto[];
   gridSize: "large" | "small";
@@ -31,6 +36,7 @@ interface EventGalleryHeaderProps {
 
 export function EventGalleryHeader({
   eventId,
+  status,
   currentEvent,
   photos,
   gridSize,
@@ -43,6 +49,7 @@ export function EventGalleryHeader({
   loadPhotosFromStorage,
 }: EventGalleryHeaderProps) {
   const navigate = useNavigate();
+  const { startEvent, endEvent } = useEvent();
   const guestPhotos = photos.filter((p) => p.isGuestPhoto).length;
 
   return (
@@ -85,6 +92,31 @@ export function EventGalleryHeader({
         <div className="flex items-center gap-3">
           {/* View Actions Group */}
           <div className="flex items-center gap-1 p-1 bg-sp_lightgreen/10 rounded-lg border border-sp_lightgreen/20">
+            {/* Status Control Button */}
+            {status === "draft" && (
+              <button
+                onClick={() => startEvent(eventId)}
+                className="p-2 rounded-md hover:bg-sp_lightgreen/30 text-sp_darkgreen transition-colors"
+                title="Start Event"
+              >
+                <Play className="w-4 h-4" />
+              </button>
+            )}
+            {status === "active" && (
+              <button
+                onClick={() => endEvent(eventId)}
+                className="p-2 rounded-md hover:bg-sp_lightgreen/30 text-sp_darkgreen transition-colors"
+                title="End Event"
+              >
+                <Pause className="w-4 h-4" />
+              </button>
+            )}
+            {status === "ended" && (
+              <div className="p-2 rounded-md opacity-70 text-sp_darkgreen transition-colors">
+                <Check className="w-4 h-4 " />
+              </div>
+            )}
+
             <button
               onClick={() => navigate(`/host/event/${eventId}/qr`)}
               className="p-2 rounded-md hover:bg-sp_lightgreen/30 text-sp_darkgreen transition-colors"

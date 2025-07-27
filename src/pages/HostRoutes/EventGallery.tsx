@@ -131,7 +131,8 @@ export function EventGallery() {
   return (
     <div className="min-h-screen bg-sp_eggshell">
       <EventGalleryHeader
-        eventId={eventId}
+        eventId={eventId!}
+        status={currentEvent?.status || "draft"}
         currentEvent={currentEvent}
         photos={photos}
         gridSize={gridSize}
