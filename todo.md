@@ -1,18 +1,14 @@
-- [ ] delete photos within EventGallery.tsx
-- [ ] delete events within LibraryContent.tsx, used in LibraryPage.tsx
-- [ ]
-
+- [x] delete photos within EventGallery.tsx
+- [x] delete events within LibraryContent.tsx, used in LibraryPage.tsx
 - [x] Finish aesthetics for Light/Dark mode on LandingPage
 - [x] Finish aesthetics for Light/Dark mode on GuestDashboard
-- [ ] Fix https://app.spevents.live/host/event/EVENT_ID/gallery page to match aesthetics
-- [ ] Fix https://app.spevents.live/host/events/EVENT_ID/ routing to Event Library, before galler?
-- [ ] Fix https://app.spevents.live/host/events/EVENT_ID/ routing to Event Library
-- [ ] Fix /gallery routing to match aesthetics
-- [ ] Fix /gallery routing so that it goes back to event_library instead of just /host
+
+- [x] Fix https://app.spevents.live/host/event/EVENT_ID/gallery page to match aesthetics
+- [] Fix https://app.spevents.live/host/event/EVENT_ID/gallery page to not reanimate all photos each polling cycle; only animate new photos that have been uploaded.
+- [ ] Fix https://app.spevents.live/host/events/EVENT_ID/slideshow aesthetic to match that of advanced build or default
+
 - [ ] Fix /qr routing to match aesthetics
-- [ ] Fix /qr routing so that it goes back to event_library instead of just /host
-- [ ] Fix /slideshow routing to match aesthetics
-- [ ] Fix /slideshow routing so that it goes back to event_library instead of just /host
+
 - [ ] Fix and make /event UI more intuitive, make more sense basically
 - [ ] Fix CreateEventModal; live app uses CreateEventModal.tsx instead of proper event creater CreateEventPage; make a simpler mode (just theme and presets) vs more customized Canva like editor
 - [ ] Fix updated UI for Event Library, update total number of photos that were uploaded
