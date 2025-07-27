@@ -7,7 +7,6 @@
 - [x] Fix https://app.spevents.live/host/event/EVENT_ID/gallery page to not reanimate all photos each polling cycle; only animate new photos that have been uploaded.
 
 - [ ] Fix /qr routing to match aesthetics
-- [ ]
 - [ ] Fix and make /event UI more intuitive, make more sense basically
 - [ ] Fix CreateEventModal; live app uses CreateEventModal.tsx instead of proper event creater CreateEventPage; make a simpler mode (just theme and presets) vs more customized Canva like editor
 - [ ] Fix updated UI for Event Library, update total number of photos that were uploaded
