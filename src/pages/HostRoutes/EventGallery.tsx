@@ -33,6 +33,7 @@ export function EventGallery() {
     handleDownloadSinglePhoto,
     deleteSelectedPhotos,
     handleShareSelected,
+    newPhotoIds,
   } = usePhotoManagement(eventId, currentEvent, selectedPhotos);
 
   // Force select the event from URL parameter immediately
@@ -168,6 +169,7 @@ export function EventGallery() {
             isSelectionMode={isSelectionMode}
             selectedPhotos={selectedPhotos}
             handlePhotoClick={handlePhotoClick}
+            newPhotoIds={newPhotoIds}
           />
         )}
       </div>

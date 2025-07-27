@@ -6,6 +6,7 @@ import type { DisplayPhoto } from "../../types";
 
 interface PhotoGridProps {
   photos: DisplayPhoto[];
+  newPhotoIds: Set<string>;
   eventId: string;
   gridSize: "large" | "small";
   isSelectionMode: boolean;
@@ -15,6 +16,7 @@ interface PhotoGridProps {
 
 export function PhotoGrid({
   photos,
+  newPhotoIds,
   eventId,
   gridSize,
   isSelectionMode,
@@ -79,61 +81,71 @@ export function PhotoGrid({
           </div>
 
           <div className={`grid ${gridCols} gap-2`}>
-            {datePhotos.map((photo, index) => (
-              <motion.div
-                key={photo.fileName}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.05 }}
-                className="relative aspect-square group cursor-pointer overflow-hidden rounded-lg border border-sp_lightgreen/30 bg-white"
-                onClick={() => handlePhotoClick(photo)}
-              >
-                <img
-                  src={photo.url || "/placeholder.svg"}
-                  alt={photo.fileName}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  loading="lazy"
-                />
+            {datePhotos.map((photo, index) => {
+              const isNewPhoto = newPhotoIds.has(photo.fileName);
 
-                {/* Selection Overlay */}
-                {isSelectionMode && (
-                  <div
-                    className={`absolute inset-0 transition-all duration-200 ${
-                      selectedPhotos.has(photo.fileName)
-                        ? "bg-sp_green/40 border-2 border-sp_green"
-                        : "bg-black/0 hover:bg-sp_darkgreen/10"
-                    }`}
-                  >
-                    <div className="absolute top-2 right-2">
-                      <div
-                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                          selectedPhotos.has(photo.fileName)
-                            ? "bg-sp_green border-sp_green"
-                            : "bg-sp_eggshell/90 border-sp_lightgreen"
-                        }`}
-                      >
-                        {selectedPhotos.has(photo.fileName) && (
-                          <Check className="w-4 h-4 text-white" />
+              return (
+                <motion.div
+                  key={photo.fileName}
+                  initial={
+                    isNewPhoto
+                      ? { opacity: 0, scale: 0.8 }
+                      : { opacity: 1, scale: 1 }
+                  }
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={
+                    isNewPhoto ? { delay: index * 0.05 } : { duration: 0 }
+                  }
+                  className="relative aspect-square group cursor-pointer overflow-hidden rounded-lg border border-sp_lightgreen/30 bg-white"
+                  onClick={() => handlePhotoClick(photo)}
+                >
+                  <img
+                    src={photo.url || "/placeholder.svg"}
+                    alt={photo.fileName}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    loading="lazy"
+                  />
+
+                  {/* Selection Overlay */}
+                  {isSelectionMode && (
+                    <div
+                      className={`absolute inset-0 transition-all duration-200 ${
+                        selectedPhotos.has(photo.fileName)
+                          ? "bg-sp_green/40 border-2 border-sp_green"
+                          : "bg-black/0 hover:bg-sp_darkgreen/10"
+                      }`}
+                    >
+                      <div className="absolute top-2 right-2">
+                        <div
+                          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                            selectedPhotos.has(photo.fileName)
+                              ? "bg-sp_green border-sp_green"
+                              : "bg-sp_eggshell/90 border-sp_lightgreen"
+                          }`}
+                        >
+                          {selectedPhotos.has(photo.fileName) && (
+                            <Check className="w-4 h-4 text-white" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Photo Info Overlay */}
+                  {!isSelectionMode && (
+                    <div className="absolute inset-0 bg-gradient-to-t from-sp_darkgreen/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute bottom-2 right-2">
+                        {photo.isGuestPhoto && (
+                          <span className="text-xs px-2 py-1 bg-sp_midgreen/90 text-sp_eggshell rounded-full">
+                            Guest
+                          </span>
                         )}
                       </div>
                     </div>
-                  </div>
-                )}
-
-                {/* Photo Info Overlay */}
-                {!isSelectionMode && (
-                  <div className="absolute inset-0 bg-gradient-to-t from-sp_darkgreen/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="absolute bottom-2 right-2">
-                      {photo.isGuestPhoto && (
-                        <span className="text-xs px-2 py-1 bg-sp_midgreen/90 text-sp_eggshell rounded-full">
-                          Guest
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </motion.div>
-            ))}
+                  )}
+                </motion.div>
+              );
+            })}
           </div>
         </motion.div>
       ))}

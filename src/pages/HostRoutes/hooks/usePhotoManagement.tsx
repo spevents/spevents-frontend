@@ -1,5 +1,5 @@
 // File: src/pages/HostRoutes/hooks/usePhotoManagement.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import JSZip from "jszip";
 import { auth } from "@/components/config/firebase";
 import {
@@ -16,16 +16,33 @@ export function usePhotoManagement(
   selectedPhotos: Set<string>,
 ) {
   const [photos, setPhotos] = useState<DisplayPhoto[]>([]);
+  const [newPhotoIds, setNewPhotoIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [isDeletingPhotos, setIsDeletingPhotos] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const isInitialLoad = useRef(true);
+  const existingPhotoIds = useRef<Set<string>>(new Set());
+  const hasLoadedOnce = useRef(false);
+  const currentEventId = useRef<string | undefined>(undefined);
+
+  // Reset refs if eventId changes
+  if (currentEventId.current !== eventId) {
+    isInitialLoad.current = true;
+    existingPhotoIds.current = new Set();
+    hasLoadedOnce.current = false;
+    currentEventId.current = eventId;
+  }
 
   const loadPhotosFromStorage = async () => {
     if (!eventId) return;
 
     try {
       console.log("🔍 Loading photos for eventId:", eventId);
-      setIsLoading(true);
+
+      // Only show loading on true initial load (never loaded before)
+      if (!hasLoadedOnce.current) {
+        setIsLoading(true);
+      }
 
       // Get all photos (both event and guest photos)
       const eventPhotos: EventPhoto[] = await listAllEventPhotos(eventId);
@@ -47,11 +64,63 @@ export function usePhotoManagement(
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       );
 
+      // Identify new photos (only after initial load)
+      if (!isInitialLoad.current) {
+        const currentPhotoIds = new Set(sortedPhotos.map((p) => p.fileName));
+        const newIds = new Set<string>();
+
+        console.log(
+          "🔍 [DEBUG] Existing photo IDs:",
+          Array.from(existingPhotoIds.current),
+        );
+        console.log(
+          "🔍 [DEBUG] Current photo IDs:",
+          Array.from(currentPhotoIds),
+        );
+
+        currentPhotoIds.forEach((id) => {
+          if (!existingPhotoIds.current.has(id)) {
+            newIds.add(id);
+          }
+        });
+
+        console.log("🔍 [DEBUG] New photo IDs detected:", Array.from(newIds));
+        setNewPhotoIds(newIds);
+
+        // Clear new photo IDs after a delay to stop animation
+        if (newIds.size > 0) {
+          console.log("🔍 [DEBUG] Will clear new photo IDs in 1000ms");
+          setTimeout(() => {
+            console.log("🔍 [DEBUG] Clearing new photo IDs");
+            setNewPhotoIds(new Set());
+          }, 1000);
+        }
+      } else {
+        // On initial load, all photos are "new" for animation
+        console.log(
+          "🔍 [DEBUG] Initial load - all photos marked as new:",
+          sortedPhotos.length,
+        );
+        setNewPhotoIds(new Set(sortedPhotos.map((p) => p.fileName)));
+        isInitialLoad.current = false;
+      }
+
+      // Update existing photo IDs reference
+      existingPhotoIds.current = new Set(sortedPhotos.map((p) => p.fileName));
+      console.log(
+        "🔍 [DEBUG] Updated existing photo IDs reference:",
+        Array.from(existingPhotoIds.current),
+      );
+
       setPhotos(sortedPhotos);
+      hasLoadedOnce.current = true;
     } catch (error) {
       console.error("❌ Error loading photos:", error);
     } finally {
-      setIsLoading(false);
+      // Only set loading false if we were actually loading
+      if (!hasLoadedOnce.current || isLoading) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -386,6 +455,7 @@ export function usePhotoManagement(
 
   return {
     photos,
+    newPhotoIds,
     isLoading,
     isDeletingPhotos,
     isDownloading,
