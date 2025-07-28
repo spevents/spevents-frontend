@@ -1,4 +1,4 @@
-// src/components/PhotoSlideshow.tsx
+// File: src/components/PhotoSlideshow.tsx
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -16,6 +16,8 @@ import {
   getEventPhotoUrl,
   EventPhoto,
 } from "@/services/api";
+import { useEvent } from "@/contexts/EventContext";
+import { colors } from "@/types/eventTypes";
 import FunSlideshow from "./slideshow_modes/FunSlideshow";
 import PresenterSlideshow from "./slideshow_modes/PresenterSlideshow";
 import ModelSlideshow from "./slideshow_modes/ModelSlideshow";
@@ -47,6 +49,7 @@ const PHOTO_REFRESH_INTERVAL = 10000; // Reduced frequency to 10 seconds
 
 export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
   const navigate = useNavigate();
+  const { currentEvent } = useEvent();
   const [viewMode, setViewMode] = useState<ViewMode>("simple");
   const [hideUI, setHideUI] = useState(false);
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -58,6 +61,12 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
   const [isLoading, setIsLoading] = useState(true);
   const timeoutsRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
   const photosRef = useRef(photos);
+
+  // Get theme colors from current event, with fallback to default
+  const themeColors = currentEvent?.colors || {
+    primary: colors.green,
+    secondary: colors.lightGreen,
+  };
 
   // Update refs when props change
   useEffect(() => {
@@ -262,6 +271,7 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
           <FunSlideshow
             photos={displayedPhotosForDisplay}
             containerDimensions={containerDimensions}
+            themeColors={themeColors}
           />
         );
       case "presenter":
@@ -269,6 +279,7 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
           <PresenterSlideshow
             photos={allPhotosForDisplay} // Use all photos
             containerDimensions={containerDimensions}
+            themeColors={themeColors}
           />
         );
       case "model":
@@ -283,12 +294,18 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
           <MarqueeSlideshow
             photos={allPhotosForDisplay} // Use all photos, not displayedPhotos
             containerDimensions={containerDimensions}
+            themeColors={themeColors}
           />
         );
       default:
         // Simple mode continues to use displayedPhotos
         return (
-          <div className="relative w-full h-full overflow-hidden bg-gray-900">
+          <div
+            className="relative w-full h-full overflow-hidden"
+            style={{
+              background: `linear-gradient(135deg, ${themeColors.primary}20, ${themeColors.secondary}10)`,
+            }}
+          >
             {displayedPhotos.length === 0 && !isLoading && (
               <div className="absolute inset-0 flex items-center justify-center text-white">
                 <div className="text-center">
@@ -315,7 +332,11 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
                   <img
                     src={photo.src}
                     alt="Slideshow photo"
-                    className="max-w-full max-h-full object-contain"
+                    className="max-w-full max-h-full object-contain rounded-lg"
+                    style={{
+                      border: `3px solid ${themeColors.secondary}60`,
+                      boxShadow: `0 0 20px ${themeColors.primary}30`,
+                    }}
                     onError={() => {
                       console.error(
                         "❌ Failed to load slideshow image:",
@@ -359,9 +380,15 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
                   onClick={() => setViewMode("simple")}
                   className={`p-2 rounded-full transition-colors ${
                     viewMode === "simple"
-                      ? "bg-white text-black"
+                      ? "text-black"
                       : "text-white hover:bg-white/20"
                   }`}
+                  style={{
+                    backgroundColor:
+                      viewMode === "simple"
+                        ? themeColors.secondary
+                        : "transparent",
+                  }}
                 >
                   <Layout size={16} />
                 </button>
@@ -369,9 +396,15 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
                   onClick={() => setViewMode("fun")}
                   className={`p-2 rounded-full transition-colors ${
                     viewMode === "fun"
-                      ? "bg-white text-black"
+                      ? "text-black"
                       : "text-white hover:bg-white/20"
                   }`}
+                  style={{
+                    backgroundColor:
+                      viewMode === "fun"
+                        ? themeColors.secondary
+                        : "transparent",
+                  }}
                 >
                   <LayoutTemplate size={16} />
                 </button>
@@ -379,9 +412,15 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
                   onClick={() => setViewMode("presenter")}
                   className={`p-2 rounded-full transition-colors ${
                     viewMode === "presenter"
-                      ? "bg-white text-black"
+                      ? "text-black"
                       : "text-white hover:bg-white/20"
                   }`}
+                  style={{
+                    backgroundColor:
+                      viewMode === "presenter"
+                        ? themeColors.secondary
+                        : "transparent",
+                  }}
                 >
                   <Presentation size={16} />
                 </button>
@@ -399,9 +438,15 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
                   onClick={() => setViewMode("marquee")}
                   className={`p-2 rounded-full transition-colors ${
                     viewMode === "marquee"
-                      ? "bg-white text-black"
+                      ? "text-black"
                       : "text-white hover:bg-white/20"
                   }`}
+                  style={{
+                    backgroundColor:
+                      viewMode === "marquee"
+                        ? themeColors.secondary
+                        : "transparent",
+                  }}
                 >
                   <AlignHorizontalSpaceAround size={16} />
                 </button>

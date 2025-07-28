@@ -1,18 +1,22 @@
-// src/components/slideshow_modes/PresenterSlideshow.tsx
+// File: src/components/slideshow_modes/PresenterSlideshow.tsx
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Props {
   photos: Array<{ src: string; id: string; createdAt: string }>;
   containerDimensions: { width: number; height: number };
-
+  themeColors: { primary: string; secondary: string };
   hideUI?: boolean;
 }
 
 const DISPLAY_DURATION = 5000; // 5 seconds per set
 const PHOTOS_PER_SET = 3;
 
-export default function PresenterSlideshow({ photos, hideUI = false }: Props) {
+export default function PresenterSlideshow({
+  photos,
+  themeColors,
+  hideUI = false,
+}: Props) {
   const [currentSetIndex, setCurrentSetIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
@@ -73,14 +77,24 @@ export default function PresenterSlideshow({ photos, hideUI = false }: Props) {
 
   if (photos.length === 0) {
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center">
+      <div
+        className="fixed inset-0 flex items-center justify-center"
+        style={{
+          background: `linear-gradient(135deg, ${themeColors.primary}40, ${themeColors.secondary}20)`,
+        }}
+      >
         <p className="text-white/50 text-lg">No photos available</p>
       </div>
     );
   }
 
   return (
-    <div className="fixed inset-0 bg-black overflow-hidden">
+    <div
+      className="fixed inset-0 overflow-hidden"
+      style={{
+        background: `linear-gradient(135deg, ${themeColors.primary}40, ${themeColors.secondary}20)`,
+      }}
+    >
       <AnimatePresence mode="wait">
         <motion.div
           key={currentSetIndex}
@@ -106,6 +120,9 @@ export default function PresenterSlideshow({ photos, hideUI = false }: Props) {
                   ease: [0.4, 0, 0.2, 1],
                 }}
                 className="relative aspect-[3/4] rounded-xl overflow-hidden"
+                style={{
+                  boxShadow: `0 0 20px ${themeColors.primary}30`,
+                }}
               >
                 <div className="absolute inset-0">
                   {!hideUI && (
@@ -115,10 +132,11 @@ export default function PresenterSlideshow({ photos, hideUI = false }: Props) {
                     src={photo.src}
                     alt="Event photo"
                     className="w-full h-full object-cover"
+                  />
+                  <div
+                    className="absolute inset-0 rounded-xl"
                     style={{
-                      filter: !hideUI
-                        ? "drop-shadow(0 0 20px rgba(0,0,0,0.3))"
-                        : "none",
+                      border: `2px solid ${themeColors.secondary}80`,
                     }}
                   />
                 </div>
@@ -141,9 +159,15 @@ export default function PresenterSlideshow({ photos, hideUI = false }: Props) {
                 }}
                 className={`transition-all duration-300 rounded-full ${
                   index === currentSetIndex
-                    ? "w-8 h-2 bg-white"
-                    : "w-2 h-2 bg-white/30 hover:bg-white/50"
+                    ? "w-8 h-2"
+                    : "w-2 h-2 hover:bg-white/50"
                 }`}
+                style={{
+                  backgroundColor:
+                    index === currentSetIndex
+                      ? themeColors.secondary
+                      : "rgba(255,255,255,0.3)",
+                }}
               />
             ))}
           </div>
@@ -151,7 +175,13 @@ export default function PresenterSlideshow({ photos, hideUI = false }: Props) {
       )}
 
       {!hideUI && (
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white/50 text-sm">
+        <div
+          className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-sm px-3 py-1 rounded-full"
+          style={{
+            backgroundColor: themeColors.primary + "80",
+            color: "white",
+          }}
+        >
           Set {currentSetIndex + 1} of {totalSets}
         </div>
       )}

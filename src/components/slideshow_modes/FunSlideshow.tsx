@@ -1,3 +1,4 @@
+// File: src/components/slideshow_modes/FunSlideshow.tsx
 import { useState, useEffect, useRef } from "react";
 import { AnimatePresence } from "motion/react";
 import * as motion from "motion/react-client";
@@ -23,10 +24,11 @@ interface FunPhoto {
 interface Props {
   photos: Array<{ src: string; id: string; createdAt: string }>;
   containerDimensions: { width: number; height: number };
+  themeColors: { primary: string; secondary: string };
 }
 
-const PHOTO_DISPLAY_TIME = 7000 + Math.random() * 2000; // Between 10-15 seconds
-const TRANSITION_DURATION = 3000; // 2 seconds for fade
+const PHOTO_DISPLAY_TIME = 7000 + Math.random() * 2000; // Between 7-9 seconds
+const TRANSITION_DURATION = 3000; // 3 seconds for transitions
 const MAX_PHOTOS = 20;
 
 function getRandomAspectRatio(): "square" | "portrait" | "landscape" {
@@ -162,19 +164,17 @@ function processFunPhoto(
   };
 }
 
-export default function FunSlideshow({ photos, containerDimensions }: Props) {
+export default function FunSlideshow({
+  photos,
+  containerDimensions,
+  themeColors,
+}: Props) {
   const [displayedPhotos, setDisplayedPhotos] = useState<FunPhoto[]>([]);
   const timeoutsRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
   const photosRef = useRef(photos);
   const dimensionsRef = useRef(containerDimensions);
 
   // Update refs when props change
-  useEffect(() => {
-    photosRef.current = photos;
-    dimensionsRef.current = containerDimensions;
-  }, [photos, containerDimensions]);
-
-  // Set up the main display cycle
   useEffect(() => {
     photosRef.current = photos;
     dimensionsRef.current = containerDimensions;
@@ -235,15 +235,21 @@ export default function FunSlideshow({ photos, containerDimensions }: Props) {
       );
     };
   }, []);
+
   return (
-    <div className="relative w-full h-screen">
+    <div
+      className="relative w-full h-screen"
+      style={{
+        background: `linear-gradient(135deg, ${themeColors.primary}40, ${themeColors.secondary}20)`,
+      }}
+    >
       <AnimatePresence>
         {displayedPhotos.map((photo) => (
           <motion.div
             key={photo.transitionId}
             initial={{ opacity: 0, scale: 0 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0 }} // Exit animation
+            exit={{ opacity: 0, scale: 0 }}
             transition={{
               scale: { type: "spring", visualDuration: 0.4, bounce: 0.2 },
             }}
@@ -256,7 +262,14 @@ export default function FunSlideshow({ photos, containerDimensions }: Props) {
               transform: `rotate(${photo.position.rotation}deg)`,
             }}
           >
-            <div className="w-full h-full p-2 bg-white/90 backdrop-blur-sm shadow-xl rounded-lg overflow-hidden">
+            <div
+              className="w-full h-full p-2 backdrop-blur-sm shadow-xl rounded-lg overflow-hidden"
+              style={{
+                backgroundColor: themeColors.secondary + "90",
+                border: `2px solid ${themeColors.primary}60`,
+                boxShadow: `0 0 20px ${themeColors.primary}30`,
+              }}
+            >
               <img
                 src={photo.src}
                 alt="Event photo"

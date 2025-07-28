@@ -10,17 +10,21 @@ interface Photo {
 
 interface MarqueeSlideshowProps {
   photos: Photo[];
-  containerDimensions: { width: number; height: number }; // ← still accepted for API parity
+  containerDimensions: { width: number; height: number };
+  themeColors: { primary: string; secondary: string };
   hideUI?: boolean;
 }
 
 const PHOTOS_PER_STRIP = 8; // photos rendered before pattern repeats once
-const STRIP_COUNT = 3;
+const STRIP_COUNT = 3; // visible vertical strips per column
 const ANIMATION_SECS = 50; // time for one full travel
-const COLUMN_COUNT = 10;
+const COLUMN_COUNT = 10; // how many columns across
 const PHOTOS_NEEDED_PER_COLUMN = PHOTOS_PER_STRIP * STRIP_COUNT * 2; // double for seamless loop
 
-export default function MarqueeSlideshow({ photos }: MarqueeSlideshowProps) {
+export default function MarqueeSlideshow({
+  photos,
+  themeColors,
+}: MarqueeSlideshowProps) {
   const [columnPhotos, setColumnPhotos] = useState<Photo[][]>([]);
   const previousIds = useRef<Set<string>>(new Set());
 
@@ -83,14 +87,30 @@ export default function MarqueeSlideshow({ photos }: MarqueeSlideshowProps) {
   /* ────────────────── render ────────────────── */
   if (photos.length === 0 || columnPhotos.length === 0) {
     return (
-      <div className="w-full h-screen bg-black flex items-center justify-center">
-        <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+      <div
+        className="w-full h-screen flex items-center justify-center"
+        style={{
+          background: `linear-gradient(135deg, ${themeColors.primary}40, ${themeColors.secondary}20)`,
+        }}
+      >
+        <div
+          className="w-16 h-16 border-4 rounded-full animate-spin"
+          style={{
+            borderColor: `${themeColors.secondary}40`,
+            borderTopColor: themeColors.primary,
+          }}
+        />
       </div>
     );
   }
 
   return (
-    <div className="w-full h-screen bg-black overflow-hidden">
+    <div
+      className="w-full h-screen overflow-hidden"
+      style={{
+        background: `linear-gradient(135deg, ${themeColors.primary}40, ${themeColors.secondary}20)`,
+      }}
+    >
       <div className="h-full w-full flex justify-center gap-12 px-8">
         {columnPhotos.map((column, colIdx) => {
           const dir = colIdx % 2 === 0 ? 1 : -1; // alternate scroll direction
@@ -120,6 +140,10 @@ export default function MarqueeSlideshow({ photos }: MarqueeSlideshowProps) {
                       src={photo.src}
                       alt="Event"
                       className="w-full h-full object-cover rounded-lg"
+                      style={{
+                        border: `2px solid ${themeColors.secondary}`,
+                        boxShadow: `0 0 10px ${themeColors.primary}30`,
+                      }}
                       loading="lazy"
                     />
                   </div>
