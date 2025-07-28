@@ -16,7 +16,6 @@ import {
 import { Header } from "@/components/create-event/Header";
 import { ProgressBar } from "@/components/create-event/ProgressBar";
 import { EventDetailsStep } from "@/components/create-event/EventDetailsStep";
-import { GuestSettingsStep } from "@/components/create-event/GuestSettingsStep";
 import { DisplayViewsStep } from "@/components/create-event/DisplayViewsStep/DisplayViewsStep";
 import { FinalSettingsStep } from "@/components/create-event/FinalSettingsStep";
 import { Navigation } from "@/components/create-event/Navigation";
@@ -69,11 +68,6 @@ export function CreateEventPage() {
     {
       title: "Event Details",
       subtitle: "Tell us about your event",
-      date: "test",
-    },
-    {
-      title: "Guest Settings",
-      subtitle: "Configure guest permissions",
       date: "test",
     },
     {
@@ -197,22 +191,57 @@ export function CreateEventPage() {
 
   const renderStepContent = () => {
     switch (currentStep) {
+      // EVENT DETAILS STEP
       case 0:
         return (
           <EventDetailsStep eventData={eventData} setEventData={setEventData} />
         );
+
+      /* 
+      // DISPLAY LIVE METRICS
+      this should by default include 
+      Displaying these metrics as part of the popup in SlideshowMode
+      - Live Guest Count
+      - Total Photos
+      - Photos Per Minute 
+
+
+      You get your defaults:
+
+      Simple (Simple grid)
+      
+      Fun
+      Marquee
+      Presenter 
+
+      Model Options (make it different presets),
+       for now keep it just at one, sane simple model similar to the SLC Ballroom
+
+       Places where people meet at that I should model:
+          https://cdn.vanderbilt.edu/vu-URL/wp-content/uploads/sites/151/2023/05/19201538/EAV-Event-Spaces.pdf
+
+       - SLC Ballroom
+       - Multicultural Community Space 
+       - Multicultural Lounge
+       - Alumni Hall
+       - Commons Center Lobby
+        - Specifically during Commons Ball
+       - Owen Business School
+       - Community Event Space
+      
+
+
+      
+
+
+      
+      
+      */
       case 1:
-        return (
-          <GuestSettingsStep
-            eventData={eventData}
-            setEventData={setEventData}
-          />
-        );
-      case 2:
         return (
           <DisplayViewsStep eventData={eventData} setEventData={setEventData} />
         );
-      case 3:
+      case 2:
         return (
           <FinalSettingsStep
             eventData={eventData}

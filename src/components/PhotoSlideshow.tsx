@@ -11,7 +11,6 @@ import {
   AlignHorizontalSpaceAround,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-// import { listAllEventPhotos, getEventPhotoUrl, EventPhoto } from "@/lib/aws";
 import {
   listAllEventPhotos,
   getEventPhotoUrl,

@@ -6,14 +6,14 @@
 - [x] Fix https://app.spevents.live/host/event/EVENT_ID/gallery page to match aesthetics
 - [x] Fix https://app.spevents.live/host/event/EVENT_ID/gallery page to not reanimate all photos each polling cycle; only animate new photos that have been uploaded.
 
-- [ ] Fix /qr routing to match aesthetics
-- [ ] Fix and make /event UI more intuitive, make more sense basically
-- [ ] Fix CreateEventModal; live app uses CreateEventModal.tsx instead of proper event creater CreateEventPage; make a simpler mode (just theme and presets) vs more customized Canva like editor
-- [ ] Fix updated UI for Event Library, update total number of photos that were uploaded
-- [ ] Starred events?; Example:
-      ? What does every bday have that it needs
-      ? create presets for each type of event (BDay theme, Wedding Theme)
-      ? Prevent bad photos
+- [x] Fix /qr routing to match aesthetics
+- [] Fix and make /event UI more intuitive, make more sense basically
+- [] Fix CreateEventModal; live app uses CreateEventModal.tsx instead of proper event creater CreateEventPage; make a simpler mode (just theme and presets) vs more customized Canva like editor
+- [] Fix updated UI for Event Library, update total number of photos that were uploaded
+- [] Starred events?; Example:
+  ? What does every bday have that it needs
+  ? create presets for each type of event (BDay theme, Wedding Theme)
+  ? Prevent bad photos
 - [ ] Create restrictions NSFW filter for what photos are put onto the
 - [ ] 3D Model, make it where geolocated internally
 - [ ] Change sample photos to be landcape photos, and have sample and other photos
