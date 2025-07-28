@@ -1,10 +1,9 @@
-// File: src/components/create-event/DisplayViewsStep.tsx
+// File: src/components/create-event/DisplayViewsStep/DisplayViewsStep.tsx
 
 import { useState } from "react";
 import {
   Plus,
   X,
-  Eye,
   Grid3X3,
   Layers,
   RotateCcw,
@@ -17,15 +16,8 @@ import {
   Box,
   Scan,
   Palette,
-  Move,
-  Play,
-  Clock,
-  Monitor,
   Settings,
-  Upload,
-  Download,
-  Activity,
-  Boxes,
+  Image,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,14 +25,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import {
-  EventData,
-  colors,
-  Theme,
-  SlideshowPreset,
-  ModelCreationMode,
-  PhotoBlock,
-} from "@/types/eventTypes";
+import { motion } from "framer-motion";
+import { EventData, colors, Theme, SlideshowPreset } from "@/types/eventTypes";
 
 const Badge = ({
   children,
@@ -76,8 +62,6 @@ export function DisplayViewsStep({
     primary: colors.green,
     secondary: colors.lightGreen,
   });
-  const [modelCreationMode, setModelCreationMode] =
-    useState<ModelCreationMode>("2d-transform");
 
   const themes: Theme[] = [
     { id: "modern", name: "Modern", colors: [colors.green, colors.lightGreen] },
@@ -89,6 +73,13 @@ export function DisplayViewsStep({
       name: "Custom",
       colors: [customColors.primary, customColors.secondary],
     },
+  ];
+
+  // Sample photos for preview
+  const samplePhotos = [
+    "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=400",
+    "https://images.unsplash.com/photo-1522770179533-24471fcdba45?w=400",
+    "https://images.unsplash.com/photo-1511578314322-379afb476865?w=400",
   ];
 
   const slideshowPresets: SlideshowPreset[] = [
@@ -142,50 +133,6 @@ export function DisplayViewsStep({
     },
   ];
 
-  const photoBlocks: PhotoBlock[] = [
-    {
-      id: "single",
-      name: "Single Photo",
-      size: { width: 1, height: 1 },
-      icon: Camera,
-      category: "single",
-    },
-    {
-      id: "double-h",
-      name: "Double Horizontal",
-      size: { width: 2, height: 1 },
-      icon: Monitor,
-      category: "multi",
-    },
-    {
-      id: "double-v",
-      name: "Double Vertical",
-      size: { width: 1, height: 2 },
-      icon: Monitor,
-      category: "multi",
-    },
-    {
-      id: "quad",
-      name: "Photo Quad",
-      size: { width: 2, height: 2 },
-      icon: Grid3X3,
-      category: "multi",
-    },
-  ];
-
-  const metricsWidgets = [
-    { id: "live-count", name: "Live Guest Count", icon: Users, enabled: true },
-    { id: "photo-count", name: "Total Photos", icon: Camera, enabled: true },
-    {
-      id: "upload-rate",
-      name: "Photos Per Minute",
-      icon: TrendingUp,
-      enabled: true,
-    },
-    { id: "engagement", name: "Engagement %", icon: Activity, enabled: false },
-    { id: "time-trend", name: "Upload Timeline", icon: Clock, enabled: false },
-  ];
-
   const addSlideshowView = () => {
     const newView = {
       id: Date.now(),
@@ -222,499 +169,88 @@ export function DisplayViewsStep({
     }
   };
 
-  const updateSlideshowView = (id: number, updates: any) => {
-    setEventData((prev) => ({
-      ...prev,
-      slideshowViews: prev.slideshowViews.map((view) =>
-        view.id === id ? { ...view, ...updates } : view,
-      ),
-    }));
-  };
+  // Simple slideshow preview component
+  const SlideshowPreview = () => {
+    if (samplePhotos.length === 0) {
+      return (
+        <div
+          className="flex items-center justify-center h-full rounded-lg"
+          style={{
+            background: `linear-gradient(135deg, ${eventData.colors.primary}40, ${eventData.colors.secondary}20)`,
+          }}
+        >
+          <div className="text-center text-gray-400">
+            <Image className="w-12 h-12 mx-auto mb-2" />
+            <p className="text-sm">Slideshow preview</p>
+          </div>
+        </div>
+      );
+    }
 
-  const openViewEditor = (viewId: number) => {
-    // TODO: Implement view editor modal
-    console.log("Opening editor for view:", viewId);
+    return (
+      <div
+        className="relative w-full h-full overflow-hidden rounded-lg"
+        style={{
+          background: `linear-gradient(135deg, ${eventData.colors.primary}40, ${eventData.colors.secondary}20)`,
+        }}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="absolute inset-4 flex items-center justify-center"
+        >
+          <img
+            src={samplePhotos[0]}
+            alt="Preview"
+            className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
+            style={{
+              border: `2px solid ${eventData.colors.secondary}80`,
+              boxShadow: `0 0 20px ${eventData.colors.primary}30`,
+            }}
+          />
+        </motion.div>
+
+        {/* Mode indicator */}
+        <div
+          className="absolute bottom-3 left-1/2 transform -translate-x-1/2 px-3 py-1 rounded-full text-xs font-medium"
+          style={{
+            backgroundColor: eventData.colors.primary + "90",
+            color: "white",
+          }}
+        >
+          {eventData.slideshowViews[0]?.preset || "Classic"} Mode
+        </div>
+
+        {/* Color theme indicator */}
+        <div className="absolute top-3 right-3 flex gap-1">
+          <div
+            className="w-3 h-3 rounded-full border border-white/50"
+            style={{ backgroundColor: eventData.colors.primary }}
+          />
+          <div
+            className="w-3 h-3 rounded-full border border-white/50"
+            style={{ backgroundColor: eventData.colors.secondary }}
+          />
+        </div>
+      </div>
+    );
   };
 
   return (
-    <div className="space-y-6">
-      {/* Live Metrics Dashboard */}
-      <Card
-        className="border"
-        style={{ borderColor: `${colors.lightGreen}30` }}
-      >
+    <div className="space-y-8">
+      {/* Slideshow Preview Section */}
+      <Card>
         <CardHeader>
-          <CardTitle
-            className="flex items-center gap-2"
-            style={{ color: colors.green }}
-          >
-            <BarChart3 className="w-5 h-5" />
-            Live Event Metrics
+          <CardTitle style={{ color: colors.green }}>
+            Slideshow Preview
           </CardTitle>
-          <p className="text-sm" style={{ color: colors.darkGreen }}>
-            Real-time analytics for host dashboard and guest displays
+          <p className="text-sm text-gray-600">
+            See how your selected theme colors will look in the slideshow
           </p>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {metricsWidgets.map((widget) => {
-              const IconComponent = widget.icon;
-              return (
-                <div
-                  key={widget.id}
-                  className={`p-3 border rounded-lg cursor-pointer transition-all ${
-                    widget.enabled
-                      ? "border-opacity-100 shadow-sm"
-                      : "border-opacity-30"
-                  }`}
-                  style={{
-                    borderColor: widget.enabled
-                      ? colors.green
-                      : `${colors.lightGreen}30`,
-                    backgroundColor: widget.enabled
-                      ? `${colors.green}10`
-                      : `${colors.eggshell}50`,
-                  }}
-                  onClick={() => {
-                    // TODO: Toggle widget enable/disable state
-                    console.log("Toggling widget:", widget.id);
-                  }}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <IconComponent
-                      className="w-4 h-4"
-                      style={{ color: colors.green }}
-                    />
-                    <p
-                      className="text-sm font-medium"
-                      style={{ color: colors.green }}
-                    >
-                      {widget.name}
-                    </p>
-                  </div>
-                  <Switch checked={widget.enabled} className="scale-75" />
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Slideshow Views */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h4 className="text-lg font-semibold" style={{ color: colors.green }}>
-            Display Views
-          </h4>
-          <p className="text-sm" style={{ color: colors.darkGreen }}>
-            Create multiple customized screens for your event
-          </p>
-        </div>
-        <Button
-          onClick={addSlideshowView}
-          style={{ backgroundColor: colors.green }}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add View
-        </Button>
-      </div>
-
-      <div className="space-y-4">
-        {eventData.slideshowViews.map((view) => (
-          <Card
-            key={view.id}
-            className="border"
-            style={{ borderColor: `${colors.lightGreen}30` }}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <Eye className="w-5 h-5" style={{ color: colors.green }} />
-                  <Input
-                    value={view.name}
-                    onChange={(e) =>
-                      updateSlideshowView(view.id, {
-                        name: e.target.value,
-                      })
-                    }
-                    className="font-medium text-lg border-none bg-transparent p-0 h-auto"
-                    style={{ color: colors.green }}
-                  />
-                  {view.isDefault && (
-                    <Badge
-                      variant="secondary"
-                      style={{
-                        backgroundColor: `${colors.lightGreen}20`,
-                        color: colors.darkGreen,
-                      }}
-                    >
-                      Default
-                    </Badge>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openViewEditor(view.id)}
-                    style={{ borderColor: colors.green, color: colors.green }}
-                  >
-                    <Settings className="w-4 h-4 mr-1" />
-                    Customize
-                  </Button>
-                  {!view.isDefault && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeSlideshowView(view.id)}
-                      className="text-gray-400 hover:text-red-600"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {slideshowPresets.map((preset) => {
-                  const IconComponent = preset.icon;
-                  return (
-                    <button
-                      key={preset.id}
-                      onClick={() =>
-                        updateSlideshowView(view.id, {
-                          preset: preset.id,
-                        })
-                      }
-                      className={`p-3 text-left border rounded-lg hover:border-opacity-80 transition-all ${
-                        view.preset === preset.id
-                          ? "border-opacity-100 shadow-md"
-                          : "border-opacity-30"
-                      }`}
-                      style={{
-                        borderColor:
-                          view.preset === preset.id
-                            ? colors.green
-                            : `${colors.lightGreen}30`,
-                        backgroundColor:
-                          view.preset === preset.id
-                            ? `${colors.green}10`
-                            : `${colors.eggshell}50`,
-                      }}
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <IconComponent
-                          className="w-4 h-4"
-                          style={{ color: colors.green }}
-                        />
-                        <p
-                          className="text-sm font-medium"
-                          style={{ color: colors.green }}
-                        >
-                          {preset.name}
-                        </p>
-                        <Badge
-                          variant="secondary"
-                          style={{
-                            backgroundColor: `${colors.lightGreen}20`,
-                            color: colors.darkGreen,
-                            fontSize: "10px",
-                          }}
-                        >
-                          {preset.category}
-                        </Badge>
-                      </div>
-                      <p
-                        className="text-xs"
-                        style={{ color: colors.darkGreen }}
-                      >
-                        {preset.description}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* 3D Model Creation Studio */}
-      <Card
-        className="border"
-        style={{ borderColor: `${colors.lightGreen}30` }}
-      >
-        <CardHeader>
-          <CardTitle
-            className="flex items-center gap-2"
-            style={{ color: colors.green }}
-          >
-            <Boxes className="w-5 h-5" />
-            3D Venue Creator
-          </CardTitle>
-          <p className="text-sm" style={{ color: colors.darkGreen }}>
-            Design your venue in 3D for immersive photo displays
-          </p>
-        </CardHeader>
-        <CardContent>
-          <Tabs
-            value={modelCreationMode}
-            onValueChange={(value) =>
-              setModelCreationMode(value as ModelCreationMode)
-            }
-          >
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="2d-transform">2D to 3D Transform</TabsTrigger>
-              <TabsTrigger value="venue-scan">Venue Scan</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="2d-transform" className="space-y-4">
-              <div
-                className="p-6 border-2 border-dashed rounded-lg text-center"
-                style={{ borderColor: `${colors.lightGreen}50` }}
-              >
-                <Palette
-                  className="w-12 h-12 mx-auto mb-4"
-                  style={{ color: colors.green }}
-                />
-                <h3
-                  className="text-lg font-semibold mb-2"
-                  style={{ color: colors.green }}
-                >
-                  Canva-Style 3D Builder
-                </h3>
-                <p className="text-sm mb-4" style={{ color: colors.darkGreen }}>
-                  Drag and drop 2D shapes to design your venue, then transform
-                  to 3D
-                </p>
-                <div className="grid grid-cols-4 gap-2 mb-4">
-                  <div className="p-2 border rounded cursor-pointer hover:bg-gray-50">
-                    <div className="w-8 h-8 bg-gray-300 mx-auto"></div>
-                    <p className="text-xs mt-1">Rectangle</p>
-                  </div>
-                  <div className="p-2 border rounded cursor-pointer hover:bg-gray-50">
-                    <div className="w-8 h-8 bg-gray-300 rounded-full mx-auto"></div>
-                    <p className="text-xs mt-1">Circle</p>
-                  </div>
-                  <div className="p-2 border rounded cursor-pointer hover:bg-gray-50">
-                    <div className="w-8 h-8 bg-gray-300 mx-auto transform rotate-45"></div>
-                    <p className="text-xs mt-1">Diamond</p>
-                  </div>
-                  <div className="p-2 border rounded cursor-pointer hover:bg-gray-50">
-                    <div className="w-8 h-4 bg-gray-300 mx-auto"></div>
-                    <p className="text-xs mt-1">Platform</p>
-                  </div>
-                </div>
-                <Button style={{ backgroundColor: colors.green }}>
-                  <Play className="w-4 h-4 mr-2" />
-                  Open 3D Builder
-                </Button>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="venue-scan" className="space-y-4">
-              <div
-                className="p-6 border-2 border-dashed rounded-lg text-center"
-                style={{ borderColor: `${colors.lightGreen}50` }}
-              >
-                <Scan
-                  className="w-12 h-12 mx-auto mb-4"
-                  style={{ color: colors.green }}
-                />
-                <h3
-                  className="text-lg font-semibold mb-2"
-                  style={{ color: colors.green }}
-                >
-                  AI Venue Scanning
-                </h3>
-                <p className="text-sm mb-4" style={{ color: colors.darkGreen }}>
-                  Record your venue and let AI generate a 3D model automatically
-                </p>
-                <div className="space-y-3">
-                  <Button
-                    style={{ backgroundColor: colors.green }}
-                    className="w-full"
-                  >
-                    <Camera className="w-4 h-4 mr-2" />
-                    Start Camera Scan
-                  </Button>
-                  <Button variant="outline" className="w-full">
-                    <Upload className="w-4 h-4 mr-2" />
-                    Upload Video File
-                  </Button>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-
-          {/* Geolocation Settings */}
-          <div
-            className="mt-4 p-4 rounded-lg"
-            style={{ backgroundColor: `${colors.lightGreen}10` }}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4" style={{ color: colors.green }} />
-                <div>
-                  <p className="font-medium" style={{ color: colors.green }}>
-                    Geolocated Photo Placement
-                  </p>
-                  <p className="text-xs" style={{ color: colors.darkGreen }}>
-                    Photos appear where they were taken in the venue
-                  </p>
-                </div>
-              </div>
-              <Switch />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Custom Slideshow Builder */}
-      <Card
-        className="border"
-        style={{ borderColor: `${colors.lightGreen}30` }}
-      >
-        <CardHeader>
-          <CardTitle
-            className="flex items-center gap-2"
-            style={{ color: colors.green }}
-          >
-            <Palette className="w-5 h-5" />
-            Custom Slideshow Builder
-          </CardTitle>
-          <p className="text-sm" style={{ color: colors.darkGreen }}>
-            Drag and drop photo blocks to create unique layouts
-          </p>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Photo Blocks Palette */}
-            <div>
-              <h4 className="font-medium mb-3" style={{ color: colors.green }}>
-                Photo Blocks
-              </h4>
-              <div className="space-y-2">
-                {photoBlocks.map((block) => {
-                  const IconComponent = block.icon;
-                  return (
-                    <div
-                      key={block.id}
-                      className="p-3 border rounded cursor-grab hover:shadow-md transition-all"
-                      style={{ borderColor: `${colors.lightGreen}30` }}
-                      draggable
-                    >
-                      <div className="flex items-center gap-2">
-                        <IconComponent
-                          className="w-4 h-4"
-                          style={{ color: colors.green }}
-                        />
-                        <div>
-                          <p
-                            className="text-sm font-medium"
-                            style={{ color: colors.green }}
-                          >
-                            {block.name}
-                          </p>
-                          <p
-                            className="text-xs"
-                            style={{ color: colors.darkGreen }}
-                          >
-                            {block.size.width}x{block.size.height}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Canvas */}
-            <div className="lg:col-span-2">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="font-medium" style={{ color: colors.green }}>
-                  Canvas
-                </h4>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
-                    <Eye className="w-4 h-4 mr-1" />
-                    Preview
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Download className="w-4 h-4 mr-1" />
-                    Save Template
-                  </Button>
-                </div>
-              </div>
-              <div
-                className="w-full h-80 border-2 border-dashed rounded-lg relative"
-                style={{
-                  borderColor: `${colors.lightGreen}50`,
-                  backgroundColor: `${colors.eggshell}30`,
-                }}
-              >
-                <div className="absolute inset-4 grid grid-cols-6 grid-rows-4 gap-1 opacity-20">
-                  {Array.from({ length: 24 }).map((_, i) => (
-                    <div key={i} className="border border-gray-300"></div>
-                  ))}
-                </div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
-                    <Move
-                      className="w-8 h-8 mx-auto mb-2"
-                      style={{ color: colors.green }}
-                    />
-                    <p className="text-sm" style={{ color: colors.darkGreen }}>
-                      Drag photo blocks here to build your layout
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Animation Settings */}
-          <div
-            className="mt-6 p-4 rounded-lg"
-            style={{ backgroundColor: `${colors.lightGreen}10` }}
-          >
-            <h4 className="font-medium mb-3" style={{ color: colors.green }}>
-              Animation Settings
-            </h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <Label className="text-sm">Transition</Label>
-                <select className="w-full mt-1 p-2 border rounded">
-                  <option>Fade In</option>
-                  <option>Slide In</option>
-                  <option>Scale Up</option>
-                  <option>Flip</option>
-                </select>
-              </div>
-              <div>
-                <Label className="text-sm">Duration</Label>
-                <select className="w-full mt-1 p-2 border rounded">
-                  <option>0.5s</option>
-                  <option>1s</option>
-                  <option>2s</option>
-                  <option>3s</option>
-                </select>
-              </div>
-              <div>
-                <Label className="text-sm">Display Time</Label>
-                <select className="w-full mt-1 p-2 border rounded">
-                  <option>3s</option>
-                  <option>5s</option>
-                  <option>10s</option>
-                  <option>15s</option>
-                </select>
-              </div>
-              <div>
-                <Label className="text-sm">Auto Advance</Label>
-                <Switch className="mt-2" />
-              </div>
-            </div>
+          <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
+            <SlideshowPreview />
           </div>
         </CardContent>
       </Card>
@@ -875,6 +411,314 @@ export function DisplayViewsStep({
           </Card>
         )}
       </div>
+
+      {/* Display Views & Presets Section */}
+      <Tabs defaultValue="presets" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="presets">Display Presets</TabsTrigger>
+          <TabsTrigger value="views">Slideshow Views</TabsTrigger>
+          <TabsTrigger value="widgets">Dashboard Widgets</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="presets" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle style={{ color: colors.green }}>
+                Choose Display Preset
+              </CardTitle>
+              <p className="text-sm text-gray-600">
+                Select how photos will be displayed during your event
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {slideshowPresets.map((preset) => {
+                  const IconComponent = preset.icon;
+                  return (
+                    <Card
+                      key={preset.id}
+                      className={`cursor-pointer transition-all hover:shadow-md ${
+                        eventData.slideshowViews[0]?.preset === preset.id
+                          ? "ring-2 shadow-md"
+                          : "hover:ring-1"
+                      }`}
+                      style={
+                        {
+                          "--ring-color":
+                            eventData.slideshowViews[0]?.preset === preset.id
+                              ? colors.green
+                              : `${colors.lightGreen}50`,
+                        } as React.CSSProperties
+                      }
+                      onClick={() =>
+                        setEventData((prev) => ({
+                          ...prev,
+                          slideshowViews: [
+                            {
+                              ...prev.slideshowViews[0],
+                              preset: preset.id,
+                            },
+                          ],
+                        }))
+                      }
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div
+                            className="p-2 rounded-lg"
+                            style={{ backgroundColor: `${colors.green}20` }}
+                          >
+                            <IconComponent
+                              className="w-5 h-5"
+                              style={{ color: colors.green }}
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <h4
+                              className="font-medium text-sm mb-1"
+                              style={{ color: colors.green }}
+                            >
+                              {preset.name}
+                            </h4>
+                            <p className="text-xs text-gray-600 mb-2">
+                              {preset.description}
+                            </p>
+                            <div className="flex flex-wrap gap-1">
+                              {preset.features.slice(0, 2).map((feature) => (
+                                <Badge
+                                  key={feature}
+                                  variant="secondary"
+                                  style={{
+                                    backgroundColor: `${colors.lightGreen}20`,
+                                    color: colors.darkGreen,
+                                  }}
+                                >
+                                  {feature}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Animation Settings */}
+          <div
+            className="mt-6 p-4 rounded-lg"
+            style={{ backgroundColor: `${colors.lightGreen}10` }}
+          >
+            <h4 className="font-medium mb-3" style={{ color: colors.green }}>
+              Animation Settings
+            </h4>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <Label className="text-sm">Transition</Label>
+                <select className="w-full mt-1 p-2 border rounded">
+                  <option>Fade In</option>
+                  <option>Slide In</option>
+                  <option>Scale Up</option>
+                  <option>Flip</option>
+                </select>
+              </div>
+              <div>
+                <Label className="text-sm">Duration</Label>
+                <select className="w-full mt-1 p-2 border rounded">
+                  <option>0.5s</option>
+                  <option>1s</option>
+                  <option>2s</option>
+                  <option>3s</option>
+                </select>
+              </div>
+              <div>
+                <Label className="text-sm">Display Time</Label>
+                <select className="w-full mt-1 p-2 border rounded">
+                  <option>3s</option>
+                  <option>5s</option>
+                  <option>10s</option>
+                  <option>15s</option>
+                </select>
+              </div>
+              <div>
+                <Label className="text-sm">Auto Advance</Label>
+                <Switch className="mt-2" />
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Other tab contents remain the same... */}
+        <TabsContent value="views" className="space-y-6">
+          {/* Slideshow Views */}
+          <div className="flex justify-between items-center">
+            <div>
+              <h4
+                className="text-lg font-semibold"
+                style={{ color: colors.green }}
+              >
+                Display Views
+              </h4>
+              <p className="text-sm" style={{ color: colors.darkGreen }}>
+                Create multiple customized screens for your event
+              </p>
+            </div>
+            <Button
+              onClick={addSlideshowView}
+              style={{ backgroundColor: colors.green }}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add View
+            </Button>
+          </div>
+
+          <div className="grid gap-4">
+            {eventData.slideshowViews.map((view) => (
+              <Card key={view.id} className="relative">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{
+                          backgroundColor: view.isDefault
+                            ? colors.green
+                            : colors.lightGreen,
+                        }}
+                      />
+                      <div>
+                        <h4
+                          className="font-medium"
+                          style={{ color: colors.green }}
+                        >
+                          {view.name}
+                        </h4>
+                        <p className="text-xs text-gray-600">
+                          {view.preset} • {view.type}
+                          {view.isDefault && " (Default)"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        style={{
+                          borderColor: colors.green,
+                          color: colors.green,
+                        }}
+                      >
+                        <Settings className="w-4 h-4" />
+                      </Button>
+                      {!view.isDefault && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeSlideshowView(view.id)}
+                          className="text-red-600 border-red-200 hover:bg-red-50"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="widgets" className="space-y-6">
+          {/* Dashboard Widgets - keeping existing content */}
+          <Card>
+            <CardHeader>
+              <CardTitle style={{ color: colors.green }}>
+                Dashboard Widgets
+              </CardTitle>
+              <p className="text-sm text-gray-600">
+                Configure what information is displayed alongside your photos
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {[
+                  {
+                    id: "metrics",
+                    name: "Live Metrics",
+                    icon: BarChart3,
+                    enabled: true,
+                  },
+                  {
+                    id: "guests",
+                    name: "Guest Count",
+                    icon: Users,
+                    enabled: false,
+                  },
+                  {
+                    id: "recent",
+                    name: "Recent Photos",
+                    icon: Camera,
+                    enabled: true,
+                  },
+                  {
+                    id: "trending",
+                    name: "Trending",
+                    icon: TrendingUp,
+                    enabled: false,
+                  },
+                  {
+                    id: "location",
+                    name: "Location Info",
+                    icon: MapPin,
+                    enabled: false,
+                  },
+                  { id: "qr", name: "QR Code", icon: Scan, enabled: true },
+                ].map((widget) => {
+                  const IconComponent = widget.icon;
+                  return (
+                    <div
+                      key={widget.id}
+                      className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                        widget.enabled
+                          ? "border-opacity-100 shadow-sm"
+                          : "border-opacity-30"
+                      }`}
+                      style={{
+                        borderColor: widget.enabled
+                          ? colors.green
+                          : `${colors.lightGreen}30`,
+                        backgroundColor: widget.enabled
+                          ? `${colors.green}10`
+                          : `${colors.eggshell}50`,
+                      }}
+                      onClick={() => {
+                        console.log("Toggling widget:", widget.id);
+                      }}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <IconComponent
+                          className="w-4 h-4"
+                          style={{ color: colors.green }}
+                        />
+                        <p
+                          className="text-sm font-medium"
+                          style={{ color: colors.green }}
+                        >
+                          {widget.name}
+                        </p>
+                      </div>
+                      <Switch checked={widget.enabled} className="scale-75" />
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

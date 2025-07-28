@@ -17,6 +17,7 @@ import {
   LogOut,
   PanelLeft,
   PanelLeftOpen,
+  Boxes,
 } from "lucide-react";
 import { useSidebar } from "@/hooks/useSideBar";
 import { useDarkMode } from "@/hooks/useDarkMode";
@@ -140,6 +141,7 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
       if (path.includes("/host/community")) return "community";
       if (path.includes("/host/photos")) return "photos";
       if (path.includes("/host/guest")) return "guests";
+      if (path.includes("/host/models")) return "models";
       return "home";
     };
 
@@ -169,6 +171,9 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
           break;
         case "guests":
           navigate("/host/guest");
+          break;
+        case "models":
+          navigate("/host/models");
           break;
         default:
           navigate("/host");
@@ -228,6 +233,13 @@ const SidebarNav = forwardRef<HTMLDivElement, SidebarNavProps>(
         id: "guests",
         label: "Guests",
         icon: TrendingUp,
+        color: "text-sp_darkgreen",
+        hoverColor: "hover:text-sp_darkgreen",
+      },
+      {
+        id: "models",
+        label: "Models",
+        icon: Boxes,
         color: "text-sp_darkgreen",
         hoverColor: "hover:text-sp_darkgreen",
       },

@@ -15,9 +15,9 @@ interface MarqueeSlideshowProps {
 }
 
 const PHOTOS_PER_STRIP = 8; // photos rendered before pattern repeats once
-const STRIP_COUNT = 3; // visible vertical strips per column
+const STRIP_COUNT = 3;
 const ANIMATION_SECS = 50; // time for one full travel
-const COLUMN_COUNT = 10; // how many columns across
+const COLUMN_COUNT = 10;
 const PHOTOS_NEEDED_PER_COLUMN = PHOTOS_PER_STRIP * STRIP_COUNT * 2; // double for seamless loop
 
 export default function MarqueeSlideshow({ photos }: MarqueeSlideshowProps) {

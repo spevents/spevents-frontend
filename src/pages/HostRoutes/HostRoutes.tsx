@@ -13,6 +13,7 @@ import { CreateEventSimplePage } from "./CreateEventPageSimple";
 import { CreateEventPage } from "./CreateEventPage";
 import ProfilePage from "../../pages/ProfilePage";
 import SubscriptionPage from "../../pages/SubscriptionPage";
+import { ModelsPage } from "./ModelsPage";
 
 export const HostRoutes = () => {
   return (
@@ -33,6 +34,7 @@ export const HostRoutes = () => {
         <Route path="community" element={<CommunityPage />} />
         <Route path="photos" element={<PhotosPage />} />
         <Route path="guest" element={<MetricsPage />} />
+        <Route path="models" element={<ModelsPage />} />
 
         {/* Account management routes */}
         <Route path="profile" element={<ProfilePage />} />
