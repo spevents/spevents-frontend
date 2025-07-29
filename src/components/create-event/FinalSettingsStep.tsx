@@ -7,31 +7,9 @@ import {
   MapPin,
   Users,
   Palette,
-  Eye,
-  Grid3X3,
-  Layers,
-  RotateCcw,
-  Shapes,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EventData, colors } from "@/types/eventTypes";
-
-const Badge = ({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  variant?: string;
-  className?: string;
-}) => (
-  <span
-    className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800 ${
-      className || ""
-    }`}
-  >
-    {children}
-  </span>
-);
 
 const Separator = ({ className }: { className?: string }) => (
   <hr className={`border-t border-gray-200 ${className || ""}`} />
@@ -76,33 +54,6 @@ export function FinalSettingsStep({
       .toString()
       .padStart(2, "0")}`;
   };
-
-  const slideshowPresets = [
-    {
-      id: "classic",
-      name: "Classic Grid",
-      description: "Traditional photo grid layout",
-      icon: Grid3X3,
-    },
-    {
-      id: "mosaic",
-      name: "Dynamic Mosaic",
-      description: "Mixed size photo arrangement",
-      icon: Layers,
-    },
-    {
-      id: "carousel",
-      name: "Rotating Carousel",
-      description: "Continuous photo rotation",
-      icon: RotateCcw,
-    },
-    {
-      id: "collage",
-      name: "Creative Collage",
-      description: "Artistic photo collage",
-      icon: Shapes,
-    },
-  ];
 
   return (
     <div className="space-y-6">
@@ -282,60 +233,6 @@ export function FinalSettingsStep({
           </div>
 
           <Separator />
-
-          {/* Display Views */}
-          <div>
-            <h4
-              className="text-lg font-semibold mb-3 flex items-center gap-2"
-              style={{ color: colors.green }}
-            >
-              <Eye className="w-5 h-5" />
-              Display Views ({eventData.slideshowViews.length})
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {eventData.slideshowViews.map((view) => {
-                const preset = slideshowPresets.find(
-                  (p) => p.id === view.preset,
-                );
-                const IconComponent = preset?.icon || Grid3X3;
-                return (
-                  <Card
-                    key={view.id}
-                    className="border"
-                    style={{
-                      borderColor: `${colors.lightGreen}30`,
-                    }}
-                  >
-                    <CardContent className="p-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <IconComponent
-                          className="w-4 h-4"
-                          style={{ color: colors.green }}
-                        />
-                        <p
-                          className="font-medium"
-                          style={{ color: colors.green }}
-                        >
-                          {view.name}
-                        </p>
-                        {view.isDefault && (
-                          <Badge variant="secondary" className="text-xs">
-                            Default
-                          </Badge>
-                        )}
-                      </div>
-                      <p
-                        className="text-xs"
-                        style={{ color: colors.darkGreen }}
-                      >
-                        {preset?.name} - {preset?.description}
-                      </p>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
 
           {eventData.description && (
             <>
