@@ -38,7 +38,7 @@ export function EventSlideshow() {
         // Test session validation
         if (event?.sessionCode) {
           const validatedEvent = await guestService.getEventBySessionCode(
-            event.sessionCode,
+            event.sessionCode
           );
           setDebugInfo((prev: any) => ({
             ...prev,
@@ -94,21 +94,6 @@ export function EventSlideshow() {
     <div className="relative h-screen">
       <PhotoSlideshow eventId={eventId} />
 
-      {/* Debug Info */}
-      {/* {debugInfo && (
-        <div className="absolute top-5 left-5 z-50 bg-white rounded-lg p-4 max-w-md text-xs">
-          <h3 className="font-bold mb-2">Debug Info</h3>
-          <pre className="overflow-auto max-h-40 bg-gray-100 p-2 rounded">
-            {JSON.stringify(debugInfo, null, 2)}
-          </pre>
-          {sessionCode && (
-            <div className="mt-2">
-              <strong>QR URL:</strong> {getScanUrl()}
-            </div>
-          )}
-        </div>
-      )} */}
-
       {/* QR Code Panel */}
       {showQR && sessionCode && (
         <div className="absolute top-5 right-16 z-50">
@@ -140,14 +125,6 @@ export function EventSlideshow() {
         >
           Show QR
         </button>
-      )}
-
-      {/* Warning if no session code */}
-      {!sessionCode && (
-        <div className="absolute top-5 right-16 z-50 bg-red-500 text-white p-4 rounded-lg">
-          <strong>No Session Code!</strong>
-          <div className="text-sm">Event needs to be activated first.</div>
-        </div>
       )}
     </div>
   );
