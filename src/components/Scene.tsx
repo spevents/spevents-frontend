@@ -1,8 +1,9 @@
 // src/components/Scene.tsx
 
-import { Suspense, useEffect } from "react";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Suspense, useEffect, useRef } from "react";
+import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import Tables from "./Tables";
+import { Stickman } from "../../models/stickman/Stickman";
 import * as THREE from "three";
 import React from "react";
 
@@ -91,6 +92,93 @@ function WallSconce({ position, rotation = 0 }: DecorativeElement) {
   );
 }
 
+function AnimatedStickman() {
+  const stickmanRef = useRef<THREE.Group>(null);
+  const bonesRef = useRef<{ [key: string]: THREE.Bone }>({});
+
+  useEffect(() => {
+    if (!stickmanRef.current) return;
+
+    // Find and store bone references
+    stickmanRef.current.traverse((child) => {
+      if (child instanceof THREE.Bone) {
+        bonesRef.current[child.name] = child;
+      }
+    });
+  }, []);
+
+  useFrame((state) => {
+    if (!stickmanRef.current || Object.keys(bonesRef.current).length === 0)
+      return;
+
+    const time = state.clock.getElapsedTime();
+    const walkSpeed = 3; // Speed of walking animation
+    const armSwing = 0.8; // How much arms swing
+    const legSwing = 0.6; // How much legs swing
+
+    // Walking cycle phase
+    const phase = (time * walkSpeed) % (Math.PI * 2);
+
+    // Arm animation (opposite to legs for natural walking)
+    if (bonesRef.current.shoulder_l_03) {
+      bonesRef.current.shoulder_l_03.rotation.x = Math.sin(phase) * armSwing;
+    }
+    if (bonesRef.current.shoulder_r_08) {
+      bonesRef.current.shoulder_r_08.rotation.x =
+        Math.sin(phase + Math.PI) * armSwing;
+    }
+
+    // Hand/forearm animation
+    if (bonesRef.current.hand_l_1_04) {
+      bonesRef.current.hand_l_1_04.rotation.x = Math.sin(phase) * 0.5;
+    }
+    if (bonesRef.current.hand_r_1_09) {
+      bonesRef.current.hand_r_1_09.rotation.x = Math.sin(phase + Math.PI) * 0.5;
+    }
+
+    // Leg animation
+    if (bonesRef.current.foot_l_1_019) {
+      bonesRef.current.foot_l_1_019.rotation.x =
+        Math.sin(phase + Math.PI) * legSwing;
+    }
+    if (bonesRef.current.foot_r_1_015) {
+      bonesRef.current.foot_r_1_015.rotation.x = Math.sin(phase) * legSwing;
+    }
+
+    // Lower leg/knee animation
+    if (bonesRef.current.foot_l_2_020) {
+      const leftKnee = Math.max(0, Math.sin(phase + Math.PI) * 0.8);
+      bonesRef.current.foot_l_2_020.rotation.x = leftKnee;
+    }
+    if (bonesRef.current.foot_r_2_016) {
+      const rightKnee = Math.max(0, Math.sin(phase) * 0.8);
+      bonesRef.current.foot_r_2_016.rotation.x = rightKnee;
+    }
+
+    // Body slight sway
+    if (bonesRef.current.body_00) {
+      bonesRef.current.body_00.rotation.z =
+        Math.sin(time * walkSpeed * 2) * 0.05;
+    }
+
+    // Head slight bob
+    if (bonesRef.current.head_014) {
+      bonesRef.current.head_014.position.y =
+        34.334815979003906 + Math.sin(time * walkSpeed * 2) * 2;
+    }
+
+    // Gentle body bobbing motion
+    stickmanRef.current.position.y =
+      -0.5 + Math.sin(time * walkSpeed * 2) * 0.1;
+  });
+
+  return (
+    <group ref={stickmanRef} position={[0, 0, 0]}>
+      <Stickman scale={[0.01, 0.01, 0.01]} castShadow receiveShadow />
+    </group>
+  );
+}
+
 export default function Scene({ children }: { children: React.ReactNode }) {
   return (
     <div className="w-full h-screen">
@@ -159,6 +247,10 @@ export default function Scene({ children }: { children: React.ReactNode }) {
         {/* Main content */}
         <Suspense fallback={null}>
           <Tables />
+
+          {/* Animated Stickman */}
+          <AnimatedStickman />
+
           {children}
         </Suspense>
 

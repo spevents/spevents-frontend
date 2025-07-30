@@ -7,6 +7,7 @@ Source: https://sketchfab.com/3d-models/stickman-low-poly-12b31ea386ee4398a552d1
 Title: Stickman Low Poly
 */
 
+// models/stickman/Stickman.tsx
 import * as THREE from "three";
 import React from "react";
 import { ThreeElements, useGraph } from "@react-three/fiber";
@@ -24,7 +25,7 @@ type GLTFResult = GLTF & {
   animations: THREE.AnimationClip[];
 };
 
-export function Model(props: ThreeElements["group"]) {
+export function Stickman(props: ThreeElements["group"]) {
   const { scene } = useGLTF("/models/stickman/raw/stickman.gltf");
   const clone = React.useMemo(() => SkeletonUtils.clone(scene), [scene]);
   const { nodes, materials } = useGraph(clone) as unknown as GLTFResult;
