@@ -111,7 +111,7 @@ export default function MarqueeSlideshow({
         background: `linear-gradient(135deg, ${themeColors.primary}40, ${themeColors.secondary}20)`,
       }}
     >
-      <div className="h-full w-full flex justify-center gap-12 px-8">
+      <div className="h-full w-full flex justify-center gap-5 px-8">
         {columnPhotos.map((column, colIdx) => {
           const dir = colIdx % 2 === 0 ? 1 : -1; // alternate scroll direction
 

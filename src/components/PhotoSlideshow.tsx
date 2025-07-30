@@ -22,6 +22,7 @@ import FunSlideshow from "./slideshow_modes/FunSlideshow";
 import PresenterSlideshow from "./slideshow_modes/PresenterSlideshow";
 import ModelSlideshow from "./slideshow_modes/ModelSlideshow";
 import MarqueeSlideshow from "./slideshow_modes/MarqueeSlideshow";
+import SimpleSlideshow from "./slideshow_modes/SimpleSlideshow";
 
 interface Photo {
   src: string;
@@ -297,60 +298,23 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
             themeColors={themeColors}
           />
         );
-      default:
-        // Simple mode continues to use displayedPhotos
+      case "simple":
         return (
-          <div
-            className="relative w-full h-full overflow-hidden"
-            style={{
-              background: `linear-gradient(135deg, ${themeColors.primary}20, ${themeColors.secondary}10)`,
-            }}
-          >
-            {displayedPhotos.length === 0 && !isLoading && (
-              <div className="absolute inset-0 flex items-center justify-center text-white">
-                <div className="text-center">
-                  <p className="text-xl mb-2">No photos to display</p>
-                  <p className="text-white/60">
-                    Photos will appear here as guests upload them
-                  </p>
-                </div>
-              </div>
-            )}
-            <AnimatePresence>
-              {displayedPhotos.map((photo) => (
-                <motion.div
-                  key={photo.transitionId}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 1.2 }}
-                  transition={{
-                    duration: 2,
-                    ease: "easeInOut",
-                  }}
-                  className="absolute inset-0 flex items-center justify-center"
-                >
-                  <img
-                    src={photo.src}
-                    alt="Slideshow photo"
-                    className="max-w-full max-h-full object-contain rounded-lg"
-                    style={{
-                      border: `3px solid ${themeColors.secondary}60`,
-                      boxShadow: `0 0 20px ${themeColors.primary}30`,
-                    }}
-                    onError={() => {
-                      console.error(
-                        "❌ Failed to load slideshow image:",
-                        photo.src,
-                      );
-                    }}
-                    onLoad={() => {
-                      console.log("✅ Slideshow image loaded:", photo.id);
-                    }}
-                  />
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
+          <SimpleSlideshow
+            photos={convertPhotosForDisplay(displayedPhotos)}
+            containerDimensions={containerDimensions}
+            themeColors={themeColors}
+            hideUI={hideUI}
+          />
+        );
+      default:
+        return (
+          <SimpleSlideshow
+            photos={convertPhotosForDisplay(displayedPhotos)}
+            containerDimensions={containerDimensions}
+            themeColors={themeColors}
+            hideUI={hideUI}
+          />
         );
     }
   };
@@ -425,16 +389,6 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
                   <Presentation size={16} />
                 </button>
                 <button
-                  onClick={() => setViewMode("model")}
-                  className={`p-2 rounded-full transition-colors ${
-                    viewMode === "model"
-                      ? "bg-white text-black"
-                      : "text-white hover:bg-white/20"
-                  }`}
-                >
-                  <Hotel size={16} />
-                </button>
-                <button
                   onClick={() => setViewMode("marquee")}
                   className={`p-2 rounded-full transition-colors ${
                     viewMode === "marquee"
@@ -449,6 +403,16 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
                   }}
                 >
                   <AlignHorizontalSpaceAround size={16} />
+                </button>
+                <button
+                  onClick={() => setViewMode("model")}
+                  className={`p-2 rounded-full transition-colors ${
+                    viewMode === "model"
+                      ? "bg-white text-black"
+                      : "text-white hover:bg-white/20"
+                  }`}
+                >
+                  <Hotel size={16} />
                 </button>
               </div>
 
