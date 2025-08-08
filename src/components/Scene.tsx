@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useRef } from "react";
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import Tables from "./Tables";
-import { Stickman } from "../../models/stickman/Stickman";
+import { Stickman } from "../../public/models/stickman/Stickman";
 import * as THREE from "three";
 import React from "react";
 
