@@ -24,6 +24,7 @@ interface Photo {
   name: string;
   created_at: string;
   fileName?: string;
+  guestId?: string;
 }
 
 interface TabConfig {
@@ -48,7 +49,6 @@ const PhotoThumbnail = ({
   const [imageState, setImageState] = useState<
     "loading" | "loaded" | "error" | "testing"
   >("testing");
-  const [testedUrls, setTestedUrls] = useState<string[]>([]);
 
   useEffect(() => {
     if (photo.url) {
@@ -69,72 +69,13 @@ const PhotoThumbnail = ({
       }
 
       console.log(`❌ URL failed (${response.status}): ${url}`);
-
-      // Try alternative URLs if this one fails
-      await tryAlternativeUrls(url);
+      setImageState("error");
+      onError?.();
     } catch (error) {
       console.log(`❌ URL error: ${url}`, error);
-      await tryAlternativeUrls(url);
-    }
-  };
-
-  const tryAlternativeUrls = async (originalUrl: string) => {
-    const fileName = originalUrl.split("/").pop();
-    if (!fileName) {
       setImageState("error");
       onError?.();
-      return;
     }
-
-    // Extract eventId from the original URL or use current context
-    const urlParts = originalUrl.split("/");
-    const eventIdFromUrl = urlParts.find((part) => part.startsWith("evt_"));
-
-    if (!eventIdFromUrl) {
-      setImageState("error");
-      onError?.();
-      return;
-    }
-
-    const cloudFrontBase = "https://d3boq06xf0z9b1.cloudfront.net";
-    const storedGuestId = localStorage.getItem("spevents-guest-id");
-
-    const alternativeUrls = [
-      `${cloudFrontBase}/events/${eventIdFromUrl}/photos/${fileName}`,
-      `${cloudFrontBase}/${eventIdFromUrl}/photos/${fileName}`,
-      `${cloudFrontBase}/${eventIdFromUrl}/${fileName}`,
-      storedGuestId
-        ? `${cloudFrontBase}/events/${eventIdFromUrl}/guests/${storedGuestId}/${fileName}`
-        : null,
-      `${cloudFrontBase}/uploads/${eventIdFromUrl}/${fileName}`,
-    ].filter(Boolean) as string[];
-
-    for (const testUrl of alternativeUrls) {
-      if (testedUrls.includes(testUrl)) continue;
-
-      try {
-        console.log(`🧪 Trying alternative: ${testUrl}`);
-        const response = await fetch(testUrl, { method: "HEAD" });
-
-        if (response.ok) {
-          console.log(`✅ Alternative URL works: ${testUrl}`);
-          // Update the photo URL that works
-          photo.url = testUrl;
-          setImageState("loaded");
-          onLoad?.();
-          return;
-        }
-
-        setTestedUrls((prev) => [...prev, testUrl]);
-      } catch (error) {
-        console.log(`❌ Alternative failed: ${testUrl}`, error);
-      }
-    }
-
-    // All URLs failed
-    console.log(`❌ All URLs failed for ${fileName}`);
-    setImageState("error");
-    onError?.();
   };
 
   const handleImageLoad = () => {
@@ -145,9 +86,9 @@ const PhotoThumbnail = ({
   };
 
   const handleImageError = () => {
-    if (imageState === "testing" || imageState === "loading") {
-      tryAlternativeUrls(photo.url);
-    }
+    console.log(`❌ Image failed to load: ${photo.url}`);
+    setImageState("error");
+    onError?.();
   };
 
   return (
@@ -168,7 +109,7 @@ const PhotoThumbnail = ({
           <Camera className="w-8 h-8 mb-2" />
           <span>Failed to load</span>
           <span className="text-xs mt-1 opacity-60">
-            Tried {testedUrls.length + 1} URLs
+            URL: {photo.url.split("/").pop()}
           </span>
         </div>
       )}
@@ -196,7 +137,7 @@ export function GuestDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("gallery");
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(
-    null,
+    null
   );
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
@@ -237,6 +178,34 @@ export function GuestDashboard() {
     loadGuestPhotos();
   }, [actualEventId]);
 
+  const constructCorrectPhotoUrl = (
+    photoData: any,
+    fileName: string
+  ): string => {
+    const cloudFrontBase = "https://d3boq06xf0z9b1.cloudfront.net";
+
+    // Get stored guestId - this should be the one from the photo upload
+    let guestId =
+      photoData.guestId || localStorage.getItem("spevents-guest-id");
+
+    // If no guestId, try to extract from existing URL
+    if (!guestId && photoData.url && photoData.url.includes("/guests/")) {
+      const urlParts = photoData.url.split("/");
+      const guestsIndex = urlParts.indexOf("guests");
+      if (guestsIndex !== -1 && guestsIndex + 1 < urlParts.length) {
+        guestId = urlParts[guestsIndex + 1];
+      }
+    }
+
+    // Construct the correct URL using the S3 structure: events/{eventId}/guests/{guestId}/{fileName}
+    if (guestId && actualEventId) {
+      return `${cloudFrontBase}/events/${actualEventId}/guests/${guestId}/${fileName}`;
+    }
+
+    // Fallback to host photos path if no guestId
+    return `${cloudFrontBase}/events/${actualEventId}/photos/${fileName}`;
+  };
+
   const loadGuestPhotos = async () => {
     if (!actualEventId) return;
 
@@ -265,13 +234,11 @@ export function GuestDashboard() {
         console.log("📷 Processing photos from key:", usedKey);
         console.log("📷 Sample photo:", storedPhotos[0]);
 
-        const processedPhotos = await Promise.all(
-          storedPhotos.map(async (photoData: any, index: number) => {
+        const processedPhotos: Photo[] = storedPhotos
+          .map((photoData: any, index: number): Photo | null => {
             try {
               let fileName = "";
-              let fallbackUrl = "";
 
-              // Extract fileName from different formats
               if (typeof photoData === "string") {
                 fileName = photoData;
               } else if (photoData.fileName) {
@@ -279,67 +246,57 @@ export function GuestDashboard() {
               } else if (photoData.name) {
                 fileName = photoData.name;
               } else if (photoData.url) {
-                // Extract from existing URL
                 fileName =
                   photoData.url.split("/").pop() || `photo-${index}.jpg`;
-                fallbackUrl = photoData.url;
               }
 
               console.log(`📷 Processing photo ${index}: ${fileName}`);
 
-              // Use direct CloudFront URL instead of signed URLs
-              let url = fallbackUrl;
+              const url = constructCorrectPhotoUrl(photoData, fileName);
+              console.log(`📷 Constructed URL: ${url}`);
 
-              if (fileName && !fallbackUrl) {
-                // First, try to determine the correct S3 path structure
-                const cloudFrontBase = "https://d3boq06xf0z9b1.cloudfront.net";
+              // keep guestId as string | undefined (never null)
+              let guestId: string | undefined =
+                (photoData.guestId as string | undefined) ??
+                localStorage.getItem("spevents-guest-id") ??
+                undefined;
 
-                // Check if we have guestId info
-                const guestId =
-                  photoData.guestId ||
-                  localStorage.getItem("spevents-guest-id") ||
-                  `guest_${Date.now()}_${Math.random()
-                    .toString(36)
-                    .substring(2, 9)}`;
-
-                // Try different path patterns that might exist
-                const possiblePaths = [
-                  `events/${actualEventId}/guests/${guestId}/${fileName}`,
-                  `events/${actualEventId}/photos/${fileName}`,
-                  `${actualEventId}/${fileName}`,
-                  `uploads/${actualEventId}/${fileName}`,
-                ];
-
-                // Use the first path as default (guest photos)
-                url = `${cloudFrontBase}/${possiblePaths[0]}`;
-                console.log(`📷 Using CloudFront URL: ${url}`);
-
-                // TODO: In production, you'd want to test each path or use signed URLs
+              // try extracting guest id from URL if still missing
+              if (
+                !guestId &&
+                photoData.url &&
+                photoData.url.includes("/guests/")
+              ) {
+                const urlParts = photoData.url.split("/");
+                const guestsIndex = urlParts.indexOf("guests");
+                if (guestsIndex !== -1 && guestsIndex + 1 < urlParts.length) {
+                  guestId = urlParts[guestsIndex + 1];
+                }
               }
 
               return {
                 url,
                 name: fileName,
-                created_at:
-                  photoData.uploadedAt ||
-                  photoData.created_at ||
-                  new Date().toISOString(),
+                created_at: String(
+                  photoData.uploadedAt ??
+                    photoData.created_at ??
+                    new Date().toISOString()
+                ),
                 fileName,
+                guestId, // string | undefined
               };
             } catch (error) {
               console.error(`❌ Error processing photo ${index}:`, error);
-              return {
-                url: `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" fill="%23f0f0f0"/><text x="100" y="100" text-anchor="middle" fill="%23999">Failed to load</text></svg>`,
-                name: `photo-${index}`,
-                created_at: new Date().toISOString(),
-                fileName: `photo-${index}`,
-              };
+              return null;
             }
-          }),
-        );
+          })
+          // Proper type guard—removes nulls and narrows to Photo
+          .filter((p): p is Photo => p !== null);
+
+        setPhotos(processedPhotos);
 
         console.log("✅ Processed photos:", processedPhotos.length);
-        setPhotos(processedPhotos.filter((photo) => photo.url));
+        setPhotos(processedPhotos);
       }
     } catch (error) {
       console.error("❌ Error loading photos:", error);
@@ -379,11 +336,11 @@ export function GuestDashboard() {
 
     if (direction === "prev") {
       setSelectedPhotoIndex(
-        selectedPhotoIndex > 0 ? selectedPhotoIndex - 1 : photos.length - 1,
+        selectedPhotoIndex > 0 ? selectedPhotoIndex - 1 : photos.length - 1
       );
     } else {
       setSelectedPhotoIndex(
-        selectedPhotoIndex < photos.length - 1 ? selectedPhotoIndex + 1 : 0,
+        selectedPhotoIndex < photos.length - 1 ? selectedPhotoIndex + 1 : 0
       );
     }
   };
@@ -407,7 +364,6 @@ export function GuestDashboard() {
     setIsDownloading(true);
 
     try {
-      // Mock API call - replace with actual backend endpoint
       const response = await fetch(`/api/photos/email`, {
         method: "POST",
         headers: {
@@ -448,7 +404,7 @@ export function GuestDashboard() {
   const createAccount = () => {
     // Navigate to account creation with pre-filled email
     const accountUrl = `https://app.spevents.live/signup?email=${encodeURIComponent(
-      email,
+      email
     )}&source=guest`;
     window.open(accountUrl, "_blank");
 
@@ -535,24 +491,17 @@ export function GuestDashboard() {
             <div className="mb-4 p-3 bg-gray-800 rounded-lg text-xs text-white/60">
               <div>Event ID: {actualEventId}</div>
               <div>Photos found: {photos.length}</div>
+              <div>Guest ID: {localStorage.getItem("spevents-guest-id")}</div>
               <div>
                 Storage keys checked: uploaded_photos_{actualEventId},
                 uploaded-photos, temp_photos_{actualEventId}
               </div>
               {photos.length > 0 && (
                 <div className="mt-2">
-                  <div>Sample photo data:</div>
-                  <pre className="text-xs mt-1 overflow-x-auto">
-                    {JSON.stringify(
-                      {
-                        url: photos[0]?.url,
-                        fileName: photos[0]?.fileName,
-                        name: photos[0]?.name,
-                      },
-                      null,
-                      2,
-                    )}
-                  </pre>
+                  <div>Sample photo URL:</div>
+                  <div className="text-xs mt-1 break-all bg-gray-700 p-2 rounded">
+                    {photos[0]?.url}
+                  </div>
                 </div>
               )}
             </div>
