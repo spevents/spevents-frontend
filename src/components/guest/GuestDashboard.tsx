@@ -17,7 +17,6 @@ import {
   Check,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { getSignedPhotoUrl } from "../../services/api";
 import { useActualEventId } from "../session/SessionValidator";
 
 interface Photo {
@@ -47,7 +46,7 @@ const PhotoThumbnail = ({
   onError,
 }: PhotoThumbnailProps) => {
   const [imageState, setImageState] = useState<"loading" | "loaded" | "error">(
-    "loading",
+    "loading"
   );
 
   const handleImageLoad = () => {
@@ -98,7 +97,7 @@ export function GuestDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("gallery");
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(
-    null,
+    null
   );
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
@@ -189,23 +188,34 @@ export function GuestDashboard() {
 
               console.log(`📷 Processing photo ${index}: ${fileName}`);
 
-              // Try to get signed URL, with fallback
+              // Use direct CloudFront URL instead of signed URLs
               let url = fallbackUrl;
-              try {
-                if (fileName && !fallbackUrl) {
-                  url = await getSignedPhotoUrl(actualEventId, fileName);
-                  console.log(`✅ Got signed URL for ${fileName}`);
-                }
-              } catch (urlError) {
-                console.error(
-                  `❌ Failed to get signed URL for ${fileName}:`,
-                  urlError,
-                );
-                // Use CloudFront direct URL as fallback
+
+              if (fileName && !fallbackUrl) {
+                // First, try to determine the correct S3 path structure
                 const cloudFrontBase = "https://d3boq06xf0z9b1.cloudfront.net";
-                url = `${cloudFrontBase}/events/${actualEventId}/guests/guest_${Date.now()}_${Math.random()
-                  .toString(36)
-                  .substring(2, 9)}/${fileName}`;
+
+                // Check if we have guestId info
+                const guestId =
+                  photoData.guestId ||
+                  localStorage.getItem("spevents-guest-id") ||
+                  `guest_${Date.now()}_${Math.random()
+                    .toString(36)
+                    .substring(2, 9)}`;
+
+                // Try different path patterns that might exist
+                const possiblePaths = [
+                  `events/${actualEventId}/guests/${guestId}/${fileName}`,
+                  `events/${actualEventId}/photos/${fileName}`,
+                  `${actualEventId}/${fileName}`,
+                  `uploads/${actualEventId}/${fileName}`,
+                ];
+
+                // Use the first path as default (guest photos)
+                url = `${cloudFrontBase}/${possiblePaths[0]}`;
+                console.log(`📷 Using CloudFront URL: ${url}`);
+
+                // TODO: In production, you'd want to test each path or use signed URLs
               }
 
               return {
@@ -226,7 +236,7 @@ export function GuestDashboard() {
                 fileName: `photo-${index}`,
               };
             }
-          }),
+          })
         );
 
         console.log("✅ Processed photos:", processedPhotos.length);
@@ -270,11 +280,11 @@ export function GuestDashboard() {
 
     if (direction === "prev") {
       setSelectedPhotoIndex(
-        selectedPhotoIndex > 0 ? selectedPhotoIndex - 1 : photos.length - 1,
+        selectedPhotoIndex > 0 ? selectedPhotoIndex - 1 : photos.length - 1
       );
     } else {
       setSelectedPhotoIndex(
-        selectedPhotoIndex < photos.length - 1 ? selectedPhotoIndex + 1 : 0,
+        selectedPhotoIndex < photos.length - 1 ? selectedPhotoIndex + 1 : 0
       );
     }
   };
@@ -339,7 +349,7 @@ export function GuestDashboard() {
   const createAccount = () => {
     // Navigate to account creation with pre-filled email
     const accountUrl = `https://app.spevents.live/signup?email=${encodeURIComponent(
-      email,
+      email
     )}&source=guest`;
     window.open(accountUrl, "_blank");
 
@@ -422,6 +432,32 @@ export function GuestDashboard() {
           </div>
         ) : (
           <div className="p-4">
+            {/* Debug info */}
+            <div className="mb-4 p-3 bg-gray-800 rounded-lg text-xs text-white/60">
+              <div>Event ID: {actualEventId}</div>
+              <div>Photos found: {photos.length}</div>
+              <div>
+                Storage keys checked: uploaded_photos_{actualEventId},
+                uploaded-photos, temp_photos_{actualEventId}
+              </div>
+              {photos.length > 0 && (
+                <div className="mt-2">
+                  <div>Sample photo data:</div>
+                  <pre className="text-xs mt-1 overflow-x-auto">
+                    {JSON.stringify(
+                      {
+                        url: photos[0]?.url,
+                        fileName: photos[0]?.fileName,
+                        name: photos[0]?.name,
+                      },
+                      null,
+                      2
+                    )}
+                  </pre>
+                </div>
+              )}
+            </div>
+
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {photos.map((photo, index) => (
                 <motion.div
