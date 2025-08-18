@@ -33,6 +33,61 @@ interface TabConfig {
   label: string;
 }
 
+interface PhotoThumbnailProps {
+  photo: Photo;
+  index: number;
+  onLoad?: () => void;
+  onError?: () => void;
+}
+
+const PhotoThumbnail = ({
+  photo,
+  index,
+  onLoad,
+  onError,
+}: PhotoThumbnailProps) => {
+  const [imageState, setImageState] = useState<"loading" | "loaded" | "error">(
+    "loading",
+  );
+
+  const handleImageLoad = () => {
+    setImageState("loaded");
+    onLoad?.();
+  };
+
+  const handleImageError = () => {
+    setImageState("error");
+    onError?.();
+  };
+
+  return (
+    <div className="w-full h-full relative">
+      {imageState === "loading" && (
+        <div className="absolute inset-0 bg-gray-800 rounded-lg flex items-center justify-center">
+          <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+        </div>
+      )}
+
+      {imageState === "error" && (
+        <div className="absolute inset-0 bg-gray-800 rounded-lg flex flex-col items-center justify-center text-white/60 text-xs">
+          <Camera className="w-8 h-8 mb-2" />
+          <span>Failed to load</span>
+        </div>
+      )}
+
+      <img
+        src={photo.url}
+        alt={`Photo ${index + 1}`}
+        className={`w-full h-full object-cover rounded-lg shadow-lg group-hover:shadow-xl transition-all duration-200 ${
+          imageState === "loaded" ? "opacity-100" : "opacity-0"
+        }`}
+        onLoad={handleImageLoad}
+        onError={handleImageError}
+      />
+    </div>
+  );
+};
+
 export function GuestDashboard() {
   const navigate = useNavigate();
   const params = useParams();
@@ -88,46 +143,97 @@ export function GuestDashboard() {
     if (!actualEventId) return;
 
     try {
-      // Fix: Use the correct localStorage key that matches PhotoReview
-      const storageKey = `uploaded_photos_${actualEventId}`;
-      const storedPhotos = JSON.parse(localStorage.getItem(storageKey) || "[]");
+      // Check multiple storage keys
+      const possibleKeys = [
+        `uploaded_photos_${actualEventId}`,
+        `uploaded-photos`,
+        `temp_photos_${actualEventId}`,
+      ];
 
-      console.log("📷 Loading photos from storage key:", storageKey);
-      console.log("📷 Found stored photos:", storedPhotos);
+      let storedPhotos: any[] = [];
+      let usedKey = "";
 
-      if (storedPhotos.length > 0) {
-        // Handle both old and new storage formats
-        if (typeof storedPhotos[0] === "object" && storedPhotos[0].url) {
-          setPhotos(storedPhotos);
-        } else if (
-          typeof storedPhotos[0] === "object" &&
-          storedPhotos[0].fileName
-        ) {
-          // New format from PhotoReview with fileName
-          const photoUrls = await Promise.all(
-            storedPhotos.map(async (photoInfo: any) => ({
-              url: await getSignedPhotoUrl(actualEventId, photoInfo.fileName),
-              name: photoInfo.fileName,
-              created_at: photoInfo.uploadedAt || new Date().toISOString(),
-              fileName: photoInfo.fileName,
-            })),
-          );
-          setPhotos(photoUrls);
-        } else {
-          // Legacy format - array of file names
-          const photoUrls = await Promise.all(
-            storedPhotos.map(async (fileName: string) => ({
-              url: await getSignedPhotoUrl(actualEventId, fileName),
-              name: fileName,
-              created_at: new Date().toISOString(),
-              fileName: fileName,
-            })),
-          );
-          setPhotos(photoUrls);
+      for (const key of possibleKeys) {
+        const stored = localStorage.getItem(key);
+        if (stored) {
+          storedPhotos = JSON.parse(stored);
+          usedKey = key;
+          console.log(`📷 Found photos in ${key}:`, storedPhotos.length);
+          break;
         }
       }
+
+      if (storedPhotos.length > 0) {
+        console.log("📷 Processing photos from key:", usedKey);
+        console.log("📷 Sample photo:", storedPhotos[0]);
+
+        const processedPhotos = await Promise.all(
+          storedPhotos.map(async (photoData: any, index: number) => {
+            try {
+              let fileName = "";
+              let fallbackUrl = "";
+
+              // Extract fileName from different formats
+              if (typeof photoData === "string") {
+                fileName = photoData;
+              } else if (photoData.fileName) {
+                fileName = photoData.fileName;
+              } else if (photoData.name) {
+                fileName = photoData.name;
+              } else if (photoData.url) {
+                // Extract from existing URL
+                fileName =
+                  photoData.url.split("/").pop() || `photo-${index}.jpg`;
+                fallbackUrl = photoData.url;
+              }
+
+              console.log(`📷 Processing photo ${index}: ${fileName}`);
+
+              // Try to get signed URL, with fallback
+              let url = fallbackUrl;
+              try {
+                if (fileName && !fallbackUrl) {
+                  url = await getSignedPhotoUrl(actualEventId, fileName);
+                  console.log(`✅ Got signed URL for ${fileName}`);
+                }
+              } catch (urlError) {
+                console.error(
+                  `❌ Failed to get signed URL for ${fileName}:`,
+                  urlError,
+                );
+                // Use CloudFront direct URL as fallback
+                const cloudFrontBase = "https://d3boq06xf0z9b1.cloudfront.net";
+                url = `${cloudFrontBase}/events/${actualEventId}/guests/guest_${Date.now()}_${Math.random()
+                  .toString(36)
+                  .substring(2, 9)}/${fileName}`;
+              }
+
+              return {
+                url,
+                name: fileName,
+                created_at:
+                  photoData.uploadedAt ||
+                  photoData.created_at ||
+                  new Date().toISOString(),
+                fileName,
+              };
+            } catch (error) {
+              console.error(`❌ Error processing photo ${index}:`, error);
+              return {
+                url: `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" fill="%23f0f0f0"/><text x="100" y="100" text-anchor="middle" fill="%23999">Failed to load</text></svg>`,
+                name: `photo-${index}`,
+                created_at: new Date().toISOString(),
+                fileName: `photo-${index}`,
+              };
+            }
+          }),
+        );
+
+        console.log("✅ Processed photos:", processedPhotos.length);
+        setPhotos(processedPhotos.filter((photo) => photo.url));
+      }
     } catch (error) {
-      console.error("Error loading photos:", error);
+      console.error("❌ Error loading photos:", error);
     } finally {
       setIsLoading(false);
     }
@@ -326,10 +432,15 @@ export function GuestDashboard() {
                   className="relative aspect-square group cursor-pointer"
                   onClick={() => handlePhotoTap(index)}
                 >
-                  <img
-                    src={photo.url}
-                    alt={`Photo ${index + 1}`}
-                    className="w-full h-full object-cover rounded-lg shadow-lg group-hover:shadow-xl transition-all duration-200"
+                  <PhotoThumbnail
+                    photo={photo}
+                    index={index}
+                    onLoad={() =>
+                      console.log(`Photo ${index + 1} loaded successfully`)
+                    }
+                    onError={() =>
+                      console.error(`Photo ${index + 1} failed to load`)
+                    }
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                   <div className="absolute bottom-2 left-2 text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200">
