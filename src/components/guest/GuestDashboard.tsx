@@ -45,25 +45,121 @@ const PhotoThumbnail = ({
   onLoad,
   onError,
 }: PhotoThumbnailProps) => {
-  const [imageState, setImageState] = useState<"loading" | "loaded" | "error">(
-    "loading"
-  );
+  const [imageState, setImageState] = useState<
+    "loading" | "loaded" | "error" | "testing"
+  >("testing");
+  const [testedUrls, setTestedUrls] = useState<string[]>([]);
 
-  const handleImageLoad = () => {
-    setImageState("loaded");
-    onLoad?.();
+  useEffect(() => {
+    if (photo.url) {
+      testImageUrl(photo.url);
+    }
+  }, [photo.url]);
+
+  const testImageUrl = async (url: string) => {
+    try {
+      console.log(`🧪 Testing URL: ${url}`);
+
+      const response = await fetch(url, { method: "HEAD" });
+      if (response.ok) {
+        console.log(`✅ URL works: ${url}`);
+        setImageState("loaded");
+        onLoad?.();
+        return;
+      }
+
+      console.log(`❌ URL failed (${response.status}): ${url}`);
+
+      // Try alternative URLs if this one fails
+      await tryAlternativeUrls(url);
+    } catch (error) {
+      console.log(`❌ URL error: ${url}`, error);
+      await tryAlternativeUrls(url);
+    }
   };
 
-  const handleImageError = () => {
+  const tryAlternativeUrls = async (originalUrl: string) => {
+    const fileName = originalUrl.split("/").pop();
+    if (!fileName) {
+      setImageState("error");
+      onError?.();
+      return;
+    }
+
+    // Extract eventId from the original URL or use current context
+    const urlParts = originalUrl.split("/");
+    const eventIdFromUrl = urlParts.find((part) => part.startsWith("evt_"));
+
+    if (!eventIdFromUrl) {
+      setImageState("error");
+      onError?.();
+      return;
+    }
+
+    const cloudFrontBase = "https://d3boq06xf0z9b1.cloudfront.net";
+    const storedGuestId = localStorage.getItem("spevents-guest-id");
+
+    const alternativeUrls = [
+      `${cloudFrontBase}/events/${eventIdFromUrl}/photos/${fileName}`,
+      `${cloudFrontBase}/${eventIdFromUrl}/photos/${fileName}`,
+      `${cloudFrontBase}/${eventIdFromUrl}/${fileName}`,
+      storedGuestId
+        ? `${cloudFrontBase}/events/${eventIdFromUrl}/guests/${storedGuestId}/${fileName}`
+        : null,
+      `${cloudFrontBase}/uploads/${eventIdFromUrl}/${fileName}`,
+    ].filter(Boolean) as string[];
+
+    for (const testUrl of alternativeUrls) {
+      if (testedUrls.includes(testUrl)) continue;
+
+      try {
+        console.log(`🧪 Trying alternative: ${testUrl}`);
+        const response = await fetch(testUrl, { method: "HEAD" });
+
+        if (response.ok) {
+          console.log(`✅ Alternative URL works: ${testUrl}`);
+          // Update the photo URL that works
+          photo.url = testUrl;
+          setImageState("loaded");
+          onLoad?.();
+          return;
+        }
+
+        setTestedUrls((prev) => [...prev, testUrl]);
+      } catch (error) {
+        console.log(`❌ Alternative failed: ${testUrl}`, error);
+      }
+    }
+
+    // All URLs failed
+    console.log(`❌ All URLs failed for ${fileName}`);
     setImageState("error");
     onError?.();
   };
 
+  const handleImageLoad = () => {
+    if (imageState === "testing") {
+      setImageState("loaded");
+      onLoad?.();
+    }
+  };
+
+  const handleImageError = () => {
+    if (imageState === "testing" || imageState === "loading") {
+      tryAlternativeUrls(photo.url);
+    }
+  };
+
   return (
     <div className="w-full h-full relative">
-      {imageState === "loading" && (
+      {(imageState === "loading" || imageState === "testing") && (
         <div className="absolute inset-0 bg-gray-800 rounded-lg flex items-center justify-center">
           <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          {imageState === "testing" && (
+            <div className="absolute bottom-2 left-2 text-white text-xs">
+              Testing...
+            </div>
+          )}
         </div>
       )}
 
@@ -71,6 +167,9 @@ const PhotoThumbnail = ({
         <div className="absolute inset-0 bg-gray-800 rounded-lg flex flex-col items-center justify-center text-white/60 text-xs">
           <Camera className="w-8 h-8 mb-2" />
           <span>Failed to load</span>
+          <span className="text-xs mt-1 opacity-60">
+            Tried {testedUrls.length + 1} URLs
+          </span>
         </div>
       )}
 
@@ -97,7 +196,7 @@ export function GuestDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("gallery");
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(
-    null
+    null,
   );
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
@@ -236,7 +335,7 @@ export function GuestDashboard() {
                 fileName: `photo-${index}`,
               };
             }
-          })
+          }),
         );
 
         console.log("✅ Processed photos:", processedPhotos.length);
@@ -280,11 +379,11 @@ export function GuestDashboard() {
 
     if (direction === "prev") {
       setSelectedPhotoIndex(
-        selectedPhotoIndex > 0 ? selectedPhotoIndex - 1 : photos.length - 1
+        selectedPhotoIndex > 0 ? selectedPhotoIndex - 1 : photos.length - 1,
       );
     } else {
       setSelectedPhotoIndex(
-        selectedPhotoIndex < photos.length - 1 ? selectedPhotoIndex + 1 : 0
+        selectedPhotoIndex < photos.length - 1 ? selectedPhotoIndex + 1 : 0,
       );
     }
   };
@@ -349,7 +448,7 @@ export function GuestDashboard() {
   const createAccount = () => {
     // Navigate to account creation with pre-filled email
     const accountUrl = `https://app.spevents.live/signup?email=${encodeURIComponent(
-      email
+      email,
     )}&source=guest`;
     window.open(accountUrl, "_blank");
 
@@ -451,7 +550,7 @@ export function GuestDashboard() {
                         name: photos[0]?.name,
                       },
                       null,
-                      2
+                      2,
                     )}
                   </pre>
                 </div>
