@@ -6,7 +6,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useSwipeable } from "react-swipeable";
 
 // Backend API calls
-import { getPresignedUrl } from "@/services/api";
+import { getPresignedUrl, uploadPhoto } from "@/services/api";
 
 // Local storage utilities for temp photos
 const getTempPhotos = (eventId: string): Photo[] => {
@@ -30,16 +30,16 @@ const storeTempPhotos = (eventId: string, photos: Photo[]): void => {
 const storeUploadedPhoto = (
   eventId: string,
   fileName: string,
-  isGuest: boolean,
+  isGuest: boolean
 ): void => {
   try {
     const uploaded = JSON.parse(
-      localStorage.getItem(`uploaded_photos_${eventId}`) || "[]",
+      localStorage.getItem(`uploaded_photos_${eventId}`) || "[]"
     );
     uploaded.push({ fileName, isGuest, uploadedAt: new Date().toISOString() });
     localStorage.setItem(
       `uploaded_photos_${eventId}`,
-      JSON.stringify(uploaded),
+      JSON.stringify(uploaded)
     );
   } catch (error) {
     console.error("Error storing uploaded photo info:", error);
@@ -171,7 +171,7 @@ export default function PhotoReview() {
 
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [processingPhotos, setProcessingPhotos] = useState<Set<number>>(
-    new Set(),
+    new Set()
   );
   const [dragPosition, setDragPosition] = useState<number>(0);
   const [screenHeight, setScreenHeight] = useState(0);
@@ -179,11 +179,11 @@ export default function PhotoReview() {
   const [isUploading, setIsUploading] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [exitDirection, setExitDirection] = useState<"up" | "down" | null>(
-    null,
+    null
   );
 
   const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(
-    null,
+    null
   );
   const [horizontalDrag, setHorizontalDrag] = useState(0);
   const [isHorizontalDragging, setIsHorizontalDragging] = useState(false);
@@ -284,42 +284,38 @@ export default function PhotoReview() {
         const blob = await response.blob();
         console.log("✅ Blob created, size:", blob.size);
 
+        // Convert blob to File object
         const fileName = `photo-${Date.now()}.jpg`;
-        console.log("🔗 Getting presigned URL for:", fileName);
+        const file = new File([blob], fileName, { type: "image/jpeg" });
+        console.log("📦 Created File object:", fileName);
 
-        // ✅ FIXED: Pass sessionCode for guest uploads
-        const presignedUrl = await getPresignedUrl({
+        // ✅ FIXED: Use the new uploadPhoto flow
+        console.log("☁️ Starting Vercel Blob upload...");
+
+        // Get upload params (returns JSON string)
+        const uploadParams = await getPresignedUrl({
           eventId: actualEventId,
           fileName,
           contentType: "image/jpeg",
           isGuestPhoto: true,
-          sessionCode: sessionCode, // ✅ Add session code here
+          sessionCode: sessionCode,
         });
-        console.log("✅ Got presigned URL");
 
-        console.log("☁️ Starting S3 upload...");
-        const uploadResponse = await fetch(presignedUrl, {
-          method: "PUT",
-          body: blob,
-          headers: {
-            "Content-Type": "image/jpeg",
+        // Upload using the new flow
+        await uploadPhoto({
+          presignedUrl: uploadParams,
+          file: file,
+          onProgress: (progress) => {
+            console.log(`📊 Upload progress: ${progress}%`);
           },
         });
-
-        console.log("📤 Upload response status:", uploadResponse.status);
-        if (!uploadResponse.ok) {
-          const errorText = await uploadResponse.text();
-          throw new Error(
-            `Upload failed: ${uploadResponse.status} - ${errorText}`,
-          );
-        }
 
         console.log("✅ Upload successful, storing photo info...");
         storeUploadedPhoto(actualEventId, fileName, true);
 
         // Update local temp storage to remove uploaded photo
         const tempPhotos = getTempPhotos(actualEventId).filter(
-          (p: Photo) => p.id !== photo.id,
+          (p: Photo) => p.id !== photo.id
         );
         storeTempPhotos(actualEventId, tempPhotos);
 
@@ -350,7 +346,7 @@ export default function PhotoReview() {
       // Update temp storage using actualEventId
       if (actualEventId) {
         const tempPhotos = getTempPhotos(actualEventId).filter(
-          (p: Photo) => p.id !== photo.id,
+          (p: Photo) => p.id !== photo.id
         );
         storeTempPhotos(actualEventId, tempPhotos);
       }
@@ -454,31 +450,31 @@ export default function PhotoReview() {
                     swipeDirection === "left"
                       ? -200
                       : swipeDirection === "right"
-                        ? 200
-                        : 0,
+                      ? 200
+                      : 0,
                 }}
                 animate={{
                   scale: isCurrentPhoto
                     ? 1
                     : isPrevPhoto || isNextPhoto
-                      ? 0.95
-                      : 0.9,
+                    ? 0.95
+                    : 0.9,
                   opacity: isCurrentPhoto ? 1 : isActive ? 0.7 : 0,
                   x: isCurrentPhoto
                     ? horizontalDrag
                     : isPrevPhoto
-                      ? -100 + horizontalDrag * 0.5
-                      : isNextPhoto
-                        ? 100 + horizontalDrag * 0.5
-                        : horizontalDrag * 0.1,
+                    ? -100 + horizontalDrag * 0.5
+                    : isNextPhoto
+                    ? 100 + horizontalDrag * 0.5
+                    : horizontalDrag * 0.1,
                   y: isCurrentPhoto ? dragPosition : index * -8,
                   rotateY: isCurrentPhoto
                     ? horizontalDrag * 0.05
                     : isPrevPhoto
-                      ? 5
-                      : isNextPhoto
-                        ? -5
-                        : 0,
+                    ? 5
+                    : isNextPhoto
+                    ? -5
+                    : 0,
                   transition: springConfig,
                 }}
                 exit={{
@@ -488,14 +484,14 @@ export default function PhotoReview() {
                     swipeDirection === "left"
                       ? 200
                       : swipeDirection === "right"
-                        ? -200
-                        : 0,
+                      ? -200
+                      : 0,
                   y:
                     exitDirection === "up"
                       ? -screenHeight
                       : exitDirection === "down"
-                        ? screenHeight
-                        : 0,
+                      ? screenHeight
+                      : 0,
                   transition: bounceTransition,
                 }}
                 drag={isCurrentPhoto}
