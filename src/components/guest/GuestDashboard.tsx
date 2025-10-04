@@ -46,70 +46,36 @@ const PhotoThumbnail = ({
   onLoad,
   onError,
 }: PhotoThumbnailProps) => {
-  const [imageState, setImageState] = useState<
-    "loading" | "loaded" | "error" | "testing"
-  >("testing");
-
-  useEffect(() => {
-    if (photo.url) {
-      testImageUrl(photo.url);
-    }
-  }, [photo.url]);
-
-  const testImageUrl = async (url: string) => {
-    try {
-      console.log(`🧪 Testing URL: ${url}`);
-
-      const response = await fetch(url, { method: "HEAD" });
-      if (response.ok) {
-        console.log(`✅ URL works: ${url}`);
-        setImageState("loaded");
-        onLoad?.();
-        return;
-      }
-
-      console.log(`❌ URL failed (${response.status}): ${url}`);
-      setImageState("error");
-      onError?.();
-    } catch (error) {
-      console.log(`❌ URL error: ${url}`, error);
-      setImageState("error");
-      onError?.();
-    }
-  };
+  const [imageState, setImageState] = useState<"loading" | "loaded" | "error">(
+    "loading"
+  );
 
   const handleImageLoad = () => {
-    if (imageState === "testing") {
-      setImageState("loaded");
-      onLoad?.();
-    }
+    console.log(`✅ Photo ${index + 1} loaded:`, photo.url);
+    setImageState("loaded");
+    onLoad?.();
   };
 
   const handleImageError = () => {
-    console.log(`❌ Image failed to load: ${photo.url}`);
+    console.error(`❌ Photo ${index + 1} failed to load:`, photo.url);
     setImageState("error");
     onError?.();
   };
 
   return (
     <div className="w-full h-full relative">
-      {(imageState === "loading" || imageState === "testing") && (
+      {imageState === "loading" && (
         <div className="absolute inset-0 bg-gray-800 rounded-lg flex items-center justify-center">
           <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          {imageState === "testing" && (
-            <div className="absolute bottom-2 left-2 text-white text-xs">
-              Testing...
-            </div>
-          )}
         </div>
       )}
 
       {imageState === "error" && (
-        <div className="absolute inset-0 bg-gray-800 rounded-lg flex flex-col items-center justify-center text-white/60 text-xs">
+        <div className="absolute inset-0 bg-gray-800 rounded-lg flex flex-col items-center justify-center text-white/60 text-xs p-2">
           <Camera className="w-8 h-8 mb-2" />
           <span>Failed to load</span>
-          <span className="text-xs mt-1 opacity-60">
-            URL: {photo.url.split("/").pop()}
+          <span className="text-xs mt-1 opacity-60 truncate w-full text-center">
+            {photo.fileName || photo.name}
           </span>
         </div>
       )}
@@ -178,126 +144,78 @@ export function GuestDashboard() {
     loadGuestPhotos();
   }, [actualEventId]);
 
-  const constructCorrectPhotoUrl = (
-    photoData: any,
-    fileName: string
-  ): string => {
-    const cloudFrontBase = "https://d3boq06xf0z9b1.cloudfront.net";
-
-    // Get stored guestId - this should be the one from the photo upload
-    let guestId =
-      photoData.guestId || localStorage.getItem("spevents-guest-id");
-
-    // If no guestId, try to extract from existing URL
-    if (!guestId && photoData.url && photoData.url.includes("/guests/")) {
-      const urlParts = photoData.url.split("/");
-      const guestsIndex = urlParts.indexOf("guests");
-      if (guestsIndex !== -1 && guestsIndex + 1 < urlParts.length) {
-        guestId = urlParts[guestsIndex + 1];
-      }
-    }
-
-    // Construct the correct URL using the S3 structure: events/{eventId}/guests/{guestId}/{fileName}
-    if (guestId && actualEventId) {
-      return `${cloudFrontBase}/events/${actualEventId}/guests/${guestId}/${fileName}`;
-    }
-
-    // Fallback to host photos path if no guestId
-    return `${cloudFrontBase}/events/${actualEventId}/photos/${fileName}`;
-  };
-
   const loadGuestPhotos = async () => {
     if (!actualEventId) return;
 
     try {
-      // Check multiple storage keys
-      const possibleKeys = [
-        `uploaded_photos_${actualEventId}`,
-        `uploaded-photos`,
-        `temp_photos_${actualEventId}`,
-      ];
+      console.log("🔍 Loading photos for event:", actualEventId);
 
-      let storedPhotos: any[] = [];
-      let usedKey = "";
+      // Check storage keys
+      const storageKey = `uploaded_photos_${actualEventId}`;
+      const stored = localStorage.getItem(storageKey);
 
-      for (const key of possibleKeys) {
-        const stored = localStorage.getItem(key);
-        if (stored) {
-          storedPhotos = JSON.parse(stored);
-          usedKey = key;
-          console.log(`📷 Found photos in ${key}:`, storedPhotos.length);
-          break;
-        }
+      if (!stored) {
+        console.log("⚠️ No photos found in localStorage");
+        setPhotos([]);
+        return;
       }
 
-      if (storedPhotos.length > 0) {
-        console.log("📷 Processing photos from key:", usedKey);
-        console.log("📷 Sample photo:", storedPhotos[0]);
+      const storedPhotos = JSON.parse(stored);
+      console.log(`📷 Found ${storedPhotos.length} photos in storage`);
+      console.log("📷 Sample stored photo:", storedPhotos[0]);
 
-        const processedPhotos: Photo[] = storedPhotos
-          .map((photoData: any, index: number): Photo | null => {
-            try {
-              let fileName = "";
-
-              if (typeof photoData === "string") {
-                fileName = photoData;
-              } else if (photoData.fileName) {
-                fileName = photoData.fileName;
-              } else if (photoData.name) {
-                fileName = photoData.name;
-              } else if (photoData.url) {
-                fileName =
-                  photoData.url.split("/").pop() || `photo-${index}.jpg`;
-              }
-
-              console.log(`📷 Processing photo ${index}: ${fileName}`);
-
-              const url = constructCorrectPhotoUrl(photoData, fileName);
-              console.log(`📷 Constructed URL: ${url}`);
-
-              // keep guestId as string | undefined (never null)
-              let guestId: string | undefined =
-                (photoData.guestId as string | undefined) ??
-                localStorage.getItem("spevents-guest-id") ??
-                undefined;
-
-              // try extracting guest id from URL if still missing
-              if (
-                !guestId &&
-                photoData.url &&
-                photoData.url.includes("/guests/")
-              ) {
-                const urlParts = photoData.url.split("/");
-                const guestsIndex = urlParts.indexOf("guests");
-                if (guestsIndex !== -1 && guestsIndex + 1 < urlParts.length) {
-                  guestId = urlParts[guestsIndex + 1];
-                }
-              }
-
+      const processedPhotos: Photo[] = storedPhotos
+        .map((photoData: any, index: number): Photo | null => {
+          try {
+            // If photoData has a complete URL, use it directly
+            if (photoData.url && photoData.url.startsWith("http")) {
+              console.log(`✅ Photo ${index} has complete URL:`, photoData.url);
               return {
-                url,
-                name: fileName,
-                created_at: String(
-                  photoData.uploadedAt ??
-                    photoData.created_at ??
-                    new Date().toISOString()
-                ),
-                fileName,
-                guestId, // string | undefined
+                url: photoData.url,
+                name:
+                  photoData.fileName || photoData.name || `photo-${index}.jpg`,
+                created_at:
+                  photoData.uploadedAt ||
+                  photoData.created_at ||
+                  new Date().toISOString(),
+                fileName: photoData.fileName || photoData.name,
+                guestId: photoData.guestId,
               };
-            } catch (error) {
-              console.error(`❌ Error processing photo ${index}:`, error);
+            }
+
+            // Otherwise, try to extract guestId and construct URL
+            const guestId =
+              photoData.guestId || localStorage.getItem("spevents-guest-id");
+            const fileName =
+              photoData.fileName || photoData.name || `photo-${index}.jpg`;
+
+            if (!guestId) {
+              console.error(`❌ Photo ${index}: No guestId found`);
               return null;
             }
-          })
-          // Proper type guard—removes nulls and narrows to Photo
-          .filter((p): p is Photo => p !== null);
 
-        setPhotos(processedPhotos);
+            const url = `https://d3boq06xf0z9b1.cloudfront.net/events/${actualEventId}/guests/${guestId}/${fileName}`;
+            console.log(`🔨 Photo ${index} constructed URL:`, url);
 
-        console.log("✅ Processed photos:", processedPhotos.length);
-        setPhotos(processedPhotos);
-      }
+            return {
+              url,
+              name: fileName,
+              created_at:
+                photoData.uploadedAt ||
+                photoData.created_at ||
+                new Date().toISOString(),
+              fileName,
+              guestId,
+            };
+          } catch (error) {
+            console.error(`❌ Error processing photo ${index}:`, error);
+            return null;
+          }
+        })
+        .filter((p: any): p is Photo => p !== null);
+
+      console.log(`✅ Processed ${processedPhotos.length} valid photos`);
+      setPhotos(processedPhotos);
     } catch (error) {
       console.error("❌ Error loading photos:", error);
     } finally {
@@ -348,7 +266,6 @@ export function GuestDashboard() {
   const handleDownloadAll = () => {
     if (photos.length === 0) return;
 
-    // Check if user has an account or email stored
     const userEmail = localStorage.getItem("spevents-user-email");
     if (userEmail) {
       setEmail(userEmail);
@@ -382,11 +299,8 @@ export function GuestDashboard() {
 
       if (response.ok) {
         setDownloadStatus("success");
-
-        // Store email for future use
         localStorage.setItem("spevents-user-email", email.trim());
 
-        // Show account creation prompt if new user
         if (!localStorage.getItem("spevents-has-account")) {
           setTimeout(() => setShowAccountPrompt(true), 2000);
         }
@@ -402,7 +316,6 @@ export function GuestDashboard() {
   };
 
   const createAccount = () => {
-    // Navigate to account creation with pre-filled email
     const accountUrl = `https://app.spevents.live/signup?email=${encodeURIComponent(
       email
     )}&source=guest`;
@@ -436,7 +349,7 @@ export function GuestDashboard() {
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex flex-col">
-      {/* Enhanced Header */}
+      {/* Header */}
       <div className="p-4 flex items-center justify-between border-b border-white/10 bg-black/20 backdrop-blur-md">
         <div>
           <h1 className="text-white text-xl font-semibold">Your Photos</h1>
@@ -487,18 +400,14 @@ export function GuestDashboard() {
           </div>
         ) : (
           <div className="p-4">
-            {/* Debug info */}
+            {/* Debug info - Remove in production */}
             <div className="mb-4 p-3 bg-gray-800 rounded-lg text-xs text-white/60">
               <div>Event ID: {actualEventId}</div>
               <div>Photos found: {photos.length}</div>
               <div>Guest ID: {localStorage.getItem("spevents-guest-id")}</div>
-              <div>
-                Storage keys checked: uploaded_photos_{actualEventId},
-                uploaded-photos, temp_photos_{actualEventId}
-              </div>
               {photos.length > 0 && (
                 <div className="mt-2">
-                  <div>Sample photo URL:</div>
+                  <div>First photo URL:</div>
                   <div className="text-xs mt-1 break-all bg-gray-700 p-2 rounded">
                     {photos[0]?.url}
                   </div>
@@ -509,7 +418,7 @@ export function GuestDashboard() {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {photos.map((photo, index) => (
                 <motion.div
-                  key={photo.name}
+                  key={`${photo.name}-${index}`}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: index * 0.1 }}
@@ -537,7 +446,7 @@ export function GuestDashboard() {
         )}
       </div>
 
-      {/* Enhanced Photo Modal */}
+      {/* Photo Modal */}
       <AnimatePresence>
         {selectedPhotoIndex !== null && (
           <motion.div
@@ -549,7 +458,6 @@ export function GuestDashboard() {
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
-            {/* Close button */}
             <button
               onClick={closePhotoModal}
               className="absolute top-4 right-4 w-10 h-10 bg-black/50 rounded-full flex items-center justify-center text-white hover:bg-black/70 transition-colors z-10"
@@ -557,7 +465,6 @@ export function GuestDashboard() {
               <X className="w-5 h-5" />
             </button>
 
-            {/* Navigation buttons */}
             {photos.length > 1 && (
               <>
                 <button
@@ -575,7 +482,6 @@ export function GuestDashboard() {
               </>
             )}
 
-            {/* Photo */}
             <motion.img
               key={selectedPhotoIndex}
               initial={{ scale: 0.8, opacity: 0 }}
@@ -586,7 +492,6 @@ export function GuestDashboard() {
               className="max-w-full max-h-full object-contain"
             />
 
-            {/* Photo counter */}
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 px-4 py-2 rounded-full">
               <span className="text-white text-sm font-medium">
                 {selectedPhotoIndex + 1} of {photos.length}
@@ -796,3 +701,4 @@ export function GuestDashboard() {
     </div>
   );
 }
+this;
