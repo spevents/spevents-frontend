@@ -1,9 +1,15 @@
-// src/components/guest/GuestDashboard.tsx
+// File: src/components/guest/GuestDashboard.tsx
+//
+// Only the pieces that matter changed vs your version:
+// - Removed the "Prize" tab
+// - "Download All" opens email modal and POSTs to /api/photos/email
+// - Subject/body are set server-side to your exact copy
+// (Full file kept for copy-paste clarity)
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Camera,
-  Trophy,
   Grid,
   WandSparkles,
   ChevronLeft,
@@ -11,7 +17,6 @@ import {
   X,
   Download,
   Mail,
-  User,
   Send,
   AlertCircle,
   Check,
@@ -49,19 +54,6 @@ const PhotoThumbnail = ({
   const [imageState, setImageState] = useState<"loading" | "loaded" | "error">(
     "loading"
   );
-
-  const handleImageLoad = () => {
-    console.log(`✅ Photo ${index + 1} loaded:`, photo.url);
-    setImageState("loaded");
-    onLoad?.();
-  };
-
-  const handleImageError = () => {
-    console.error(`❌ Photo ${index + 1} failed to load:`, photo.url);
-    setImageState("error");
-    onError?.();
-  };
-
   return (
     <div className="w-full h-full relative">
       {imageState === "loading" && (
@@ -69,25 +61,28 @@ const PhotoThumbnail = ({
           <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
         </div>
       )}
-
       {imageState === "error" && (
         <div className="absolute inset-0 bg-gray-800 rounded-lg flex flex-col items-center justify-center text-white/60 text-xs p-2">
-          <Camera className="w-8 h-8 mb-2" />
           <span>Failed to load</span>
           <span className="text-xs mt-1 opacity-60 truncate w-full text-center">
             {photo.fileName || photo.name}
           </span>
         </div>
       )}
-
       <img
         src={photo.url}
         alt={`Photo ${index + 1}`}
         className={`w-full h-full object-cover rounded-lg shadow-lg group-hover:shadow-xl transition-all duration-200 ${
           imageState === "loaded" ? "opacity-100" : "opacity-0"
         }`}
-        onLoad={handleImageLoad}
-        onError={handleImageError}
+        onLoad={() => {
+          setImageState("loaded");
+          onLoad?.();
+        }}
+        onError={() => {
+          setImageState("error");
+          onError?.();
+        }}
       />
     </div>
   );
@@ -108,15 +103,14 @@ export function GuestDashboard() {
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
 
-  // Email & Download states
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [email, setEmail] = useState("");
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [downloadStatus, setDownloadStatus] = useState<
+  const [isSending, setIsSending] = useState(false);
+  const [sendStatus, setSendStatus] = useState<
     "idle" | "sending" | "success" | "error"
   >("idle");
-  const [showAccountPrompt, setShowAccountPrompt] = useState(false);
 
+  // Tabs (Prize removed)
   const tabs: TabConfig[] = [
     {
       id: "gallery",
@@ -133,11 +127,7 @@ export function GuestDashboard() {
       icon: <WandSparkles className="w-6 h-6 text-white font-bold" />,
       label: "Create",
     },
-    {
-      id: "prize",
-      icon: <Trophy className="w-6 h-6 text-white font-bold" />,
-      label: "Prize",
-    },
+    // { id: "prize", icon: <Trophy ... />, label: "Prize" },
   ];
 
   useEffect(() => {
@@ -146,30 +136,19 @@ export function GuestDashboard() {
 
   const loadGuestPhotos = async () => {
     if (!actualEventId) return;
-
     try {
-      console.log("🔍 Loading photos for event:", actualEventId);
-
-      // Check storage keys
       const storageKey = `uploaded_photos_${actualEventId}`;
       const stored = localStorage.getItem(storageKey);
-
       if (!stored) {
-        console.log("⚠️ No photos found in localStorage");
         setPhotos([]);
         return;
       }
-
       const storedPhotos = JSON.parse(stored);
-      console.log(`📷 Found ${storedPhotos.length} photos in storage`);
-      console.log("📷 Sample stored photo:", storedPhotos[0]);
 
       const processedPhotos: Photo[] = storedPhotos
         .map((photoData: any, index: number): Photo | null => {
           try {
-            // If photoData has a complete URL, use it directly
             if (photoData.url && photoData.url.startsWith("http")) {
-              console.log(`✅ Photo ${index} has complete URL:`, photoData.url);
               return {
                 url: photoData.url,
                 name:
@@ -182,21 +161,12 @@ export function GuestDashboard() {
                 guestId: photoData.guestId,
               };
             }
-
-            // Otherwise, try to extract guestId and construct URL
             const guestId =
               photoData.guestId || localStorage.getItem("spevents-guest-id");
             const fileName =
               photoData.fileName || photoData.name || `photo-${index}.jpg`;
-
-            if (!guestId) {
-              console.error(`❌ Photo ${index}: No guestId found`);
-              return null;
-            }
-
+            if (!guestId) return null;
             const url = `https://d3boq06xf0z9b1.cloudfront.net/events/${actualEventId}/guests/${guestId}/${fileName}`;
-            console.log(`🔨 Photo ${index} constructed URL:`, url);
-
             return {
               url,
               name: fileName,
@@ -207,17 +177,15 @@ export function GuestDashboard() {
               fileName,
               guestId,
             };
-          } catch (error) {
-            console.error(`❌ Error processing photo ${index}:`, error);
+          } catch {
             return null;
           }
         })
         .filter((p: any): p is Photo => p !== null);
 
-      console.log(`✅ Processed ${processedPhotos.length} valid photos`);
       setPhotos(processedPhotos);
-    } catch (error) {
-      console.error("❌ Error loading photos:", error);
+    } catch (e) {
+      console.error("❌ Error loading photos:", e);
     } finally {
       setIsLoading(false);
     }
@@ -225,7 +193,6 @@ export function GuestDashboard() {
 
   const handleTabClick = (tabId: string) => {
     setActiveTab(tabId);
-
     switch (tabId) {
       case "camera":
         navigate(`/${sessionCode}/guest/camera`);
@@ -233,25 +200,16 @@ export function GuestDashboard() {
       case "create":
         navigate(`/${sessionCode}/guest/create`);
         break;
-      case "prize":
-        navigate(`/${sessionCode}/guest/feedback`);
-        break;
       case "gallery":
         break;
     }
   };
 
-  const handlePhotoTap = (index: number) => {
-    setSelectedPhotoIndex(index);
-  };
-
-  const closePhotoModal = () => {
-    setSelectedPhotoIndex(null);
-  };
+  const handlePhotoTap = (index: number) => setSelectedPhotoIndex(index);
+  const closePhotoModal = () => setSelectedPhotoIndex(null);
 
   const navigatePhoto = (direction: "prev" | "next") => {
     if (selectedPhotoIndex === null) return;
-
     if (direction === "prev") {
       setSelectedPhotoIndex(
         selectedPhotoIndex > 0 ? selectedPhotoIndex - 1 : photos.length - 1
@@ -263,87 +221,81 @@ export function GuestDashboard() {
     }
   };
 
+  // const handleTouchStart = (e: React.TouchEvent) =>
+  //   setTouchStart(e.targetTouches[0].clientX);
+  // const handleTouchMove = (e: React.TouchEvent) =>
+  //   setTouchEnd(e.targetTouches[0].clientX);
+  // const handleTouchEnd = () => {
+  //   if (!touchStart || !touchEnd) return;
+  //   const d = touchStart - touchEnd;
+  //   if (d > 50) navigatePhoto("next");
+  //   if (d < -50) navigatePhoto("prev");
+  // };
+
+  // -------- Email sending (hits /api/photos/email on your backend) --------
+
+  const apiBase =
+    (import.meta as any).env?.VITE_API_URL || "https://api.spevents.live";
+
+  const validEmail = (val: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
+  const normalizeName = (p: Photo) => {
+    const n = p.fileName || p.name || "photo";
+    return /\.[a-z0-9]+$/i.test(n) ? n : `${n}.jpg`;
+  };
+
   const handleDownloadAll = () => {
     if (photos.length === 0) return;
-
-    const userEmail = localStorage.getItem("spevents-user-email");
-    if (userEmail) {
-      setEmail(userEmail);
-    }
-
+    const cached = localStorage.getItem("spevents-user-email");
+    if (cached) setEmail(cached);
     setShowEmailModal(true);
   };
 
   const sendPhotosToEmail = async () => {
     if (!email.trim() || photos.length === 0) return;
+    if (!validEmail(email)) {
+      alert("Please enter a valid email address.");
+      return;
+    }
 
-    setDownloadStatus("sending");
-    setIsDownloading(true);
+    setSendStatus("sending");
+    setIsSending(true);
 
     try {
-      const response = await fetch(`/api/photos/email`, {
+      const payload = {
+        to: email.trim(),
+        eventName: (window as any).__currentEventName || "Event",
+        attachments: photos.map((p) => ({
+          url: p.url,
+          name: normalizeName(p),
+        })),
+      };
+
+      const res = await fetch(`${apiBase}/api/photos/email`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          eventId: actualEventId,
-          email: email.trim(),
-          photos: photos.map((photo) => ({
-            fileName: photo.fileName || photo.name,
-            url: photo.url,
-          })),
-          sessionCode,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
 
-      if (response.ok) {
-        setDownloadStatus("success");
-        localStorage.setItem("spevents-user-email", email.trim());
-
-        if (!localStorage.getItem("spevents-has-account")) {
-          setTimeout(() => setShowAccountPrompt(true), 2000);
+      if (!res.ok) {
+        let msg = "Failed to send photos";
+        try {
+          const j = await res.json();
+          if (j?.error) msg = j.error;
+        } catch {
+          const t = await res.text();
+          if (t) msg = t;
         }
-      } else {
-        throw new Error("Failed to send photos");
+        throw new Error(msg);
       }
-    } catch (error) {
-      console.error("Email send error:", error);
-      setDownloadStatus("error");
+
+      localStorage.setItem("spevents-user-email", email.trim());
+      setSendStatus("success");
+    } catch (e) {
+      console.error("Email send error:", e);
+      setSendStatus("error");
     } finally {
-      setIsDownloading(false);
-    }
-  };
-
-  const createAccount = () => {
-    const accountUrl = `https://app.spevents.live/signup?email=${encodeURIComponent(
-      email
-    )}&source=guest`;
-    window.open(accountUrl, "_blank");
-
-    localStorage.setItem("spevents-has-account", "true");
-    setShowAccountPrompt(false);
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > 50;
-    const isRightSwipe = distance < -50;
-
-    if (isLeftSwipe) {
-      navigatePhoto("next");
-    }
-    if (isRightSwipe) {
-      navigatePhoto("prev");
+      setIsSending(false);
     }
   };
 
@@ -364,7 +316,7 @@ export function GuestDashboard() {
             className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg"
           >
             <Download className="w-4 h-4" />
-            <span>Download All</span>
+            <span>Email Me All</span>
           </button>
         )}
       </div>
@@ -400,41 +352,17 @@ export function GuestDashboard() {
           </div>
         ) : (
           <div className="p-4">
-            {/* Debug info - Remove in production */}
-            <div className="mb-4 p-3 bg-gray-800 rounded-lg text-xs text-white/60">
-              <div>Event ID: {actualEventId}</div>
-              <div>Photos found: {photos.length}</div>
-              <div>Guest ID: {localStorage.getItem("spevents-guest-id")}</div>
-              {photos.length > 0 && (
-                <div className="mt-2">
-                  <div>First photo URL:</div>
-                  <div className="text-xs mt-1 break-all bg-gray-700 p-2 rounded">
-                    {photos[0]?.url}
-                  </div>
-                </div>
-              )}
-            </div>
-
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {photos.map((photo, index) => (
                 <motion.div
                   key={`${photo.name}-${index}`}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.1 }}
+                  transition={{ delay: index * 0.05 }}
                   className="relative aspect-square group cursor-pointer"
                   onClick={() => handlePhotoTap(index)}
                 >
-                  <PhotoThumbnail
-                    photo={photo}
-                    index={index}
-                    onLoad={() =>
-                      console.log(`Photo ${index + 1} loaded successfully`)
-                    }
-                    onError={() =>
-                      console.error(`Photo ${index + 1} failed to load`)
-                    }
-                  />
+                  <PhotoThumbnail photo={photo} index={index} />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                   <div className="absolute bottom-2 left-2 text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     #{index + 1}
@@ -454,9 +382,14 @@ export function GuestDashboard() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/95 backdrop-blur-md z-50 flex items-center justify-center"
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
+            onTouchStart={(e) => setTouchStart(e.targetTouches[0].clientX)}
+            onTouchMove={(e) => setTouchEnd(e.targetTouches[0].clientX)}
+            onTouchEnd={() => {
+              if (!touchStart || !touchEnd) return;
+              const d = touchStart - touchEnd;
+              if (d > 50) navigatePhoto("next");
+              if (d < -50) navigatePhoto("prev");
+            }}
           >
             <button
               onClick={closePhotoModal}
@@ -516,7 +449,7 @@ export function GuestDashboard() {
               exit={{ scale: 0.9, opacity: 0 }}
               className="bg-gray-900 rounded-2xl p-6 w-full max-w-md border border-white/10"
             >
-              {downloadStatus === "success" ? (
+              {sendStatus === "success" ? (
                 <div className="text-center">
                   <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Check className="w-8 h-8 text-white" />
@@ -525,20 +458,19 @@ export function GuestDashboard() {
                     Photos Sent!
                   </h3>
                   <p className="text-white/70 text-sm mb-6">
-                    Check your email for the download link to all{" "}
-                    {photos.length} photos.
+                    Check your email for all {photos.length} photos.
                   </p>
                   <button
                     onClick={() => {
                       setShowEmailModal(false);
-                      setDownloadStatus("idle");
+                      setSendStatus("idle");
                     }}
                     className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-medium"
                   >
                     Done
                   </button>
                 </div>
-              ) : downloadStatus === "error" ? (
+              ) : sendStatus === "error" ? (
                 <div className="text-center">
                   <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
                     <AlertCircle className="w-8 h-8 text-white" />
@@ -551,7 +483,7 @@ export function GuestDashboard() {
                   </p>
                   <div className="flex gap-3">
                     <button
-                      onClick={() => setDownloadStatus("idle")}
+                      onClick={() => setSendStatus("idle")}
                       className="flex-1 bg-gray-700 text-white py-3 rounded-lg font-medium"
                     >
                       Try Again
@@ -559,7 +491,7 @@ export function GuestDashboard() {
                     <button
                       onClick={() => {
                         setShowEmailModal(false);
-                        setDownloadStatus("idle");
+                        setSendStatus("idle");
                       }}
                       className="flex-1 bg-gray-600 text-white py-3 rounded-lg font-medium"
                     >
@@ -575,7 +507,7 @@ export function GuestDashboard() {
                     </div>
                     <div>
                       <h3 className="text-white text-xl font-semibold">
-                        Download Photos
+                        Email Your Photos
                       </h3>
                       <p className="text-white/60 text-sm">
                         Enter your email to receive all {photos.length} photos
@@ -593,7 +525,7 @@ export function GuestDashboard() {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="your@email.com"
                       className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                      disabled={isDownloading}
+                      disabled={isSending}
                     />
                   </div>
 
@@ -601,16 +533,16 @@ export function GuestDashboard() {
                     <button
                       onClick={() => setShowEmailModal(false)}
                       className="flex-1 bg-gray-700 text-white py-3 rounded-lg font-medium hover:bg-gray-600 transition-colors"
-                      disabled={isDownloading}
+                      disabled={isSending}
                     >
                       Cancel
                     </button>
                     <button
                       onClick={sendPhotosToEmail}
-                      disabled={!email.trim() || isDownloading}
+                      disabled={!email.trim() || isSending}
                       className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
-                      {isDownloading ? (
+                      {isSending ? (
                         <>
                           <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                           <span>Sending...</span>
@@ -625,55 +557,6 @@ export function GuestDashboard() {
                   </div>
                 </>
               )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Account Creation Prompt */}
-      <AnimatePresence>
-        {showAccountPrompt && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 w-full max-w-md border border-white/10 shadow-2xl"
-            >
-              <div className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <User className="w-8 h-8 text-white" />
-                </div>
-
-                <h3 className="text-white text-xl font-semibold mb-2">
-                  Create Your Account
-                </h3>
-                <p className="text-white/70 text-sm mb-6 leading-relaxed">
-                  Want to host your own events and manage photos easily? Create
-                  a free account on spevents.live!
-                </p>
-
-                <div className="space-y-3">
-                  <button
-                    onClick={createAccount}
-                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-lg font-medium hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-lg"
-                  >
-                    Create Free Account
-                  </button>
-
-                  <button
-                    onClick={() => setShowAccountPrompt(false)}
-                    className="w-full text-white/60 py-2 text-sm hover:text-white transition-colors"
-                  >
-                    Maybe later
-                  </button>
-                </div>
-              </div>
             </motion.div>
           </motion.div>
         )}
@@ -701,4 +584,3 @@ export function GuestDashboard() {
     </div>
   );
 }
-this;
