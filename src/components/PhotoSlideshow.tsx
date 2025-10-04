@@ -1,4 +1,5 @@
 // File: src/components/PhotoSlideshow.tsx
+
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -11,11 +12,7 @@ import {
   AlignHorizontalSpaceAround,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  listAllEventPhotos,
-  getEventPhotoUrl,
-  EventPhoto,
-} from "@/services/api";
+import { listAllEventPhotos, EventPhoto } from "@/services/api";
 import { useEvent } from "@/contexts/EventContext";
 import { colors } from "@/types/eventTypes";
 import FunSlideshow from "./slideshow_modes/FunSlideshow";
@@ -46,7 +43,7 @@ type ViewMode = "simple" | "fun" | "presenter" | "model" | "marquee";
 
 const MAX_PHOTOS = 16;
 const PHOTO_DISPLAY_TIME = 8000 + Math.random() * 2000;
-const PHOTO_REFRESH_INTERVAL = 10000; // Reduced frequency to 10 seconds
+const PHOTO_REFRESH_INTERVAL = 10000;
 
 export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
   const navigate = useNavigate();
@@ -63,13 +60,11 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
   const timeoutsRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
   const photosRef = useRef(photos);
 
-  // Get theme colors from current event, with fallback to default
   const themeColors = currentEvent?.colors || {
     primary: colors.green,
     secondary: colors.lightGreen,
   };
 
-  // Update refs when props change
   useEffect(() => {
     photosRef.current = photos;
   }, [photos]);
@@ -108,11 +103,11 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
   }, [hideUI]);
 
   const getTimestampFromFilename = (fileName: string): number => {
-    const match = fileName.match(/photo-(\d+)\.jpg/);
+    const match = fileName.match(/(\d+)-/);
     if (match && match[1]) {
       return parseInt(match[1], 10);
     }
-    return Date.now(); // Return current time as fallback
+    return Date.now();
   };
 
   const loadPhotos = async () => {
@@ -136,11 +131,11 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
       }
 
       const loadedPhotos: Photo[] = eventPhotos.map((eventPhoto) => {
-        const photoUrl = getEventPhotoUrl(eventId, eventPhoto);
-        console.log("🔗 Generated URL for", eventPhoto.fileName, ":", photoUrl);
+        // ✅ FIX: Use photo.url directly from backend
+        console.log("🔗 Using Vercel Blob URL:", eventPhoto.url);
 
         return {
-          src: photoUrl,
+          src: eventPhoto.url, // ← Use direct URL from backend
           id: eventPhoto.fileName,
           createdAt: getTimestampFromFilename(eventPhoto.fileName),
           transitionId: `${eventPhoto.fileName}-${Date.now()}`,
@@ -171,11 +166,11 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
         const oldestPhoto = current.reduce(
           (oldest, photo) =>
             photo.expiryTime < oldest.expiryTime ? photo : oldest,
-          current[0],
+          current[0]
         );
 
         const availablePhotos = photosRef.current.filter(
-          (photo) => !current.some((p) => p.id === photo.id),
+          (photo) => !current.some((p) => p.id === photo.id)
         );
 
         const photoPool =
@@ -195,11 +190,11 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
         }, PHOTO_DISPLAY_TIME + removalJitter);
 
         return current.map((photo) =>
-          photo.transitionId === oldestPhoto.transitionId ? newPhoto : photo,
+          photo.transitionId === oldestPhoto.transitionId ? newPhoto : photo
         );
       } else {
         const availablePhotos = photosRef.current.filter(
-          (photo) => !current.some((p) => p.id === photo.id),
+          (photo) => !current.some((p) => p.id === photo.id)
         );
 
         if (availablePhotos.length === 0) {
@@ -225,7 +220,6 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
     });
   };
 
-  // Load photos on mount and set up refresh interval
   useEffect(() => {
     if (eventId) {
       console.log("🎬 Starting slideshow for eventId:", eventId);
@@ -241,7 +235,6 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
     }
   }, [eventId]);
 
-  // Start slideshow when photos are loaded
   useEffect(() => {
     if (photos.length > 0 && displayedPhotos.length === 0 && !isLoading) {
       console.log("🚀 Starting photo display with", photos.length, "photos");
@@ -251,7 +244,6 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
     }
   }, [photos.length, displayedPhotos.length, isLoading]);
 
-  // Clear timeouts on unmount
   useEffect(() => {
     return () => {
       Object.values(timeoutsRef.current).forEach((timeout) => {
@@ -261,8 +253,6 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
   }, []);
 
   const renderViewMode = () => {
-    // For modes that need all photos (marquee, presenter), use the full photos array
-    // For simple/fun/model modes, use the rotating displayedPhotos
     const allPhotosForDisplay = convertPhotosForDisplay(photos);
     const displayedPhotosForDisplay = convertPhotosForDisplay(displayedPhotos);
 
@@ -278,7 +268,7 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
       case "presenter":
         return (
           <PresenterSlideshow
-            photos={allPhotosForDisplay} // Use all photos
+            photos={allPhotosForDisplay}
             containerDimensions={containerDimensions}
             themeColors={themeColors}
           />
@@ -293,7 +283,7 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
       case "marquee":
         return (
           <MarqueeSlideshow
-            photos={allPhotosForDisplay} // Use all photos, not displayedPhotos
+            photos={allPhotosForDisplay}
             containerDimensions={containerDimensions}
             themeColors={themeColors}
           />

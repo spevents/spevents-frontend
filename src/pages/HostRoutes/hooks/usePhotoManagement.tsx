@@ -1,10 +1,11 @@
 // File: src/pages/HostRoutes/hooks/usePhotoManagement.tsx
+// Fix: Line 84 - Use photo.url directly instead of getEventPhotoUrl()
+
 import { useState, useEffect, useRef } from "react";
 import JSZip from "jszip";
 import { auth } from "@/components/config/firebase";
 import {
   listAllEventPhotos,
-  getEventPhotoUrl,
   photoService,
   type EventPhoto,
 } from "@/services/api";
@@ -13,7 +14,7 @@ import { DisplayPhoto } from "../types";
 export function usePhotoManagement(
   eventId: string | undefined,
   currentEvent: any,
-  selectedPhotos: Set<string>,
+  selectedPhotos: Set<string>
 ) {
   const [photos, setPhotos] = useState<DisplayPhoto[]>([]);
   const [newPhotoIds, setNewPhotoIds] = useState<Set<string>>(new Set());
@@ -25,7 +26,6 @@ export function usePhotoManagement(
   const hasLoadedOnce = useRef(false);
   const currentEventId = useRef<string | undefined>(undefined);
 
-  // Reset refs if eventId changes
   if (currentEventId.current !== eventId) {
     isInitialLoad.current = true;
     existingPhotoIds.current = new Set();
@@ -39,44 +39,31 @@ export function usePhotoManagement(
     try {
       console.log("🔍 Loading photos for eventId:", eventId);
 
-      // Only show loading on true initial load (never loaded before)
       if (!hasLoadedOnce.current) {
         setIsLoading(true);
       }
 
-      // Get all photos (both event and guest photos)
       const eventPhotos: EventPhoto[] = await listAllEventPhotos(eventId);
       console.log("📸 Found photos:", eventPhotos.length);
 
-      // Convert to display format with correct URLs
+      // ✅ FIX: Use photo.url directly from backend
       const displayPhotos: DisplayPhoto[] = eventPhotos.map((photo) => ({
-        url: getEventPhotoUrl(eventId, photo),
+        url: photo.url, // ← Use direct URL from backend
         fileName: photo.fileName,
-        created_at: new Date().toISOString(),
+        created_at: photo.uploadedAt || new Date().toISOString(),
         fullKey: photo.fullKey,
         isGuestPhoto: photo.isGuestPhoto,
         guestId: photo.guestId,
       }));
 
-      // Sort by creation time (most recent first)
       const sortedPhotos = displayPhotos.sort(
         (a: DisplayPhoto, b: DisplayPhoto) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
-      // Identify new photos (only after initial load)
       if (!isInitialLoad.current) {
         const currentPhotoIds = new Set(sortedPhotos.map((p) => p.fileName));
         const newIds = new Set<string>();
-
-        console.log(
-          "🔍 [DEBUG] Existing photo IDs:",
-          Array.from(existingPhotoIds.current),
-        );
-        console.log(
-          "🔍 [DEBUG] Current photo IDs:",
-          Array.from(currentPhotoIds),
-        );
 
         currentPhotoIds.forEach((id) => {
           if (!existingPhotoIds.current.has(id)) {
@@ -84,40 +71,24 @@ export function usePhotoManagement(
           }
         });
 
-        console.log("🔍 [DEBUG] New photo IDs detected:", Array.from(newIds));
         setNewPhotoIds(newIds);
 
-        // Clear new photo IDs after a delay to stop animation
         if (newIds.size > 0) {
-          console.log("🔍 [DEBUG] Will clear new photo IDs in 1000ms");
           setTimeout(() => {
-            console.log("🔍 [DEBUG] Clearing new photo IDs");
             setNewPhotoIds(new Set());
           }, 1000);
         }
       } else {
-        // On initial load, all photos are "new" for animation
-        console.log(
-          "🔍 [DEBUG] Initial load - all photos marked as new:",
-          sortedPhotos.length,
-        );
         setNewPhotoIds(new Set(sortedPhotos.map((p) => p.fileName)));
         isInitialLoad.current = false;
       }
 
-      // Update existing photo IDs reference
       existingPhotoIds.current = new Set(sortedPhotos.map((p) => p.fileName));
-      console.log(
-        "🔍 [DEBUG] Updated existing photo IDs reference:",
-        Array.from(existingPhotoIds.current),
-      );
-
       setPhotos(sortedPhotos);
       hasLoadedOnce.current = true;
     } catch (error) {
       console.error("❌ Error loading photos:", error);
     } finally {
-      // Only set loading false if we were actually loading
       if (!hasLoadedOnce.current || isLoading) {
         setIsLoading(false);
       }
@@ -132,10 +103,8 @@ export function usePhotoManagement(
     }
   }, [eventId]);
 
-  // CORS-friendly download using your API as proxy
   const downloadViaProxy = async (photo: DisplayPhoto): Promise<Blob> => {
     try {
-      // Get Firebase auth token properly
       const user = auth.currentUser;
       if (!user) {
         throw new Error("User not authenticated");
@@ -143,9 +112,7 @@ export function usePhotoManagement(
 
       const token = await user.getIdToken();
       const apiUrl =
-        import.meta.env.VITE_API_URL || "https://spevents-backend.vercel.app";
-
-      console.log(`🔗 Downloading via API: ${apiUrl}/api/photos`);
+        import.meta.env.VITE_API_URL || "https://api.spevents.live";
 
       const response = await fetch(`${apiUrl}/api/photos`, {
         method: "POST",
@@ -173,38 +140,22 @@ export function usePhotoManagement(
     }
   };
 
-  // Download all photos
   const handleDownloadAll = async () => {
     if (photos.length === 0) return;
 
     setIsDownloading(true);
     try {
-      console.log(`🔄 Creating zip with all ${photos.length} photos`);
-
       const zip = new JSZip();
       let successCount = 0;
       let failCount = 0;
 
-      // Download all photos via API proxy
       for (let i = 0; i < photos.length; i++) {
         const photo = photos[i];
         try {
-          console.log(
-            `📥 Downloading: ${photo.fileName} (${i + 1}/${photos.length})`,
-          );
-
           const blob = await downloadViaProxy(photo);
-
-          if (blob.size === 0) {
-            throw new Error("Empty response");
-          }
-
+          if (blob.size === 0) throw new Error("Empty response");
           zip.file(photo.fileName, blob);
           successCount++;
-
-          console.log(
-            `✅ Added to zip: ${photo.fileName} (${blob.size} bytes)`,
-          );
         } catch (error) {
           console.error(`❌ Failed to download ${photo.fileName}:`, error);
           failCount++;
@@ -215,21 +166,12 @@ export function usePhotoManagement(
         throw new Error("No photos could be downloaded");
       }
 
-      console.log(
-        `📊 Download summary: ${successCount} success, ${failCount} failed`,
-      );
-
-      // Generate and download zip
-      console.log("🔄 Generating zip file...");
       const zipBlob = await zip.generateAsync({
         type: "blob",
         compression: "DEFLATE",
-        compressionOptions: {
-          level: 6,
-        },
+        compressionOptions: { level: 6 },
       });
 
-      // Create download link
       const zipUrl = URL.createObjectURL(zipBlob);
       const link = document.createElement("a");
       link.href = zipUrl;
@@ -240,14 +182,11 @@ export function usePhotoManagement(
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
       setTimeout(() => URL.revokeObjectURL(zipUrl), 1000);
-
-      console.log("✅ Zip download initiated");
 
       if (failCount > 0) {
         alert(
-          `Download completed with ${successCount} photos. ${failCount} photos failed to download.`,
+          `Download completed with ${successCount} photos. ${failCount} photos failed to download.`
         );
       }
     } catch (error) {
@@ -255,52 +194,33 @@ export function usePhotoManagement(
       alert(
         `Download failed: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`,
+        }`
       );
     } finally {
       setIsDownloading(false);
     }
   };
 
-  // Updated download function using API proxy
   const handleDownloadSelected = async () => {
     if (selectedPhotos.size === 0) return;
 
     setIsDownloading(true);
     try {
       const selectedPhotoObjects = photos.filter((p) =>
-        selectedPhotos.has(p.fileName),
+        selectedPhotos.has(p.fileName)
       );
-
-      console.log(`🔄 Creating zip with ${selectedPhotoObjects.length} photos`);
 
       const zip = new JSZip();
       let successCount = 0;
       let failCount = 0;
 
-      // Download photos via API proxy to avoid CORS
       for (let i = 0; i < selectedPhotoObjects.length; i++) {
         const photo = selectedPhotoObjects[i];
         try {
-          console.log(
-            `📥 Downloading: ${photo.fileName} (${i + 1}/${
-              selectedPhotoObjects.length
-            })`,
-          );
-
-          // Use API proxy instead of direct fetch
           const blob = await downloadViaProxy(photo);
-
-          if (blob.size === 0) {
-            throw new Error("Empty response");
-          }
-
+          if (blob.size === 0) throw new Error("Empty response");
           zip.file(photo.fileName, blob);
           successCount++;
-
-          console.log(
-            `✅ Added to zip: ${photo.fileName} (${blob.size} bytes)`,
-          );
         } catch (error) {
           console.error(`❌ Failed to download ${photo.fileName}:`, error);
           failCount++;
@@ -311,21 +231,12 @@ export function usePhotoManagement(
         throw new Error("No photos could be downloaded");
       }
 
-      console.log(
-        `📊 Download summary: ${successCount} success, ${failCount} failed`,
-      );
-
-      // Generate and download zip
-      console.log("🔄 Generating zip file...");
       const zipBlob = await zip.generateAsync({
         type: "blob",
         compression: "DEFLATE",
-        compressionOptions: {
-          level: 6,
-        },
+        compressionOptions: { level: 6 },
       });
 
-      // Create download link
       const zipUrl = URL.createObjectURL(zipBlob);
       const link = document.createElement("a");
       link.href = zipUrl;
@@ -336,14 +247,11 @@ export function usePhotoManagement(
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
       setTimeout(() => URL.revokeObjectURL(zipUrl), 1000);
-
-      console.log("✅ Zip download initiated");
 
       if (failCount > 0) {
         alert(
-          `Download completed with ${successCount} photos. ${failCount} photos failed to download.`,
+          `Download completed with ${successCount} photos. ${failCount} photos failed to download.`
         );
       }
     } catch (error) {
@@ -351,14 +259,13 @@ export function usePhotoManagement(
       alert(
         `Download failed: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`,
+        }`
       );
     } finally {
       setIsDownloading(false);
     }
   };
 
-  // Updated single photo download using API proxy
   const handleDownloadSinglePhoto = async (photo: DisplayPhoto) => {
     try {
       const blob = await downloadViaProxy(photo);
@@ -427,26 +334,19 @@ export function usePhotoManagement(
 
     setIsDeletingPhotos(true);
     try {
-      console.log(
-        `🗑️ Deleting ${selectedPhotos.size} photos for event ${eventId}`,
-      );
-
       const selectedPhotoObjects = photos.filter((p) =>
-        selectedPhotos.has(p.fileName),
+        selectedPhotos.has(p.fileName)
       );
 
-      // Use photoService.deletePhotos with fullKeys
       const photoKeys = selectedPhotoObjects.map((p) => p.fullKey);
       await photoService.deletePhotos(eventId, photoKeys);
-
       await loadPhotosFromStorage();
-      console.log("✅ Photos deleted successfully");
     } catch (error) {
       console.error("❌ Error deleting photos:", error);
       alert(
         `Failed to delete photos: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`,
+        }`
       );
     } finally {
       setIsDeletingPhotos(false);
