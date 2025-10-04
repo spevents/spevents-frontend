@@ -237,43 +237,6 @@ export async function getPresignedUrl({
 //   }
 // }
 
-// export async function uploadPhoto({
-//   presignedUrl,
-//   file,
-//   onProgress,
-// }: {
-//   presignedUrl: string;
-//   file: File;
-//   onProgress?: (progress: number) => void;
-// }): Promise<void> {
-//   return new Promise((resolve, reject) => {
-//     const xhr = new XMLHttpRequest();
-
-//     xhr.upload.onprogress = (event) => {
-//       if (event.lengthComputable && onProgress) {
-//         const progress = (event.loaded / event.total) * 100;
-//         onProgress(progress);
-//       }
-//     };
-
-//     xhr.onload = () => {
-//       if (xhr.status === 200) {
-//         resolve();
-//       } else {
-//         reject(new Error(`Upload failed with status: ${xhr.status}`));
-//       }
-//     };
-
-//     xhr.onerror = () => {
-//       reject(new Error("Upload failed"));
-//     };
-
-//     xhr.open("PUT", presignedUrl);
-//     xhr.setRequestHeader("Content-Type", file.type);
-//     xhr.send(file);
-//   });
-// }
-
 // File: src/services/api.ts
 // Replace your uploadPhoto() function with this:
 
@@ -293,16 +256,29 @@ export async function uploadPhoto({
     // Convert file to base64
     const fileData = await fileToBase64(file);
 
-    // Get auth header
-    const authHeader = await getAuthHeader();
+    // ✅ FIX: Only get auth header if user is authenticated
+    let authHeader = {};
+    const user = auth.currentUser;
 
-    // Upload directly to blob endpoint WITH auth
+    if (user) {
+      try {
+        const token = await user.getIdToken();
+        authHeader = { Authorization: `Bearer ${token}` };
+        console.log("✅ Using authenticated upload");
+      } catch (error) {
+        console.error("Failed to get auth token:", error);
+      }
+    } else {
+      console.log("ℹ️ Using guest upload (no auth)");
+    }
+
+    // Upload directly to blob endpoint
     const response = await fetch(`${BACKEND_URL}/api/upload-blob`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
-        ...authHeader, // ← THIS WAS MISSING
+        ...authHeader, // ← Will be empty for guest uploads
       },
       body: JSON.stringify({
         ...uploadParams,
