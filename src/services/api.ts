@@ -66,7 +66,7 @@ const getAuthHeader = async (): Promise<{ Authorization: string } | {}> => {
  */
 const makeAuthenticatedRequest = async (
   endpoint: string,
-  options: RequestInit = {},
+  options: RequestInit = {}
 ): Promise<Response> => {
   const authHeader = await getAuthHeader();
 
@@ -120,21 +120,21 @@ export async function getUserEvents(): Promise<Event[]> {
 
 export async function getEvent(eventId: string): Promise<Event> {
   const response = await makeAuthenticatedRequest(
-    `/api/events?eventId=${eventId}`,
+    `/api/events?eventId=${eventId}`
   );
   return response.json();
 }
 
 export async function updateEvent(
   eventId: string,
-  updates: Partial<Event>,
+  updates: Partial<Event>
 ): Promise<Event> {
   const response = await makeAuthenticatedRequest(
     `/api/events?eventId=${eventId}`,
     {
       method: "PUT",
       body: JSON.stringify(updates),
-    },
+    }
   );
 
   return response.json();
@@ -149,7 +149,6 @@ export async function deleteEvent(eventId: string): Promise<void> {
 // ===============================
 // PHOTO UPLOAD & MANAGEMENT
 // ===============================
-
 export async function getPresignedUrl({
   eventId,
   fileName,
@@ -165,53 +164,119 @@ export async function getPresignedUrl({
   guestId?: string;
   sessionCode?: string;
 }): Promise<string> {
-  try {
-    console.log(`🔗 Requesting presigned URL:`, {
-      eventId,
-      fileName,
-      contentType,
-      isGuestPhoto,
-      guestId,
-      sessionCode,
-    });
-
-    const response = await fetch(`${BACKEND_URL}/api/upload`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({
-        eventId,
-        fileName,
-        contentType,
-        isGuestPhoto,
-        guestId,
-        sessionCode,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`❌ Presigned URL request failed:`, {
-        status: response.status,
-        statusText: response.statusText,
-        errorText,
-      });
-      throw new Error(
-        `Failed to get presigned URL: ${response.status} - ${errorText}`,
-      );
-    }
-
-    const { signedUrl } = await response.json();
-    console.log(`✅ Got presigned URL successfully`);
-    return signedUrl;
-  } catch (error) {
-    console.error(`❌ Error getting presigned URL:`, error);
-    throw error;
-  }
+  // Return a marker - actual upload happens in uploadPhoto()
+  return JSON.stringify({
+    eventId,
+    fileName,
+    contentType,
+    isGuestPhoto,
+    guestId,
+    sessionCode,
+  });
 }
 
+// export async function getPresignedUrl({
+//   eventId,
+//   fileName,
+//   contentType,
+//   isGuestPhoto = false,
+//   guestId,
+//   sessionCode,
+// }: {
+//   eventId?: string;
+//   fileName: string;
+//   contentType: string;
+//   isGuestPhoto?: boolean;
+//   guestId?: string;
+//   sessionCode?: string;
+// }): Promise<string> {
+//   try {
+//     console.log(`🔗 Requesting presigned URL:`, {
+//       eventId,
+//       fileName,
+//       contentType,
+//       isGuestPhoto,
+//       guestId,
+//       sessionCode,
+//     });
+
+//     const response = await fetch(`${BACKEND_URL}/api/upload`, {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//         Accept: "application/json",
+//       },
+//       body: JSON.stringify({
+//         eventId,
+//         fileName,
+//         contentType,
+//         isGuestPhoto,
+//         guestId,
+//         sessionCode,
+//       }),
+//     });
+
+//     if (!response.ok) {
+//       const errorText = await response.text();
+//       console.error(`❌ Presigned URL request failed:`, {
+//         status: response.status,
+//         statusText: response.statusText,
+//         errorText,
+//       });
+//       throw new Error(
+//         `Failed to get presigned URL: ${response.status} - ${errorText}`
+//       );
+//     }
+
+//     const { signedUrl } = await response.json();
+//     console.log(`✅ Got presigned URL successfully`);
+//     return signedUrl;
+//   } catch (error) {
+//     console.error(`❌ Error getting presigned URL:`, error);
+//     throw error;
+//   }
+// }
+
+// export async function uploadPhoto({
+//   presignedUrl,
+//   file,
+//   onProgress,
+// }: {
+//   presignedUrl: string;
+//   file: File;
+//   onProgress?: (progress: number) => void;
+// }): Promise<void> {
+//   return new Promise((resolve, reject) => {
+//     const xhr = new XMLHttpRequest();
+
+//     xhr.upload.onprogress = (event) => {
+//       if (event.lengthComputable && onProgress) {
+//         const progress = (event.loaded / event.total) * 100;
+//         onProgress(progress);
+//       }
+//     };
+
+//     xhr.onload = () => {
+//       if (xhr.status === 200) {
+//         resolve();
+//       } else {
+//         reject(new Error(`Upload failed with status: ${xhr.status}`));
+//       }
+//     };
+
+//     xhr.onerror = () => {
+//       reject(new Error("Upload failed"));
+//     };
+
+//     xhr.open("PUT", presignedUrl);
+//     xhr.setRequestHeader("Content-Type", file.type);
+//     xhr.send(file);
+//   });
+// }
+
+// ===============================
+// 2. UPDATE uploadPhoto() → now uploads directly to blob
+// ===============================
 export async function uploadPhoto({
   presignedUrl,
   file,
@@ -221,39 +286,58 @@ export async function uploadPhoto({
   file: File;
   onProgress?: (progress: number) => void;
 }): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
+  try {
+    const uploadParams = JSON.parse(presignedUrl);
 
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable && onProgress) {
-        const progress = (event.loaded / event.total) * 100;
-        onProgress(progress);
-      }
-    };
+    console.log(`🚀 Uploading to Vercel Blob:`, uploadParams);
 
-    xhr.onload = () => {
-      if (xhr.status === 200) {
-        resolve();
-      } else {
-        reject(new Error(`Upload failed with status: ${xhr.status}`));
-      }
-    };
+    // Convert file to base64
+    const fileData = await fileToBase64(file);
 
-    xhr.onerror = () => {
-      reject(new Error("Upload failed"));
-    };
+    // Upload directly to blob endpoint
+    const response = await fetch(`${BACKEND_URL}/api/upload-blob`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        ...uploadParams,
+        fileData,
+      }),
+    });
 
-    xhr.open("PUT", presignedUrl);
-    xhr.setRequestHeader("Content-Type", file.type);
-    xhr.send(file);
-  });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Upload failed: ${response.status} - ${errorText}`);
+    }
+
+    if (onProgress) onProgress(100);
+    console.log("✅ Upload successful");
+  } catch (error) {
+    console.error(`❌ Upload error:`, error);
+    throw error;
+  }
 }
+
+// export async function getEventPhotos(eventId: string): Promise<EventPhoto[]> {
+//   try {
+//     // Fixed: Use the correct backend endpoint
+//     const response = await makeAuthenticatedRequest(
+//       `/api/photos/${eventId}/all`
+//     );
+//     const data = await response.json();
+//     return Array.isArray(data) ? data : data.photos || [];
+//   } catch (error) {
+//     console.error("Get photos error:", error);
+//     return [];
+//   }
+// }
 
 export async function getEventPhotos(eventId: string): Promise<EventPhoto[]> {
   try {
-    // Fixed: Use the correct backend endpoint
     const response = await makeAuthenticatedRequest(
-      `/api/photos/${eventId}/all`,
+      `/api/upload-blob?eventId=${eventId}`
     );
     const data = await response.json();
     return Array.isArray(data) ? data : data.photos || [];
@@ -264,7 +348,7 @@ export async function getEventPhotos(eventId: string): Promise<EventPhoto[]> {
 }
 
 export async function listAllEventPhotos(
-  eventId: string,
+  eventId: string
 ): Promise<EventPhoto[]> {
   try {
     return await getEventPhotos(eventId);
@@ -281,7 +365,7 @@ export async function listAllEventPhotos(
 export async function deleteMultipleFiles(
   eventId: string,
   fileNames: string[],
-  guestId?: string,
+  guestId?: string
 ): Promise<void> {
   try {
     console.log(`🗑️ Deleting ${fileNames.length} photos for event ${eventId}`);
@@ -320,7 +404,7 @@ export function getSignedPhotoUrl(eventId: string, fileName: string): string {
 
 export function getEventPhotoUrl(
   eventId: string,
-  photo: EventPhoto | string,
+  photo: EventPhoto | string
 ): string {
   const cloudFrontUrl =
     import.meta.env.VITE_CLOUDFRONT_URL || "https://your-cloudfront-url";
@@ -362,7 +446,7 @@ export const eventService = {
       const q = query(
         collection(db, "events"),
         where("sessionCode", "==", sessionCode.toUpperCase()),
-        limit(1),
+        limit(1)
       );
 
       const snapshot = await getDocs(q);
@@ -376,7 +460,7 @@ export const eventService = {
       const event = { id: doc.id, ...doc.data() } as Event;
 
       console.log(
-        `✅ Found event: ${event.id} for sessionCode: ${sessionCode}`,
+        `✅ Found event: ${event.id} for sessionCode: ${sessionCode}`
       );
       return event;
     } catch (error) {
@@ -410,7 +494,7 @@ export const photoService = {
   async getUploadUrl(
     eventId: string,
     fileName: string,
-    sessionCode?: string,
+    sessionCode?: string
   ): Promise<UploadResponse> {
     const params = new URLSearchParams({
       eventId,
@@ -446,7 +530,7 @@ export const guestService = {
         `${BACKEND_URL}/api/guest/event?sessionCode=${sessionCode}`,
         {
           headers: { "Content-Type": "application/json" },
-        },
+        }
       );
 
       if (!response.ok) {
@@ -466,7 +550,7 @@ export const guestService = {
   async uploadGuestPhoto(
     eventId: string,
     sessionCode: string,
-    file: File,
+    file: File
   ): Promise<string> {
     try {
       console.log(`🚀 Starting guest photo upload:`, {
@@ -504,7 +588,7 @@ export const guestService = {
           errorText,
         });
         throw new Error(
-          `Failed to get presigned URL: ${response.status} - ${errorText}`,
+          `Failed to get presigned URL: ${response.status} - ${errorText}`
         );
       }
 
@@ -528,7 +612,7 @@ export const guestService = {
           errorText,
         });
         throw new Error(
-          `S3 upload failed: ${uploadResponse.status} - ${errorText}`,
+          `S3 upload failed: ${uploadResponse.status} - ${errorText}`
         );
       }
 
@@ -566,11 +650,11 @@ export const storeTempPhotos = (eventId: string, photos: Photo[]): void => {
 export const storeUploadedPhoto = (
   eventId: string,
   fileName: string,
-  isGuest: boolean,
+  isGuest: boolean
 ): void => {
   try {
     const uploaded = JSON.parse(
-      localStorage.getItem(`uploaded_photos_${eventId}`) || "[]",
+      localStorage.getItem(`uploaded_photos_${eventId}`) || "[]"
     );
     uploaded.push({
       fileName,
@@ -579,7 +663,7 @@ export const storeUploadedPhoto = (
     });
     localStorage.setItem(
       `uploaded_photos_${eventId}`,
-      JSON.stringify(uploaded),
+      JSON.stringify(uploaded)
     );
   } catch (error) {
     console.error("Error storing uploaded photo info:", error);
@@ -587,7 +671,7 @@ export const storeUploadedPhoto = (
 };
 
 export const getUploadedPhotos = (
-  eventId: string,
+  eventId: string
 ): Array<{ fileName: string; isGuest: boolean; uploadedAt: string }> => {
   try {
     const stored = localStorage.getItem(`uploaded_photos_${eventId}`);
@@ -610,4 +694,14 @@ export async function testConnection(): Promise<boolean> {
     console.error("Backend connection test failed:", error);
     return false;
   }
+}
+
+// Helper: Convert File to base64
+async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
