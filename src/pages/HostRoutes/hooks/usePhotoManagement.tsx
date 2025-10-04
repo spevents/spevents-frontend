@@ -1,5 +1,4 @@
 // File: src/pages/HostRoutes/hooks/usePhotoManagement.tsx
-// Fix: Line 84 - Use photo.url directly instead of getEventPhotoUrl()
 
 import { useState, useEffect, useRef } from "react";
 import JSZip from "jszip";
@@ -9,7 +8,7 @@ import {
   photoService,
   type EventPhoto,
 } from "@/services/api";
-import { DisplayPhoto } from "../types";
+import type { DisplayPhoto } from "../types";
 
 export function usePhotoManagement(
   eventId: string | undefined,
@@ -46,12 +45,11 @@ export function usePhotoManagement(
       const eventPhotos: EventPhoto[] = await listAllEventPhotos(eventId);
       console.log("📸 Found photos:", eventPhotos.length);
 
-      // ✅ FIX: Use photo.url directly from backend
       const displayPhotos: DisplayPhoto[] = eventPhotos.map((photo) => ({
-        url: photo.url, // ← Use direct URL from backend
+        url: photo.url, // direct Vercel Blob URL
         fileName: photo.fileName,
         created_at: photo.uploadedAt || new Date().toISOString(),
-        fullKey: photo.fullKey,
+        fullKey: (photo as any).fullKey, // optional from older API
         isGuestPhoto: photo.isGuestPhoto,
         guestId: photo.guestId,
       }));
@@ -64,19 +62,12 @@ export function usePhotoManagement(
       if (!isInitialLoad.current) {
         const currentPhotoIds = new Set(sortedPhotos.map((p) => p.fileName));
         const newIds = new Set<string>();
-
         currentPhotoIds.forEach((id) => {
-          if (!existingPhotoIds.current.has(id)) {
-            newIds.add(id);
-          }
+          if (!existingPhotoIds.current.has(id)) newIds.add(id);
         });
-
         setNewPhotoIds(newIds);
-
         if (newIds.size > 0) {
-          setTimeout(() => {
-            setNewPhotoIds(new Set());
-          }, 1000);
+          setTimeout(() => setNewPhotoIds(new Set()), 1000);
         }
       } else {
         setNewPhotoIds(new Set(sortedPhotos.map((p) => p.fileName)));
@@ -103,90 +94,157 @@ export function usePhotoManagement(
     }
   }, [eventId]);
 
+  /**
+   * Prefer direct Vercel Blob URL when available; fallback to proxy for legacy/private cases.
+   */
+
+  const downloadFromVercelUrl = async (photo: DisplayPhoto): Promise<Blob> => {
+    if (!photo.url) throw new Error("Missing photo.url");
+
+    const url = photo.url.includes("?")
+      ? `${photo.url}&download=1`
+      : `${photo.url}?download=1`;
+
+    const res = await fetch(url, {
+      method: "GET",
+      mode: "cors",
+      credentials: "omit",
+    });
+
+    if (!res.ok) {
+      throw new Error(`Vercel Blob GET failed: ${res.status}`);
+    }
+    const blob = await res.blob();
+    if (!blob || blob.size === 0) {
+      throw new Error("Vercel Blob returned empty blob");
+    }
+    return blob;
+  };
+
+  // Keep the proxy available as a fallback (your backend can decide where to fetch from).
   const downloadViaProxy = async (photo: DisplayPhoto): Promise<Blob> => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("User not authenticated");
+
+    const token = await user.getIdToken();
+    const apiUrl = import.meta.env.VITE_API_URL || "https://api.spevents.live";
+
+    const response = await fetch(`${apiUrl}/api/photos`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        action: "download",
+        eventId,
+        fileName: photo.fileName,
+        guestId: photo.guestId,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `Proxy download failed: ${response.status} - ${errorText}`
+      );
+    }
+
+    const blob = await response.blob();
+    if (!blob || blob.size === 0) {
+      throw new Error("Proxy returned empty blob");
+    }
+    return blob;
+  };
+
+  const getPhotoBlob = async (photo: DisplayPhoto): Promise<Blob> => {
     try {
-      const user = auth.currentUser;
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
-
-      const token = await user.getIdToken();
-      const apiUrl =
-        import.meta.env.VITE_API_URL || "https://api.spevents.live";
-
-      const response = await fetch(`${apiUrl}/api/photos`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          action: "download",
-          eventId,
-          fileName: photo.fileName,
-          guestId: photo.guestId,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Download failed: ${response.status} - ${errorText}`);
-      }
-
-      return response.blob();
-    } catch (error) {
-      console.error("Download via proxy failed:", error);
-      throw error;
+      return await downloadFromVercelUrl(photo);
+    } catch (e) {
+      console.warn(
+        `Vercel Blob fetch failed for ${photo.fileName}, trying proxy…`,
+        e
+      );
+      return await downloadViaProxy(photo);
     }
   };
+
+  const deriveDownloadName = (photo: DisplayPhoto): string => {
+    const hasExt = /\.[a-z0-9]+$/i.test(photo.fileName || "");
+    if (photo.fileName && hasExt) return photo.fileName;
+
+    try {
+      const u = new URL(photo.url);
+      const base = u.pathname.split("/").pop() || photo.fileName || "photo";
+      if (/\.[a-z0-9]+$/i.test(base)) return base;
+      return `${base}.jpg`;
+    } catch {
+      return photo.fileName && hasExt
+        ? photo.fileName
+        : `${photo.fileName || "photo"}.jpg`;
+    }
+  };
+
+  const zipAndSave = async (
+    entries: Array<{ name: string; blob: Blob }>,
+    zipName: string
+  ) => {
+    const zip = new JSZip();
+    entries.forEach(({ name, blob }) => zip.file(name, blob));
+    const zipBlob = await zip.generateAsync({
+      type: "blob",
+      compression: "DEFLATE",
+      compressionOptions: { level: 6 },
+    });
+
+    const zipUrl = URL.createObjectURL(zipBlob);
+    const link = document.createElement("a");
+    link.href = zipUrl;
+    link.download = zipName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(zipUrl), 1000);
+  };
+
+  const safeZipName = (suffix: string) =>
+    `${(currentEvent?.name || "event")
+      .toString()
+      .replace(/[^\w\-]+/g, "_")}-${suffix}-${
+      new Date().toISOString().split("T")[0]
+    }.zip`;
 
   const handleDownloadAll = async () => {
     if (photos.length === 0) return;
 
     setIsDownloading(true);
     try {
-      const zip = new JSZip();
-      let successCount = 0;
-      let failCount = 0;
+      const results = await Promise.allSettled(
+        photos.map(async (photo) => {
+          const blob = await getPhotoBlob(photo);
+          const name = deriveDownloadName(photo);
+          return { name, blob };
+        })
+      );
 
-      for (let i = 0; i < photos.length; i++) {
-        const photo = photos[i];
-        try {
-          const blob = await downloadViaProxy(photo);
-          if (blob.size === 0) throw new Error("Empty response");
-          zip.file(photo.fileName, blob);
-          successCount++;
-        } catch (error) {
-          console.error(`❌ Failed to download ${photo.fileName}:`, error);
-          failCount++;
-        }
-      }
+      const successes = results
+        .filter(
+          (r): r is PromiseFulfilledResult<{ name: string; blob: Blob }> =>
+            r.status === "fulfilled"
+        )
+        .map((r) => r.value);
 
-      if (successCount === 0) {
+      const failures = results.filter((r) => r.status === "rejected");
+
+      if (successes.length === 0) {
         throw new Error("No photos could be downloaded");
       }
 
-      const zipBlob = await zip.generateAsync({
-        type: "blob",
-        compression: "DEFLATE",
-        compressionOptions: { level: 6 },
-      });
+      await zipAndSave(successes, safeZipName("all-photos"));
 
-      const zipUrl = URL.createObjectURL(zipBlob);
-      const link = document.createElement("a");
-      link.href = zipUrl;
-      link.download = `${currentEvent?.name || "event"}-all-photos-${
-        new Date().toISOString().split("T")[0]
-      }.zip`;
-
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(zipUrl), 1000);
-
-      if (failCount > 0) {
+      if (failures.length > 0) {
         alert(
-          `Download completed with ${successCount} photos. ${failCount} photos failed to download.`
+          `Download completed with ${successes.length} photos. ${failures.length} photos failed to download.`
         );
       }
     } catch (error) {
@@ -206,52 +264,34 @@ export function usePhotoManagement(
 
     setIsDownloading(true);
     try {
-      const selectedPhotoObjects = photos.filter((p) =>
-        selectedPhotos.has(p.fileName)
+      const selected = photos.filter((p) => selectedPhotos.has(p.fileName));
+
+      const results = await Promise.allSettled(
+        selected.map(async (photo) => {
+          const blob = await getPhotoBlob(photo);
+          const name = deriveDownloadName(photo);
+          return { name, blob };
+        })
       );
 
-      const zip = new JSZip();
-      let successCount = 0;
-      let failCount = 0;
+      const successes = results
+        .filter(
+          (r): r is PromiseFulfilledResult<{ name: string; blob: Blob }> =>
+            r.status === "fulfilled"
+        )
+        .map((r) => r.value);
 
-      for (let i = 0; i < selectedPhotoObjects.length; i++) {
-        const photo = selectedPhotoObjects[i];
-        try {
-          const blob = await downloadViaProxy(photo);
-          if (blob.size === 0) throw new Error("Empty response");
-          zip.file(photo.fileName, blob);
-          successCount++;
-        } catch (error) {
-          console.error(`❌ Failed to download ${photo.fileName}:`, error);
-          failCount++;
-        }
-      }
+      const failures = results.filter((r) => r.status === "rejected");
 
-      if (successCount === 0) {
+      if (successes.length === 0) {
         throw new Error("No photos could be downloaded");
       }
 
-      const zipBlob = await zip.generateAsync({
-        type: "blob",
-        compression: "DEFLATE",
-        compressionOptions: { level: 6 },
-      });
+      await zipAndSave(successes, safeZipName("photos"));
 
-      const zipUrl = URL.createObjectURL(zipBlob);
-      const link = document.createElement("a");
-      link.href = zipUrl;
-      link.download = `${currentEvent?.name || "event"}-photos-${
-        new Date().toISOString().split("T")[0]
-      }.zip`;
-
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(zipUrl), 1000);
-
-      if (failCount > 0) {
+      if (failures.length > 0) {
         alert(
-          `Download completed with ${successCount} photos. ${failCount} photos failed to download.`
+          `Download completed with ${successes.length} photos. ${failures.length} photos failed to download.`
         );
       }
     } catch (error) {
@@ -268,11 +308,11 @@ export function usePhotoManagement(
 
   const handleDownloadSinglePhoto = async (photo: DisplayPhoto) => {
     try {
-      const blob = await downloadViaProxy(photo);
+      const blob = await getPhotoBlob(photo);
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = photo.fileName;
+      link.download = deriveDownloadName(photo);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -303,8 +343,8 @@ export function usePhotoManagement(
         try {
           await navigator.share(shareData);
           return;
-        } catch (error) {
-          if (error instanceof Error && error.name !== "AbortError") {
+        } catch (error: any) {
+          if (error?.name !== "AbortError") {
             console.log("Native share failed, falling back to clipboard");
           } else {
             return;
@@ -337,8 +377,9 @@ export function usePhotoManagement(
       const selectedPhotoObjects = photos.filter((p) =>
         selectedPhotos.has(p.fileName)
       );
-
-      const photoKeys = selectedPhotoObjects.map((p) => p.fullKey);
+      const photoKeys = selectedPhotoObjects.map(
+        (p) => p.fullKey || p.fileName
+      );
       await photoService.deletePhotos(eventId, photoKeys);
       await loadPhotosFromStorage();
     } catch (error) {
