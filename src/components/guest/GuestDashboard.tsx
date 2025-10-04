@@ -11,7 +11,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   Camera,
   Grid,
-  WandSparkles,
   ChevronLeft,
   ChevronRight,
   X,
@@ -122,11 +121,11 @@ export function GuestDashboard() {
       icon: <Camera className="w-6 h-6 text-white font-bold" />,
       label: "Camera",
     },
-    {
-      id: "create",
-      icon: <WandSparkles className="w-6 h-6 text-white font-bold" />,
-      label: "Create",
-    },
+    // {
+    //   id: "create",
+    //   icon: <WandSparkles className="w-6 h-6 text-white font-bold" />,
+    //   label: "Create",
+    // },
     // { id: "prize", icon: <Trophy ... />, label: "Prize" },
   ];
 
