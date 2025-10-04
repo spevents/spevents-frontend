@@ -274,9 +274,9 @@ export async function getPresignedUrl({
 //   });
 // }
 
-// ===============================
-// 2. UPDATE uploadPhoto() → now uploads directly to blob
-// ===============================
+// File: src/services/api.ts
+// Replace your uploadPhoto() function with this:
+
 export async function uploadPhoto({
   presignedUrl,
   file,
@@ -288,18 +288,21 @@ export async function uploadPhoto({
 }): Promise<void> {
   try {
     const uploadParams = JSON.parse(presignedUrl);
-
     console.log(`🚀 Uploading to Vercel Blob:`, uploadParams);
 
     // Convert file to base64
     const fileData = await fileToBase64(file);
 
-    // Upload directly to blob endpoint
+    // Get auth header
+    const authHeader = await getAuthHeader();
+
+    // Upload directly to blob endpoint WITH auth
     const response = await fetch(`${BACKEND_URL}/api/upload-blob`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
+        ...authHeader, // ← THIS WAS MISSING
       },
       body: JSON.stringify({
         ...uploadParams,
