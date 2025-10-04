@@ -954,7 +954,7 @@ export default function PhotoReview() {
         console.log("  Guest ID:", guestId);
 
         // Store with complete data
-        storeUploadedPhoto(actualEventId, fileName, blobUrl, guestId);
+        storeUploadedPhoto(actualEventId, blobUrl, fileName, guestId);
 
         // Update local temp storage to remove uploaded photo
         const tempPhotos = getTempPhotos(actualEventId).filter(
