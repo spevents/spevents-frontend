@@ -240,6 +240,7 @@ export async function getPresignedUrl({
 // File: src/services/api.ts
 // Replace your uploadPhoto() function with this:
 
+// src/services/api.ts
 export async function uploadPhoto({
   presignedUrl,
   file,
@@ -248,15 +249,17 @@ export async function uploadPhoto({
   presignedUrl: string;
   file: File;
   onProgress?: (progress: number) => void;
-}): Promise<void> {
+}): Promise<{
+  photoUrl: string;
+  guestId: string;
+  fileName: string;
+}> {
   try {
     const uploadParams = JSON.parse(presignedUrl);
     console.log(`🚀 Uploading to Vercel Blob:`, uploadParams);
 
-    // Convert file to base64
     const fileData = await fileToBase64(file);
 
-    // ✅ FIX: Only get auth header if user is authenticated
     let authHeader = {};
     const user = auth.currentUser;
 
@@ -264,21 +267,17 @@ export async function uploadPhoto({
       try {
         const token = await user.getIdToken();
         authHeader = { Authorization: `Bearer ${token}` };
-        console.log("✅ Using authenticated upload");
       } catch (error) {
         console.error("Failed to get auth token:", error);
       }
-    } else {
-      console.log("ℹ️ Using guest upload (no auth)");
     }
 
-    // Upload directly to blob endpoint
     const response = await fetch(`${BACKEND_URL}/api/upload-blob`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
-        ...authHeader, // ← Will be empty for guest uploads
+        ...authHeader,
       },
       body: JSON.stringify({
         ...uploadParams,
@@ -291,13 +290,81 @@ export async function uploadPhoto({
       throw new Error(`Upload failed: ${response.status} - ${errorText}`);
     }
 
+    const result = await response.json();
+    console.log("✅ Upload response:", result);
+
     if (onProgress) onProgress(100);
-    console.log("✅ Upload successful");
+
+    return {
+      photoUrl: result.photoUrl,
+      guestId: result.guestId,
+      fileName: result.fileName,
+    };
   } catch (error) {
     console.error(`❌ Upload error:`, error);
     throw error;
   }
 }
+
+// OLD BUT KEEP FOR NOW
+// export async function uploadPhoto({
+//   presignedUrl,
+//   file,
+//   onProgress,
+// }: {
+//   presignedUrl: string;
+//   file: File;
+//   onProgress?: (progress: number) => void;
+// }): Promise<void> {
+//   try {
+//     const uploadParams = JSON.parse(presignedUrl);
+//     console.log(`🚀 Uploading to Vercel Blob:`, uploadParams);
+
+//     // Convert file to base64
+//     const fileData = await fileToBase64(file);
+
+//     // ✅ FIX: Only get auth header if user is authenticated
+//     let authHeader = {};
+//     const user = auth.currentUser;
+
+//     if (user) {
+//       try {
+//         const token = await user.getIdToken();
+//         authHeader = { Authorization: `Bearer ${token}` };
+//         console.log("✅ Using authenticated upload");
+//       } catch (error) {
+//         console.error("Failed to get auth token:", error);
+//       }
+//     } else {
+//       console.log("ℹ️ Using guest upload (no auth)");
+//     }
+
+//     // Upload directly to blob endpoint
+//     const response = await fetch(`${BACKEND_URL}/api/upload-blob`, {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//         Accept: "application/json",
+//         ...authHeader, // ← Will be empty for guest uploads
+//       },
+//       body: JSON.stringify({
+//         ...uploadParams,
+//         fileData,
+//       }),
+//     });
+
+//     if (!response.ok) {
+//       const errorText = await response.text();
+//       throw new Error(`Upload failed: ${response.status} - ${errorText}`);
+//     }
+
+//     if (onProgress) onProgress(100);
+//     console.log("✅ Upload successful");
+//   } catch (error) {
+//     console.error(`❌ Upload error:`, error);
+//     throw error;
+//   }
+// }
 
 // export async function getEventPhotos(eventId: string): Promise<EventPhoto[]> {
 //   try {
