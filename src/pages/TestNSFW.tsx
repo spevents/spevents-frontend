@@ -3,9 +3,18 @@
 import { useState } from "react";
 import { checkNSFW, NSFWCheckResponse } from "@/services/nsfw";
 
+interface ExtendedNSFWResponse extends NSFWCheckResponse {
+  errorDetails?: {
+    status?: number;
+    message?: string;
+    response?: any;
+  };
+  allResults?: Array<{ label: string; score: number }>;
+}
+
 export default function TestNSFW() {
   const [file, setFile] = useState<File | null>(null);
-  const [result, setResult] = useState<NSFWCheckResponse | null>(null);
+  const [result, setResult] = useState<ExtendedNSFWResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
 
@@ -23,7 +32,7 @@ export default function TestNSFW() {
     setLoading(true);
     try {
       const res = await checkNSFW(file);
-      setResult(res);
+      setResult(res as ExtendedNSFWResponse);
     } catch (error) {
       console.error(error);
     } finally {
@@ -38,8 +47,44 @@ export default function TestNSFW() {
       return "⚠️ File was too large after compression. Try a smaller image.";
     }
 
+    if (result.label === "api_error") {
+      return (
+        <div>
+          <p className="font-bold">⚠️ API Error - Check your configuration!</p>
+          {result.errorDetails && (
+            <div className="mt-2 text-xs font-mono bg-gray-900 p-2 rounded">
+              <p>Status: {result.errorDetails.status}</p>
+              <p>Message: {result.errorDetails.message}</p>
+            </div>
+          )}
+          <p className="mt-2 text-xs">
+            Common causes:
+            <br />
+            1. Missing HUGGING_FACE_API_KEY environment variable
+            <br />
+            2. Invalid API key
+            <br />
+            3. Model loading or rate limiting
+          </p>
+        </div>
+      );
+    }
+
+    if (result.label === "missing_api_key") {
+      return "❌ Missing Hugging Face API Key! Set HUGGING_FACE_API_KEY in your environment variables.";
+    }
+
     if (result.label === "error" || result.label === "exception") {
-      return "⚠️ Error checking image. Upload will be allowed by default.";
+      return (
+        <div>
+          <p>⚠️ Error checking image. Upload will be allowed by default.</p>
+          {result.errorDetails && (
+            <div className="mt-2 text-xs font-mono bg-gray-900 p-2 rounded">
+              <p>{result.errorDetails.message}</p>
+            </div>
+          )}
+        </div>
+      );
     }
 
     return null;
@@ -94,6 +139,8 @@ export default function TestNSFW() {
               result.isNSFW
                 ? "border-red-500 bg-red-900/20"
                 : result.label === "error" ||
+                    result.label === "api_error" ||
+                    result.label === "missing_api_key" ||
                     result.label === "file_too_large" ||
                     result.label === "exception"
                   ? "border-yellow-500 bg-yellow-900/20"
@@ -105,6 +152,8 @@ export default function TestNSFW() {
                 result.isNSFW
                   ? "text-red-400"
                   : result.label === "error" ||
+                      result.label === "api_error" ||
+                      result.label === "missing_api_key" ||
                       result.label === "file_too_large" ||
                       result.label === "exception"
                     ? "text-yellow-400"
@@ -124,10 +173,26 @@ export default function TestNSFW() {
                 </span>
               </p>
             </div>
+            
+            {/* Show all results for debugging */}
+            {result.allResults && result.allResults.length > 0 && (
+              <div className="mt-3 text-xs">
+                <p className="font-bold text-gray-300 mb-1">All Classifications:</p>
+                <div className="bg-gray-900 p-2 rounded space-y-1 font-mono">
+                  {result.allResults.map((r, i) => (
+                    <div key={i} className="flex justify-between">
+                      <span>{r.label}</span>
+                      <span className="text-yellow-400">{(r.score * 100).toFixed(2)}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {getResultMessage() && (
-              <p className="mt-3 text-sm text-yellow-400">
+              <div className="mt-3 text-sm text-yellow-400">
                 {getResultMessage()}
-              </p>
+              </div>
             )}
           </div>
         )}
@@ -136,6 +201,9 @@ export default function TestNSFW() {
           <p>✅ Using backend API (no frontend key needed)</p>
           <p className="mt-1">
             Images over 1MB will be automatically compressed
+          </p>
+          <p className="mt-1 text-yellow-400">
+            ⚠️ Make sure HUGGING_FACE_API_KEY is set in your environment!
           </p>
         </div>
       </div>
