@@ -35,7 +35,7 @@ export function CaptionGenerator({
           },
           body: JSON.stringify({
             eventId,
-            limit: 5, // Process 5 at a time
+            limit: 10,
           }),
         },
       );
