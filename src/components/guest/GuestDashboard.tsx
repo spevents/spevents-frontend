@@ -51,7 +51,7 @@ const PhotoThumbnail = ({
   onError,
 }: PhotoThumbnailProps) => {
   const [imageState, setImageState] = useState<"loading" | "loaded" | "error">(
-    "loading"
+    "loading",
   );
   return (
     <div className="w-full h-full relative">
@@ -97,7 +97,7 @@ export function GuestDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("gallery");
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(
-    null
+    null,
   );
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
@@ -211,11 +211,11 @@ export function GuestDashboard() {
     if (selectedPhotoIndex === null) return;
     if (direction === "prev") {
       setSelectedPhotoIndex(
-        selectedPhotoIndex > 0 ? selectedPhotoIndex - 1 : photos.length - 1
+        selectedPhotoIndex > 0 ? selectedPhotoIndex - 1 : photos.length - 1,
       );
     } else {
       setSelectedPhotoIndex(
-        selectedPhotoIndex < photos.length - 1 ? selectedPhotoIndex + 1 : 0
+        selectedPhotoIndex < photos.length - 1 ? selectedPhotoIndex + 1 : 0,
       );
     }
   };

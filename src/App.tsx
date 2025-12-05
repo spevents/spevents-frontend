@@ -11,6 +11,7 @@ import { GuestLanding } from "./pages/guest/GuestLanding";
 import { OnboardingPage } from "./pages/HostRoutes/OnboardingPage";
 import { RouteGuard } from "./components/auth/RouteGuard";
 import { SignInPage } from "./components/auth/SignInPage";
+import TestNSFW from "./pages/TestNSFW";
 
 export default function App() {
   const currentDomain = window.location.hostname;
@@ -72,6 +73,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/signin" element={<SignInPage />} />
+            <Route path="/test-nsfw" element={<TestNSFW />} />
             <Route path="/guest/*" element={<GuestRoutes />} />
 
             <Route

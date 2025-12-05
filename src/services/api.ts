@@ -66,7 +66,7 @@ const getAuthHeader = async (): Promise<{ Authorization: string } | {}> => {
  */
 const makeAuthenticatedRequest = async (
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
 ): Promise<Response> => {
   const authHeader = await getAuthHeader();
 
@@ -120,21 +120,21 @@ export async function getUserEvents(): Promise<Event[]> {
 
 export async function getEvent(eventId: string): Promise<Event> {
   const response = await makeAuthenticatedRequest(
-    `/api/events?eventId=${eventId}`
+    `/api/events?eventId=${eventId}`,
   );
   return response.json();
 }
 
 export async function updateEvent(
   eventId: string,
-  updates: Partial<Event>
+  updates: Partial<Event>,
 ): Promise<Event> {
   const response = await makeAuthenticatedRequest(
     `/api/events?eventId=${eventId}`,
     {
       method: "PUT",
       body: JSON.stringify(updates),
-    }
+    },
   );
 
   return response.json();
@@ -383,7 +383,7 @@ export async function uploadPhoto({
 export async function getEventPhotos(eventId: string): Promise<EventPhoto[]> {
   try {
     const response = await makeAuthenticatedRequest(
-      `/api/upload-blob?eventId=${eventId}`
+      `/api/upload-blob?eventId=${eventId}`,
     );
     const data = await response.json();
     return Array.isArray(data) ? data : data.photos || [];
@@ -394,7 +394,7 @@ export async function getEventPhotos(eventId: string): Promise<EventPhoto[]> {
 }
 
 export async function listAllEventPhotos(
-  eventId: string
+  eventId: string,
 ): Promise<EventPhoto[]> {
   try {
     return await getEventPhotos(eventId);
@@ -411,7 +411,7 @@ export async function listAllEventPhotos(
 export async function deleteMultipleFiles(
   eventId: string,
   fileNames: string[],
-  guestId?: string
+  guestId?: string,
 ): Promise<void> {
   try {
     console.log(`🗑️ Deleting ${fileNames.length} photos for event ${eventId}`);
@@ -450,7 +450,7 @@ export function getSignedPhotoUrl(eventId: string, fileName: string): string {
 
 export function getEventPhotoUrl(
   eventId: string,
-  photo: EventPhoto | string
+  photo: EventPhoto | string,
 ): string {
   const cloudFrontUrl =
     import.meta.env.VITE_CLOUDFRONT_URL || "https://your-cloudfront-url";
@@ -492,7 +492,7 @@ export const eventService = {
       const q = query(
         collection(db, "events"),
         where("sessionCode", "==", sessionCode.toUpperCase()),
-        limit(1)
+        limit(1),
       );
 
       const snapshot = await getDocs(q);
@@ -506,7 +506,7 @@ export const eventService = {
       const event = { id: doc.id, ...doc.data() } as Event;
 
       console.log(
-        `✅ Found event: ${event.id} for sessionCode: ${sessionCode}`
+        `✅ Found event: ${event.id} for sessionCode: ${sessionCode}`,
       );
       return event;
     } catch (error) {
@@ -540,7 +540,7 @@ export const photoService = {
   async getUploadUrl(
     eventId: string,
     fileName: string,
-    sessionCode?: string
+    sessionCode?: string,
   ): Promise<UploadResponse> {
     const params = new URLSearchParams({
       eventId,
@@ -576,7 +576,7 @@ export const guestService = {
         `${BACKEND_URL}/api/guest/event?sessionCode=${sessionCode}`,
         {
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -596,7 +596,7 @@ export const guestService = {
   async uploadGuestPhoto(
     eventId: string,
     sessionCode: string,
-    file: File
+    file: File,
   ): Promise<string> {
     try {
       console.log(`🚀 Starting guest photo upload:`, {
@@ -634,7 +634,7 @@ export const guestService = {
           errorText,
         });
         throw new Error(
-          `Failed to get presigned URL: ${response.status} - ${errorText}`
+          `Failed to get presigned URL: ${response.status} - ${errorText}`,
         );
       }
 
@@ -658,7 +658,7 @@ export const guestService = {
           errorText,
         });
         throw new Error(
-          `S3 upload failed: ${uploadResponse.status} - ${errorText}`
+          `S3 upload failed: ${uploadResponse.status} - ${errorText}`,
         );
       }
 
@@ -696,11 +696,11 @@ export const storeTempPhotos = (eventId: string, photos: Photo[]): void => {
 export const storeUploadedPhoto = (
   eventId: string,
   fileName: string,
-  isGuest: boolean
+  isGuest: boolean,
 ): void => {
   try {
     const uploaded = JSON.parse(
-      localStorage.getItem(`uploaded_photos_${eventId}`) || "[]"
+      localStorage.getItem(`uploaded_photos_${eventId}`) || "[]",
     );
     uploaded.push({
       fileName,
@@ -709,7 +709,7 @@ export const storeUploadedPhoto = (
     });
     localStorage.setItem(
       `uploaded_photos_${eventId}`,
-      JSON.stringify(uploaded)
+      JSON.stringify(uploaded),
     );
   } catch (error) {
     console.error("Error storing uploaded photo info:", error);
@@ -717,7 +717,7 @@ export const storeUploadedPhoto = (
 };
 
 export const getUploadedPhotos = (
-  eventId: string
+  eventId: string,
 ): Array<{ fileName: string; isGuest: boolean; uploadedAt: string }> => {
   try {
     const stored = localStorage.getItem(`uploaded_photos_${eventId}`);

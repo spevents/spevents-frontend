@@ -13,7 +13,7 @@ import type { DisplayPhoto } from "../types";
 export function usePhotoManagement(
   eventId: string | undefined,
   currentEvent: any,
-  selectedPhotos: Set<string>
+  selectedPhotos: Set<string>,
 ) {
   const [photos, setPhotos] = useState<DisplayPhoto[]>([]);
   const [newPhotoIds, setNewPhotoIds] = useState<Set<string>>(new Set());
@@ -56,7 +56,7 @@ export function usePhotoManagement(
 
       const sortedPhotos = displayPhotos.sort(
         (a: DisplayPhoto, b: DisplayPhoto) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       );
 
       if (!isInitialLoad.current) {
@@ -146,7 +146,7 @@ export function usePhotoManagement(
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(
-        `Proxy download failed: ${response.status} - ${errorText}`
+        `Proxy download failed: ${response.status} - ${errorText}`,
       );
     }
 
@@ -163,7 +163,7 @@ export function usePhotoManagement(
     } catch (e) {
       console.warn(
         `Vercel Blob fetch failed for ${photo.fileName}, trying proxy…`,
-        e
+        e,
       );
       return await downloadViaProxy(photo);
     }
@@ -187,7 +187,7 @@ export function usePhotoManagement(
 
   const zipAndSave = async (
     entries: Array<{ name: string; blob: Blob }>,
-    zipName: string
+    zipName: string,
   ) => {
     const zip = new JSZip();
     entries.forEach(({ name, blob }) => zip.file(name, blob));
@@ -224,13 +224,13 @@ export function usePhotoManagement(
           const blob = await getPhotoBlob(photo);
           const name = deriveDownloadName(photo);
           return { name, blob };
-        })
+        }),
       );
 
       const successes = results
         .filter(
           (r): r is PromiseFulfilledResult<{ name: string; blob: Blob }> =>
-            r.status === "fulfilled"
+            r.status === "fulfilled",
         )
         .map((r) => r.value);
 
@@ -244,7 +244,7 @@ export function usePhotoManagement(
 
       if (failures.length > 0) {
         alert(
-          `Download completed with ${successes.length} photos. ${failures.length} photos failed to download.`
+          `Download completed with ${successes.length} photos. ${failures.length} photos failed to download.`,
         );
       }
     } catch (error) {
@@ -252,7 +252,7 @@ export function usePhotoManagement(
       alert(
         `Download failed: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
       );
     } finally {
       setIsDownloading(false);
@@ -271,13 +271,13 @@ export function usePhotoManagement(
           const blob = await getPhotoBlob(photo);
           const name = deriveDownloadName(photo);
           return { name, blob };
-        })
+        }),
       );
 
       const successes = results
         .filter(
           (r): r is PromiseFulfilledResult<{ name: string; blob: Blob }> =>
-            r.status === "fulfilled"
+            r.status === "fulfilled",
         )
         .map((r) => r.value);
 
@@ -291,7 +291,7 @@ export function usePhotoManagement(
 
       if (failures.length > 0) {
         alert(
-          `Download completed with ${successes.length} photos. ${failures.length} photos failed to download.`
+          `Download completed with ${successes.length} photos. ${failures.length} photos failed to download.`,
         );
       }
     } catch (error) {
@@ -299,7 +299,7 @@ export function usePhotoManagement(
       alert(
         `Download failed: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
       );
     } finally {
       setIsDownloading(false);
@@ -375,10 +375,10 @@ export function usePhotoManagement(
     setIsDeletingPhotos(true);
     try {
       const selectedPhotoObjects = photos.filter((p) =>
-        selectedPhotos.has(p.fileName)
+        selectedPhotos.has(p.fileName),
       );
       const photoKeys = selectedPhotoObjects.map(
-        (p) => p.fullKey || p.fileName
+        (p) => p.fullKey || p.fileName,
       );
       await photoService.deletePhotos(eventId, photoKeys);
       await loadPhotosFromStorage();
@@ -387,7 +387,7 @@ export function usePhotoManagement(
       alert(
         `Failed to delete photos: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
       );
     } finally {
       setIsDeletingPhotos(false);

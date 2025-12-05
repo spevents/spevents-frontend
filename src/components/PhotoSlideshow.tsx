@@ -166,11 +166,11 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
         const oldestPhoto = current.reduce(
           (oldest, photo) =>
             photo.expiryTime < oldest.expiryTime ? photo : oldest,
-          current[0]
+          current[0],
         );
 
         const availablePhotos = photosRef.current.filter(
-          (photo) => !current.some((p) => p.id === photo.id)
+          (photo) => !current.some((p) => p.id === photo.id),
         );
 
         const photoPool =
@@ -190,11 +190,11 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
         }, PHOTO_DISPLAY_TIME + removalJitter);
 
         return current.map((photo) =>
-          photo.transitionId === oldestPhoto.transitionId ? newPhoto : photo
+          photo.transitionId === oldestPhoto.transitionId ? newPhoto : photo,
         );
       } else {
         const availablePhotos = photosRef.current.filter(
-          (photo) => !current.some((p) => p.id === photo.id)
+          (photo) => !current.some((p) => p.id === photo.id),
         );
 
         if (availablePhotos.length === 0) {

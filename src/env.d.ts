@@ -18,6 +18,7 @@ interface ImportMetaEnv {
   readonly VITE_S3_BUCKET_NAME: string;
   readonly VITE_CLOUDFRONT_URL: string;
   readonly VITE_BYPASS_AUTH: string;
+  readonly VITE_HUGGING_FACE_API_KEY: string;
 }
 
 interface ImportMeta {

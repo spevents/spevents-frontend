@@ -283,12 +283,35 @@
 //         }
 //         const blob = await response.blob();
 //         console.log("✅ Blob created, size:", blob.size);
-
+//
 //         // Convert blob to File object
 //         const fileName = `photo-${Date.now()}.jpg`;
 //         const file = new File([blob], fileName, { type: "image/jpeg" });
 //         console.log("📦 Created File object:", fileName);
-
+//
+//         // NSFW Check
+//         console.log("🛡️ Checking for NSFW content...");
+//         const nsfwResult = await checkNSFW(file);
+//
+//         if (nsfwResult.isNSFW) {
+//            console.warn("🚫 NSFW content detected:", nsfwResult);
+//            alert("This photo cannot be uploaded as it was detected as inappropriate.");
+//
+//            // Stop upload process
+//            setIsUploading(false);
+//            setProcessingPhotos((prev) => {
+//              const newSet = new Set(prev);
+//              newSet.delete(photo.id);
+//              return newSet;
+//            });
+//            setExitDirection(null);
+//
+//            // Add back to photos list if it was removed (it was filtered out at start of function)
+//            setPhotos((prev) => [...prev, photo]);
+//            return;
+//         }
+//         console.log("✅ NSFW check passed:", nsfwResult);
+//
 //         // ✅ FIXED: Use the new uploadPhoto flow
 //         console.log("☁️ Starting Vercel Blob upload...");
 
@@ -620,6 +643,7 @@ import { useSwipeable } from "react-swipeable";
 
 // Backend API calls
 import { getPresignedUrl, uploadPhoto } from "@/services/api";
+import { checkNSFW } from "@/services/nsfw";
 
 // Local storage utilities for temp photos
 const getTempPhotos = (eventId: string): Photo[] => {
@@ -644,11 +668,11 @@ const storeUploadedPhoto = (
   eventId: string,
   photoUrl: string,
   fileName: string,
-  guestId: string
+  guestId: string,
 ): void => {
   try {
     const uploaded = JSON.parse(
-      localStorage.getItem(`uploaded_photos_${eventId}`) || "[]"
+      localStorage.getItem(`uploaded_photos_${eventId}`) || "[]",
     );
 
     uploaded.push({
@@ -662,7 +686,7 @@ const storeUploadedPhoto = (
 
     localStorage.setItem(
       `uploaded_photos_${eventId}`,
-      JSON.stringify(uploaded)
+      JSON.stringify(uploaded),
     );
 
     console.log("✅ Stored uploaded photo:", {
@@ -800,7 +824,7 @@ export default function PhotoReview() {
 
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [processingPhotos, setProcessingPhotos] = useState<Set<number>>(
-    new Set()
+    new Set(),
   );
   const [dragPosition, setDragPosition] = useState<number>(0);
   const [screenHeight, setScreenHeight] = useState(0);
@@ -808,11 +832,11 @@ export default function PhotoReview() {
   const [isUploading, setIsUploading] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [exitDirection, setExitDirection] = useState<"up" | "down" | null>(
-    null
+    null,
   );
 
   const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(
-    null
+    null,
   );
   const [horizontalDrag, setHorizontalDrag] = useState(0);
   const [isHorizontalDragging, setIsHorizontalDragging] = useState(false);
@@ -916,6 +940,31 @@ export default function PhotoReview() {
         const file = new File([blob], fileName, { type: "image/jpeg" });
         console.log("📦 Created File object:", fileName);
 
+        // NSFW Check
+        console.log("🛡️ Checking for NSFW content...");
+        const nsfwResult = await checkNSFW(file);
+
+        if (nsfwResult.isNSFW) {
+          console.warn("🚫 NSFW content detected:", nsfwResult);
+          alert(
+            "This photo cannot be uploaded as it was detected as inappropriate.",
+          );
+
+          // Stop upload process
+          setIsUploading(false);
+          setProcessingPhotos((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(photo.id);
+            return newSet;
+          });
+          setExitDirection(null);
+
+          // Add back to photos list if it was removed (it was filtered out at start of function)
+          setPhotos((prev) => [...prev, photo]);
+          return;
+        }
+        console.log("✅ NSFW check passed:", nsfwResult);
+
         console.log("☁️ Starting upload...");
 
         // Get upload params
@@ -958,7 +1007,7 @@ export default function PhotoReview() {
 
         // Update local temp storage to remove uploaded photo
         const tempPhotos = getTempPhotos(actualEventId).filter(
-          (p: Photo) => p.id !== photo.id
+          (p: Photo) => p.id !== photo.id,
         );
         storeTempPhotos(actualEventId, tempPhotos);
 
@@ -987,7 +1036,7 @@ export default function PhotoReview() {
 
       if (actualEventId) {
         const tempPhotos = getTempPhotos(actualEventId).filter(
-          (p: Photo) => p.id !== photo.id
+          (p: Photo) => p.id !== photo.id,
         );
         storeTempPhotos(actualEventId, tempPhotos);
       }
@@ -1090,31 +1139,31 @@ export default function PhotoReview() {
                     swipeDirection === "left"
                       ? -200
                       : swipeDirection === "right"
-                      ? 200
-                      : 0,
+                        ? 200
+                        : 0,
                 }}
                 animate={{
                   scale: isCurrentPhoto
                     ? 1
                     : isPrevPhoto || isNextPhoto
-                    ? 0.95
-                    : 0.9,
+                      ? 0.95
+                      : 0.9,
                   opacity: isCurrentPhoto ? 1 : isActive ? 0.7 : 0,
                   x: isCurrentPhoto
                     ? horizontalDrag
                     : isPrevPhoto
-                    ? -100 + horizontalDrag * 0.5
-                    : isNextPhoto
-                    ? 100 + horizontalDrag * 0.5
-                    : horizontalDrag * 0.1,
+                      ? -100 + horizontalDrag * 0.5
+                      : isNextPhoto
+                        ? 100 + horizontalDrag * 0.5
+                        : horizontalDrag * 0.1,
                   y: isCurrentPhoto ? dragPosition : index * -8,
                   rotateY: isCurrentPhoto
                     ? horizontalDrag * 0.05
                     : isPrevPhoto
-                    ? 5
-                    : isNextPhoto
-                    ? -5
-                    : 0,
+                      ? 5
+                      : isNextPhoto
+                        ? -5
+                        : 0,
                   transition: springConfig,
                 }}
                 exit={{
@@ -1124,14 +1173,14 @@ export default function PhotoReview() {
                     swipeDirection === "left"
                       ? 200
                       : swipeDirection === "right"
-                      ? -200
-                      : 0,
+                        ? -200
+                        : 0,
                   y:
                     exitDirection === "up"
                       ? -screenHeight
                       : exitDirection === "down"
-                      ? screenHeight
-                      : 0,
+                        ? screenHeight
+                        : 0,
                   transition: bounceTransition,
                 }}
                 drag={isCurrentPhoto}
