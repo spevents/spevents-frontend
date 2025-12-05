@@ -27,7 +27,7 @@ export function DepthMapGenerator({
       console.log(`🎬 Starting depth map generation for event: ${eventId}`);
 
       const response = await fetch(
-        `https://app.spevents.live/api/generate-depth-maps`,
+        `https://api.spevents.live/api/generate-depth-maps`,
         {
           method: "POST",
           headers: {
