@@ -9,7 +9,7 @@ export interface NSFWCheckResponse {
 }
 
 // Compress image before sending to API
-async function compressImage(file: File, maxSizeMB: number = 1): Promise<File> {
+async function compressImage(file: File, _maxSizeMB: number = 1): Promise<File> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     
