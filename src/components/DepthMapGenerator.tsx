@@ -35,6 +35,7 @@ export function DepthMapGenerator({
           },
           body: JSON.stringify({
             eventId,
+            limit: 3,
           }),
         },
       );

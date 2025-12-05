@@ -94,19 +94,66 @@ const makeAuthenticatedRequest = async (
 // EVENT MANAGEMENT
 // ===============================
 
+// File: src/services/api.ts - Replace createEvent function
+
 export async function createEvent(eventData: CreateEventData): Promise<Event> {
   try {
-    const response = await makeAuthenticatedRequest("/api/events", {
+    console.log("🎬 api.ts createEvent START");
+    console.log("📦 Data:", eventData);
+    console.log("🌐 Backend URL:", BACKEND_URL);
+
+    const user = auth.currentUser;
+    console.log("👤 Auth user:", user?.email || "NOT LOGGED IN");
+
+    if (!user) {
+      throw new Error("Must be logged in");
+    }
+
+    const token = await user.getIdToken();
+    console.log("🔑 Got token");
+
+    const url = `${BACKEND_URL}/api/events`;
+    console.log("📡 Calling:", url);
+
+    const response = await fetch(url, {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify(eventData),
     });
 
-    return response.json();
+    console.log("📊 Response status:", response.status);
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error("❌ Backend error:", error);
+      throw new Error(error);
+    }
+
+    const result = await response.json();
+    console.log("✅ Event created:", result);
+    return result;
   } catch (error) {
-    console.error("Create event error:", error);
+    console.error("❌ createEvent failed:", error);
     throw error;
   }
 }
+
+// export async function createEvent(eventData: CreateEventData): Promise<Event> {
+//   try {
+//     const response = await makeAuthenticatedRequest("/api/events", {
+//       method: "POST",
+//       body: JSON.stringify(eventData),
+//     });
+
+//     return response.json();
+//   } catch (error) {
+//     console.error("Create event error:", error);
+//     throw error;
+//   }
+// }
 
 export async function getUserEvents(): Promise<Event[]> {
   try {
