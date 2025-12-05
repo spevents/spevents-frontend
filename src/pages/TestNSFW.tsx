@@ -1,3 +1,5 @@
+// src/pages/TestNSFW.tsx
+
 import { useState } from "react";
 import { checkNSFW, NSFWCheckResponse } from "@/services/nsfw";
 
@@ -29,6 +31,20 @@ export default function TestNSFW() {
     }
   };
 
+  const getResultMessage = () => {
+    if (!result) return null;
+    
+    if (result.label === "file_too_large") {
+      return "⚠️ File was too large after compression. Try a smaller image.";
+    }
+    
+    if (result.label === "error" || result.label === "exception") {
+      return "⚠️ Error checking image. Upload will be allowed by default.";
+    }
+    
+    return null;
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8 flex flex-col items-center">
       <h1 className="text-3xl font-bold mb-8">NSFW Filter Test</h1>
@@ -47,6 +63,11 @@ export default function TestNSFW() {
               file:bg-blue-600 file:text-white
               hover:file:bg-blue-700"
           />
+          {file && (
+            <p className="text-xs text-gray-400 mt-2">
+              Size: {(file.size / 1024 / 1024).toFixed(2)}MB
+            </p>
+          )}
         </div>
 
         {preview && (
@@ -69,10 +90,22 @@ export default function TestNSFW() {
 
         {result && (
           <div
-            className={`p-4 rounded-lg border ${result.isNSFW ? "border-red-500 bg-red-900/20" : "border-green-500 bg-green-900/20"}`}
+            className={`p-4 rounded-lg border ${
+              result.isNSFW
+                ? "border-red-500 bg-red-900/20"
+                : result.label === "error" || result.label === "file_too_large" || result.label === "exception"
+                  ? "border-yellow-500 bg-yellow-900/20"
+                  : "border-green-500 bg-green-900/20"
+            }`}
           >
             <h3
-              className={`text-xl font-bold mb-2 ${result.isNSFW ? "text-red-400" : "text-green-400"}`}
+              className={`text-xl font-bold mb-2 ${
+                result.isNSFW
+                  ? "text-red-400"
+                  : result.label === "error" || result.label === "file_too_large" || result.label === "exception"
+                    ? "text-yellow-400"
+                    : "text-green-400"
+              }`}
             >
               {result.isNSFW ? "🚫 BLOCKED (NSFW)" : "✅ ALLOWED (Safe)"}
             </h3>
@@ -87,12 +120,17 @@ export default function TestNSFW() {
                 </span>
               </p>
             </div>
+            {getResultMessage() && (
+              <p className="mt-3 text-sm text-yellow-400">
+                {getResultMessage()}
+              </p>
+            )}
           </div>
         )}
 
         <div className="text-xs text-gray-500 mt-4">
-          API Key Present:{" "}
-          {import.meta.env.VITE_HUGGING_FACE_API_KEY ? "✅ Yes" : "❌ No"}
+          <p>✅ Using backend API (no frontend key needed)</p>
+          <p className="mt-1">Images over 1MB will be automatically compressed</p>
         </div>
       </div>
     </div>
