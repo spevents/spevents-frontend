@@ -8,6 +8,7 @@ import {
   photoService,
   type EventPhoto,
 } from "@/services/api";
+import { checkNSFW } from "@/services/nsfw";
 import type { DisplayPhoto } from "../types";
 
 export function usePhotoManagement(
@@ -20,6 +21,7 @@ export function usePhotoManagement(
   const [isLoading, setIsLoading] = useState(true);
   const [isDeletingPhotos, setIsDeletingPhotos] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isCheckingNSFW, setIsCheckingNSFW] = useState(false);
   const isInitialLoad = useRef(true);
   const existingPhotoIds = useRef<Set<string>>(new Set());
   const hasLoadedOnce = useRef(false);
@@ -394,17 +396,57 @@ export function usePhotoManagement(
     }
   };
 
+  const checkSelectedPhotosForNSFW = async (): Promise<Set<string>> => {
+    if (selectedPhotos.size === 0) return new Set();
+
+    setIsCheckingNSFW(true);
+    const nsfwDetected = new Set<string>();
+    let checkedCount = 0;
+
+    try {
+      const selected = photos.filter((p) => selectedPhotos.has(p.fileName));
+
+      for (const photo of selected) {
+        try {
+          const blob = await getPhotoBlob(photo);
+          const file = new File([blob], photo.fileName, { type: "image/jpeg" });
+          const result = await checkNSFW(file);
+
+          if (result.isNSFW) {
+            nsfwDetected.add(photo.fileName);
+          }
+          checkedCount++;
+        } catch (error) {
+          console.error(`Failed to check NSFW for ${photo.fileName}:`, error);
+        }
+      }
+
+      const message = `Checked ${checkedCount} photos.\nFound ${nsfwDetected.size} potential NSFW images.`;
+      alert(message);
+
+      return nsfwDetected;
+    } catch (error) {
+      console.error("NSFW check failed:", error);
+      alert("Failed to complete NSFW check.");
+      return new Set();
+    } finally {
+      setIsCheckingNSFW(false);
+    }
+  };
+
   return {
     photos,
     newPhotoIds,
     isLoading,
     isDeletingPhotos,
     isDownloading,
+    isCheckingNSFW,
     loadPhotosFromStorage,
     handleDownloadAll,
     handleDownloadSelected,
     handleDownloadSinglePhoto,
     deleteSelectedPhotos,
     handleShareSelected,
+    checkSelectedPhotosForNSFW,
   };
 }

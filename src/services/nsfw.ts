@@ -1,10 +1,6 @@
-const HUGGING_FACE_API_URL =
-  "https://api-inference.huggingface.co/models/TostAI/nsfw-image-detection-large";
+// src/services/nsfw.ts
 
-interface NSFWResult {
-  label: string;
-  score: number;
-}
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
 
 export interface NSFWCheckResponse {
   isNSFW: boolean;
@@ -12,71 +8,52 @@ export interface NSFWCheckResponse {
   label: string;
 }
 
-export async function checkNSFW(file: File): Promise<NSFWCheckResponse> {
-  const apiKey = import.meta.env.VITE_HUGGING_FACE_API_KEY;
-  console.log(
-    "🔍 checkNSFW called with file:",
-    file.name,
-    "API Key present:",
-    !!apiKey,
-  );
+async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = (reader.result as string).split(",")[1];
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
-  if (!apiKey) {
-    console.warn("Missing VITE_HUGGING_FACE_API_KEY, skipping NSFW check.");
-    return { isNSFW: false, score: 0, label: "skipped" };
-  }
+export async function checkNSFW(file: File): Promise<NSFWCheckResponse> {
+  console.log("🔍 checkNSFW called with file:", file.name, "size:", file.size);
 
   try {
-    const response = await fetch(HUGGING_FACE_API_URL, {
+    // Convert file to base64
+    const fileData = await fileToBase64(file);
+
+    // Call backend API
+    const response = await fetch(`${BACKEND_URL}/api/check-nsfw`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": file.type,
+        "Content-Type": "application/json",
       },
-      body: file,
+      body: JSON.stringify({
+        fileData,
+        contentType: file.type,
+      }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error("NSFW Check API Error:", response.status, errorText);
-      // Fail open (allow upload) or fail closed (block upload) depending on policy.
-      // For now, we'll log error and return false to not block users if API fails.
+      // Fail open - allow upload if API fails
       return { isNSFW: false, score: 0, label: "error" };
     }
 
-    const result: NSFWResult[] = await response.json();
+    const result: NSFWCheckResponse = await response.json();
 
-    // The model returns an array of objects like [{ label: "nsfw", score: 0.9 }, { label: "normal", score: 0.1 }]
-    // We need to find the "nsfw" label and check its score.
-    // Note: The specific labels for TostAI/nsfw-image-detection-large might vary,
-    // but usually it's "nsfw" vs "normal" or similar classes.
-    // Let's inspect the output structure based on standard image classification.
+    console.log("NSFW Check Result:", result);
 
-    // Common labels for this model are often 'nsfw', 'sexy', 'porn', 'hentai' vs 'neutral', 'drawings'.
-    // However, TostAI model specifically might just have 'nsfw' and 'normal'.
-    // Let's assume standard behavior: if the top result is NSFW-related with high confidence.
-
-    // Let's look for specific NSFW labels.
-    const nsfwLabels = ["nsfw", "porn", "hentai", "sexy"];
-
-    // Find the highest scoring label
-    const topResult = result.reduce((prev, current) =>
-      prev.score > current.score ? prev : current,
-    );
-
-    const isNSFW =
-      nsfwLabels.includes(topResult.label.toLowerCase()) &&
-      topResult.score > 0.7;
-
-    console.log("NSFW Check Result:", { isNSFW, topResult });
-
-    return {
-      isNSFW,
-      score: topResult.score,
-      label: topResult.label,
-    };
+    return result;
   } catch (error) {
     console.error("Error checking NSFW:", error);
+    // Fail open - allow upload if exception occurs
     return { isNSFW: false, score: 0, label: "exception" };
   }
 }

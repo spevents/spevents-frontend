@@ -1,6 +1,5 @@
-// File: src/pages/HostRoutes/components/SelectionActionsBar.tsx
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Trash2, Share } from "lucide-react";
+import { Download, Trash2, Share, ShieldAlert, Loader2 } from "lucide-react";
 import type { DisplayPhoto } from "../../types";
 
 interface SelectionActionsBarProps {
@@ -11,8 +10,10 @@ interface SelectionActionsBarProps {
   handleShareSelected: () => Promise<void>;
   handleDownloadSelected: () => Promise<void>;
   handleDeleteSelected: () => Promise<void>;
+  handleCheckNSFW: () => Promise<void>;
   isDownloading: boolean;
   isDeletingPhotos: boolean;
+  isCheckingNSFW: boolean;
 }
 
 export function SelectionActionsBar({
@@ -23,8 +24,10 @@ export function SelectionActionsBar({
   handleShareSelected,
   handleDownloadSelected,
   handleDeleteSelected,
+  handleCheckNSFW,
   isDownloading,
   isDeletingPhotos,
+  isCheckingNSFW,
 }: SelectionActionsBarProps) {
   return (
     <AnimatePresence>
@@ -64,6 +67,18 @@ export function SelectionActionsBar({
               >
                 <Download className="w-4 h-4" />
                 Download
+              </button>
+              <button
+                onClick={handleCheckNSFW}
+                disabled={isCheckingNSFW}
+                className="flex items-center gap-2 px-3 py-2 border border-yellow-600 text-yellow-600 hover:bg-yellow-600 hover:text-white rounded-lg transition-colors disabled:opacity-50"
+              >
+                {isCheckingNSFW ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <ShieldAlert className="w-4 h-4" />
+                )}
+                Check NSFW
               </button>
               <button
                 onClick={handleDeleteSelected}

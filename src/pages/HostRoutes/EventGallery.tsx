@@ -34,6 +34,8 @@ export function EventGallery() {
     deleteSelectedPhotos,
     handleShareSelected,
     newPhotoIds,
+    checkSelectedPhotosForNSFW,
+    isCheckingNSFW,
   } = usePhotoManagement(eventId, currentEvent, selectedPhotos);
 
   // Force select the event from URL parameter immediately
@@ -124,6 +126,13 @@ export function EventGallery() {
     setIsSelectionMode(false);
   };
 
+  const handleCheckNSFW = async () => {
+    const nsfwPhotos = await checkSelectedPhotosForNSFW();
+    if (nsfwPhotos.size > 0) {
+      setSelectedPhotos(nsfwPhotos);
+    }
+  };
+
   if (!eventId) {
     return <Navigate to="/host" replace />;
   }
@@ -153,8 +162,10 @@ export function EventGallery() {
         handleShareSelected={handleShareSelected}
         handleDownloadSelected={handleDownloadSelected}
         handleDeleteSelected={handleDeleteSelected}
+        handleCheckNSFW={handleCheckNSFW}
         isDownloading={isDownloading}
         isDeletingPhotos={isDeletingPhotos}
+        isCheckingNSFW={isCheckingNSFW}
       />
 
       <div className="p-4 pb-20">
