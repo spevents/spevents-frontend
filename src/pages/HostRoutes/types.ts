@@ -8,5 +8,5 @@ export interface DisplayPhoto {
   isGuestPhoto: boolean;
   guestId?: string;
   aiCaption?: string;
-captionGeneratedAt?: string;
+  captionGeneratedAt?: string;
 }

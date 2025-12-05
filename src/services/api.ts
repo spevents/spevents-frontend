@@ -22,8 +22,9 @@ export interface EventPhoto {
   isGuestPhoto: boolean;
   guestId?: string;
   url: string;
-  uploadedAt?: string;
+  uploadedAt: string;
   depthMap?: string;
+  aiCaption: string;
 }
 
 interface Photo {

@@ -220,8 +220,8 @@ export function EventGalleryHeader({
         {/* AI Caption Generator Panel */}
         {showCaptionGenerator && (
           <div className="px-4 pb-4">
-            <CaptionGenerator 
-              eventId={eventId} 
+            <CaptionGenerator
+              eventId={eventId}
               onComplete={() => loadPhotosFromStorage()}
             />
           </div>
