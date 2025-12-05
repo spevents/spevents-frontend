@@ -23,6 +23,7 @@
     "@radix-ui/react-tabs": "^1.1.12",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.4.2",
+    "@three-ts/orbit-controls": "^1.4.7",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/jszip": "^3.4.0",
@@ -44,7 +45,7 @@
     "react-swipeable": "^7.0.2",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
-    "three": "^0.170.0",
+    "three": "^0.181.2",
     "three-stdlib": "^2.36.0",
     "ts-node": "^10.9.2",
     "vercel": "^44.6.4"

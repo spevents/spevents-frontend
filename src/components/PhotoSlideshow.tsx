@@ -1,4 +1,4 @@
-// File path: src/components/PhotoSlideshow.tsx
+// File: src/components/PhotoSlideshow.tsx
 
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
@@ -28,14 +28,14 @@ interface Photo {
   createdAt: number;
   transitionId: string;
   expiryTime: number;
-  depthMap?: string; // Add depthMap support
+  depthMap?: string;
 }
 
 interface PhotoWithStringDate {
   src: string;
   id: string;
   createdAt: string;
-  depthMap?: string; // Add depthMap support
+  depthMap?: string;
 }
 
 interface PhotoSlideshowProps {
@@ -77,7 +77,7 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
       src: photo.src,
       id: photo.id,
       createdAt: new Date(photo.createdAt).toISOString(),
-      depthMap: photo.depthMap, // Include depthMap
+      depthMap: photo.depthMap,
     }));
   };
 
@@ -287,7 +287,15 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
         const photosForParallax = convertPhotosForDisplay(photos);
 
         return hasDepthMaps ? (
-          <ParallaxSlideshow photos={photosForParallax} hideUI={hideUI} />
+          <ParallaxSlideshow
+            photos={photosForParallax}
+            hideUI={hideUI}
+            eventId={eventId!} // ⭐ Pass eventId
+            onPhotosRefresh={() => {
+              console.log("🔄 Depth maps generated, refreshing photos...");
+              loadPhotos(); // ⭐ Refresh photos after depth map generation
+            }}
+          />
         ) : (
           <SimpleParallaxSlideshow photos={photosForParallax} hideUI={hideUI} />
         );
