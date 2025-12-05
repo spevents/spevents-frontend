@@ -173,16 +173,20 @@ export default function TestNSFW() {
                 </span>
               </p>
             </div>
-            
+
             {/* Show all results for debugging */}
             {result.allResults && result.allResults.length > 0 && (
               <div className="mt-3 text-xs">
-                <p className="font-bold text-gray-300 mb-1">All Classifications:</p>
+                <p className="font-bold text-gray-300 mb-1">
+                  All Classifications:
+                </p>
                 <div className="bg-gray-900 p-2 rounded space-y-1 font-mono">
                   {result.allResults.map((r, i) => (
                     <div key={i} className="flex justify-between">
                       <span>{r.label}</span>
-                      <span className="text-yellow-400">{(r.score * 100).toFixed(2)}%</span>
+                      <span className="text-yellow-400">
+                        {(r.score * 100).toFixed(2)}%
+                      </span>
                     </div>
                   ))}
                 </div>
