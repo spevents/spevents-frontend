@@ -7,4 +7,6 @@ export interface DisplayPhoto {
   fullKey: string;
   isGuestPhoto: boolean;
   guestId?: string;
+  aiCaption?: string;
+captionGeneratedAt?: string;
 }

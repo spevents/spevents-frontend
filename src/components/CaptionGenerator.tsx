@@ -6,10 +6,7 @@ interface CaptionGeneratorProps {
   onComplete?: () => void;
 }
 
-export function CaptionGenerator({
-  eventId,
-  onComplete,
-}: CaptionGeneratorProps) {
+export function CaptionGenerator({ eventId, onComplete }: CaptionGeneratorProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState<{
     processed: number;

@@ -1,4 +1,4 @@
-// File: src/pages/HostRoutes/components/PhotoGrid.tsx
+// File: src/pages/HostRoutes/components/EventGallery/PhotoGrid.tsx
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Check } from "lucide-react";
@@ -141,6 +141,15 @@ export function PhotoGrid({
                           </span>
                         )}
                       </div>
+                    </div>
+                  )}
+
+                  {/* AI Caption - Always visible */}
+                  {photo.aiCaption && (
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                      <p className="text-white text-xs line-clamp-2 font-medium">
+                        🤖 {photo.aiCaption}
+                      </p>
                     </div>
                   )}
                 </motion.div>
