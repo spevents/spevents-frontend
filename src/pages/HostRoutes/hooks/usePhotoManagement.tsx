@@ -54,6 +54,7 @@ export function usePhotoManagement(
         fullKey: (photo as any).fullKey, // optional from older API
         isGuestPhoto: photo.isGuestPhoto,
         guestId: photo.guestId,
+        aiCaption: photo.aiCaption,
       }));
 
       const sortedPhotos = displayPhotos.sort(
