@@ -19,7 +19,6 @@ import FunSlideshow from "./slideshow_modes/FunSlideshow";
 import PresenterSlideshow from "./slideshow_modes/PresenterSlideshow";
 import MarqueeSlideshow from "./slideshow_modes/MarqueeSlideshow";
 import SimpleSlideshow from "./slideshow_modes/SimpleSlideshow";
-import SimpleParallaxSlideshow from "./slideshow_modes/SimpleParallaxSlideshow";
 import ParallaxSlideshow from "./slideshow_modes/ParallaxSlideshow";
 
 interface Photo {
@@ -144,7 +143,7 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
           createdAt: getTimestampFromFilename(eventPhoto.fileName),
           transitionId: `${eventPhoto.fileName}-${Date.now()}`,
           expiryTime: Date.now() + PHOTO_DISPLAY_TIME,
-          depthMap: (eventPhoto as any).depthMap, // Include depth map if available
+          depthMap: (eventPhoto as any).depthMap,
         };
       });
 
@@ -281,25 +280,19 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
             themeColors={themeColors}
           />
         );
-      case "model": {
-        // Use full parallax if we have depth maps, otherwise use simple version
-        const hasDepthMaps = photos.some((p) => p.depthMap);
-        const photosForParallax = convertPhotosForDisplay(photos);
-
-        return hasDepthMaps ? (
+      case "model":
+        // ✅ FIXED: Always show ParallaxSlideshow with generator button
+        return (
           <ParallaxSlideshow
-            photos={photosForParallax}
+            photos={allPhotosForDisplay}
             hideUI={hideUI}
-            eventId={eventId!} // ⭐ Pass eventId
+            eventId={eventId!}
             onPhotosRefresh={() => {
               console.log("🔄 Depth maps generated, refreshing photos...");
-              loadPhotos(); // ⭐ Refresh photos after depth map generation
+              loadPhotos();
             }}
           />
-        ) : (
-          <SimpleParallaxSlideshow photos={photosForParallax} hideUI={hideUI} />
         );
-      }
       case "marquee":
         return (
           <MarqueeSlideshow
