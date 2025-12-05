@@ -23,6 +23,7 @@ export interface EventPhoto {
   guestId?: string;
   url: string;
   uploadedAt?: string;
+  depthMap?: string;
 }
 
 interface Photo {

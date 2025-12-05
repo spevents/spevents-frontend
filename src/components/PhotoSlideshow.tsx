@@ -1,4 +1,4 @@
-// File: src/components/PhotoSlideshow.tsx
+// File path: src/components/PhotoSlideshow.tsx
 
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
@@ -17,9 +17,10 @@ import { useEvent } from "@/contexts/EventContext";
 import { colors } from "@/types/eventTypes";
 import FunSlideshow from "./slideshow_modes/FunSlideshow";
 import PresenterSlideshow from "./slideshow_modes/PresenterSlideshow";
-import ModelSlideshow from "./slideshow_modes/ModelSlideshow";
 import MarqueeSlideshow from "./slideshow_modes/MarqueeSlideshow";
 import SimpleSlideshow from "./slideshow_modes/SimpleSlideshow";
+import SimpleParallaxSlideshow from "./slideshow_modes/SimpleParallaxSlideshow";
+import ParallaxSlideshow from "./slideshow_modes/ParallaxSlideshow";
 
 interface Photo {
   src: string;
@@ -27,12 +28,14 @@ interface Photo {
   createdAt: number;
   transitionId: string;
   expiryTime: number;
+  depthMap?: string; // Add depthMap support
 }
 
 interface PhotoWithStringDate {
   src: string;
   id: string;
   createdAt: string;
+  depthMap?: string; // Add depthMap support
 }
 
 interface PhotoSlideshowProps {
@@ -71,8 +74,10 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
 
   const convertPhotosForDisplay = (photos: Photo[]): PhotoWithStringDate[] => {
     return photos.map((photo) => ({
-      ...photo,
+      src: photo.src,
+      id: photo.id,
       createdAt: new Date(photo.createdAt).toISOString(),
+      depthMap: photo.depthMap, // Include depthMap
     }));
   };
 
@@ -131,19 +136,22 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
       }
 
       const loadedPhotos: Photo[] = eventPhotos.map((eventPhoto) => {
-        // ✅ FIX: Use photo.url directly from backend
         console.log("🔗 Using Vercel Blob URL:", eventPhoto.url);
 
         return {
-          src: eventPhoto.url, // ← Use direct URL from backend
+          src: eventPhoto.url,
           id: eventPhoto.fileName,
           createdAt: getTimestampFromFilename(eventPhoto.fileName),
           transitionId: `${eventPhoto.fileName}-${Date.now()}`,
           expiryTime: Date.now() + PHOTO_DISPLAY_TIME,
+          depthMap: (eventPhoto as any).depthMap, // Include depth map if available
         };
       });
 
       console.log("✅ Slideshow photos loaded:", loadedPhotos.length);
+      const withDepth = loadedPhotos.filter((p) => p.depthMap).length;
+      console.log(`🎨 ${withDepth} photos have depth maps`);
+
       setPhotos(loadedPhotos);
       setIsLoading(false);
     } catch (error) {
@@ -273,13 +281,17 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
             themeColors={themeColors}
           />
         );
-      case "model":
-        return (
-          <ModelSlideshow
-            photos={displayedPhotosForDisplay}
-            containerDimensions={containerDimensions}
-          />
+      case "model": {
+        // Use full parallax if we have depth maps, otherwise use simple version
+        const hasDepthMaps = photos.some((p) => p.depthMap);
+        const photosForParallax = convertPhotosForDisplay(photos);
+
+        return hasDepthMaps ? (
+          <ParallaxSlideshow photos={photosForParallax} hideUI={hideUI} />
+        ) : (
+          <SimpleParallaxSlideshow photos={photosForParallax} hideUI={hideUI} />
         );
+      }
       case "marquee":
         return (
           <MarqueeSlideshow
