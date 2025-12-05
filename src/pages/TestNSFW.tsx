@@ -33,15 +33,15 @@ export default function TestNSFW() {
 
   const getResultMessage = () => {
     if (!result) return null;
-    
+
     if (result.label === "file_too_large") {
       return "⚠️ File was too large after compression. Try a smaller image.";
     }
-    
+
     if (result.label === "error" || result.label === "exception") {
       return "⚠️ Error checking image. Upload will be allowed by default.";
     }
-    
+
     return null;
   };
 
@@ -93,7 +93,9 @@ export default function TestNSFW() {
             className={`p-4 rounded-lg border ${
               result.isNSFW
                 ? "border-red-500 bg-red-900/20"
-                : result.label === "error" || result.label === "file_too_large" || result.label === "exception"
+                : result.label === "error" ||
+                    result.label === "file_too_large" ||
+                    result.label === "exception"
                   ? "border-yellow-500 bg-yellow-900/20"
                   : "border-green-500 bg-green-900/20"
             }`}
@@ -102,7 +104,9 @@ export default function TestNSFW() {
               className={`text-xl font-bold mb-2 ${
                 result.isNSFW
                   ? "text-red-400"
-                  : result.label === "error" || result.label === "file_too_large" || result.label === "exception"
+                  : result.label === "error" ||
+                      result.label === "file_too_large" ||
+                      result.label === "exception"
                     ? "text-yellow-400"
                     : "text-green-400"
               }`}
@@ -130,7 +134,9 @@ export default function TestNSFW() {
 
         <div className="text-xs text-gray-500 mt-4">
           <p>✅ Using backend API (no frontend key needed)</p>
-          <p className="mt-1">Images over 1MB will be automatically compressed</p>
+          <p className="mt-1">
+            Images over 1MB will be automatically compressed
+          </p>
         </div>
       </div>
     </div>
