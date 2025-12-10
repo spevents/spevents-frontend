@@ -24,7 +24,7 @@ export function CaptionGenerator({
       setError(null);
       setProgress(null);
 
-      console.log(`🤖 Starting AI caption generation for event: ${eventId}`);
+      console.log(`🤖 Starting : ${eventId}`);
 
       const response = await fetch(
         `https://api.spevents.live/api/generate-captions-batch`,
@@ -70,7 +70,7 @@ export function CaptionGenerator({
   return (
     <div className="bg-gray-800 rounded-lg p-4 border border-purple-500/30">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-white font-bold">🤖 AI Caption Generator</h3>
+        <h3 className="text-white font-bold">Captions</h3>
         <button
           onClick={generateCaptions}
           disabled={isGenerating}

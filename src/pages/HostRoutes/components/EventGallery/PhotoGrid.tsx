@@ -148,7 +148,7 @@ export function PhotoGrid({
                   {photo.aiCaption && (
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
                       <p className="text-white text-xs line-clamp-2 font-medium">
-                        🤖 {photo.aiCaption}
+                        {photo.aiCaption}
                       </p>
                     </div>
                   )}

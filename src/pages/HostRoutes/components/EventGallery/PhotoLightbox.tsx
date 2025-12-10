@@ -155,7 +155,7 @@ export function PhotoLightbox({
               {selectedPhoto.aiCaption && (
                 <div className="mb-3 p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg">
                   <p className="text-sm text-sp_eggshell">
-                    <span className="text-purple-400">🤖 AI:</span>{" "}
+                    <span className="text-purple-400"></span>{" "}
                     {selectedPhoto.aiCaption}
                   </p>
                 </div>
