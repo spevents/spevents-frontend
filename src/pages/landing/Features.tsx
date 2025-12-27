@@ -1,6 +1,13 @@
 // src/components/landing/Features.tsx
 import { motion } from "framer-motion";
-import { Camera, Users, LineChart } from "lucide-react";
+import {
+  DollarSign,
+  Zap,
+  Shield,
+  Box,
+  ShoppingBag,
+  Building2,
+} from "lucide-react";
 
 interface FeaturesProps {
   isDark: boolean;
@@ -9,21 +16,29 @@ interface FeaturesProps {
 export const Features = ({ isDark }: FeaturesProps) => {
   const features = [
     {
-      icon: Camera,
-      title: "Instant Uploads",
+      icon: DollarSign,
+      title: "10x Cost Reduction",
       description:
-        "Guests scan QR codes to upload photos instantly to your event wall",
+        "Custom GPU pipelines deliver $5-10 scans vs $100+ with Matterport and traditional solutions",
     },
     {
-      icon: Users,
-      title: "Live Photo Wall",
-      description: "Watch photos appear in real-time on any screen or display",
+      icon: Zap,
+      title: "Near Real-Time",
+      description:
+        "Process in minutes, not hours. Validated on thousands of photos at live events",
     },
     {
-      icon: LineChart,
-      title: "Easy Setup",
-      description: "Create events in minutes with our intuitive dashboard",
+      icon: Shield,
+      title: "Production Ready",
+      description:
+        "Battle-tested infrastructure with 90%+ cost reduction compared to cloud APIs",
     },
+  ];
+
+  const useCases = [
+    { icon: Box, label: "AR/VR Experiences" },
+    { icon: ShoppingBag, label: "E-commerce 3D" },
+    { icon: Building2, label: "Real Estate Tours" },
   ];
 
   return (
@@ -42,21 +57,19 @@ export const Features = ({ isDark }: FeaturesProps) => {
               isDark ? "text-sp_eggshell" : "text-sp_darkgreen"
             }`}
           >
-            Everything You Need
+            Why Teams Choose Us
           </h2>
           <p
             className={`text-xl max-w-2xl mx-auto ${
               isDark ? "text-sp_lightgreen" : "text-sp_darkgreen/80"
             }`}
           >
-            Simple, powerful tools to capture and share every moment of your
-            event
+            Infrastructure that makes 3D reconstruction economically viable at
+            scale
           </p>
         </div>
 
-        <div
-          className={`grid md:grid-cols-2 lg:grid-cols-${features.length} gap-8`}
-        >
+        <div className="grid md:grid-cols-3 gap-8 mb-16">
           {features.map((feature, index) => (
             <motion.div
               key={index}
@@ -96,6 +109,32 @@ export const Features = ({ isDark }: FeaturesProps) => {
               </p>
             </motion.div>
           ))}
+        </div>
+
+        {/* Use Cases */}
+        <div className="text-center">
+          <p
+            className={`text-sm uppercase tracking-wide mb-4 ${
+              isDark ? "text-sp_lightgreen/70" : "text-sp_darkgreen/60"
+            }`}
+          >
+            Built for
+          </p>
+          <div className="flex flex-wrap justify-center gap-6">
+            {useCases.map((useCase, index) => (
+              <div
+                key={index}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full ${
+                  isDark
+                    ? "bg-sp_green/40 text-sp_lightgreen"
+                    : "bg-sp_darkgreen/10 text-sp_darkgreen"
+                }`}
+              >
+                <useCase.icon className="w-4 h-4" />
+                <span className="text-sm font-medium">{useCase.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </motion.section>

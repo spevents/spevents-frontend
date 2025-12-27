@@ -6,7 +6,6 @@ interface HeroProps {
   isDark: boolean;
 }
 
-// Helper function to get URLs
 const getUrls = () => {
   const domain = getDomain();
   const currentOrigin = window.location.origin;
@@ -22,8 +21,8 @@ const getUrls = () => {
   }
 
   return {
-    host: "https://app.spevents.live",
-    guest: "https://join.spevents.live",
+    host: `https://app.spevents.live`,
+    guest: `https://guest.spevents.live`,
     demo: "https://calendly.com/spevents-party/30min",
   };
 };
@@ -45,22 +44,53 @@ export const Hero = ({ isDark }: HeroProps) => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className={`text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 ${
+            className={`text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 ${
               isDark ? "text-sp_eggshell" : "text-sp_darkgreen"
             }`}
           >
-            Event Photo Sharing
+            AI Infra for Real-Time 3D Reconstruction
           </motion.h1>
           <motion.h2
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className={`text-xl sm:text-2xl mb-12 max-w-3xl mx-auto ${
+            className={`text-xl sm:text-2xl mb-8 max-w-3xl mx-auto ${
               isDark ? "text-sp_lightgreen" : "text-sp_darkgreen/80"
             }`}
           >
-            Live photo walls. Instant guest uploads. No apps required.
+            10-30x cheaper. Near real-time. Production-ready.
           </motion.h2>
+
+          {/* Stats Row */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+            className="flex flex-wrap justify-center gap-8 mb-12"
+          >
+            {[
+              { value: "$5-10", label: "per scan vs $100+" },
+              { value: "90%+", label: "cost reduction" },
+              { value: "Minutes", label: "not hours" },
+            ].map((stat, i) => (
+              <div key={i} className="text-center">
+                <div
+                  className={`text-3xl sm:text-4xl font-bold ${
+                    isDark ? "text-sp_lightgreen" : "text-sp_green"
+                  }`}
+                >
+                  {stat.value}
+                </div>
+                <div
+                  className={`text-sm ${
+                    isDark ? "text-sp_lightgreen/70" : "text-sp_darkgreen/60"
+                  }`}
+                >
+                  {stat.label}
+                </div>
+              </div>
+            ))}
+          </motion.div>
 
           {/* CTA Buttons */}
           <motion.div

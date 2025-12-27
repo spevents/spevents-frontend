@@ -35,11 +35,11 @@ export const Footer = ({ isDark }: FooterProps) => {
               isDark ? "text-sp_lightgreen" : "text-sp_green"
             }`}
           >
-            Making event memories accessible to everyone
+            Powering the next generation of 3D experiences
           </p>
           <div className="flex justify-center gap-6">
             <a
-              href="https://github.com/spevents/spevents-frontend"
+              href="https://github.com/spevents"
               target="_blank"
               rel="noopener noreferrer"
               className={`transition-colors ${
@@ -49,6 +49,18 @@ export const Footer = ({ isDark }: FooterProps) => {
               }`}
             >
               GitHub
+            </a>
+            <a
+              href="https://calendly.com/spevents-party/30min"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`transition-colors ${
+                isDark
+                  ? "text-sp_lightgreen hover:text-sp_eggshell"
+                  : "text-sp_green hover:text-sp_darkgreen"
+              }`}
+            >
+              Contact
             </a>
           </div>
         </div>
