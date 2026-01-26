@@ -135,14 +135,4 @@ To create a production build:
 npm run build
 ```
 
-## Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/NewFeature`)
-3. Commit changes (`git commit -m 'Add NewFeature'`)
-4. Push branch (`git push origin feature/NewFeature`)
-5. Open Pull Request
-
 ## [LICENSE](LICENSE)
-
-Basic
