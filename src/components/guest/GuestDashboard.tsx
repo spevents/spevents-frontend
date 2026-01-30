@@ -12,7 +12,6 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
-  Download,
   Share2,
   Target,
   User,
@@ -99,7 +98,6 @@ export function GuestDashboard() {
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
 
-  const [isDownloading, setIsDownloading] = useState(false);
   const [canShare, setCanShare] = useState(false);
 
   // Check if Web Share API is available
@@ -242,40 +240,7 @@ export function GuestDashboard() {
   //   if (d < -50) navigatePhoto("prev");
   // };
 
-  // -------- Download and Share functions --------
-
-  const downloadPhoto = async (photo: Photo, index: number) => {
-    try {
-      const response = await fetch(photo.url);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = photo.fileName || photo.name || `photo-${index + 1}.jpg`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-    } catch (e) {
-      console.error("Download error:", e);
-    }
-  };
-
-  const handleDownloadAll = async () => {
-    if (photos.length === 0) return;
-    setIsDownloading(true);
-    try {
-      for (let i = 0; i < photos.length; i++) {
-        await downloadPhoto(photos[i], i);
-        // Small delay between downloads
-        if (i < photos.length - 1) {
-          await new Promise((r) => setTimeout(r, 300));
-        }
-      }
-    } finally {
-      setIsDownloading(false);
-    }
-  };
+  // -------- Share functions --------
 
   const handleSharePhoto = async (photo: Photo) => {
     if (!canShare) return;
@@ -355,32 +320,14 @@ export function GuestDashboard() {
           </div>
         </div>
 
-        {photos.length > 0 && (
-          <div className="flex items-center gap-2">
-            {canShare && (
-              <button
-                onClick={handleShareAll}
-                className="flex items-center gap-2 bg-sp_midgreen hover:bg-sp_green text-sp_eggshell px-3 py-2 rounded-lg font-medium transition-all duration-200 shadow-lg"
-              >
-                <Share2 className="w-4 h-4" />
-                <span className="hidden sm:inline">Share</span>
-              </button>
-            )}
-            <button
-              onClick={handleDownloadAll}
-              disabled={isDownloading}
-              className="flex items-center gap-2 bg-sp_midgreen hover:bg-sp_green text-sp_eggshell px-3 py-2 rounded-lg font-medium transition-all duration-200 shadow-lg disabled:opacity-50"
-            >
-              {isDownloading ? (
-                <div className="w-4 h-4 border-2 border-sp_eggshell/30 border-t-sp_eggshell rounded-full animate-spin" />
-              ) : (
-                <Download className="w-4 h-4" />
-              )}
-              <span className="hidden sm:inline">
-                {isDownloading ? "..." : "Download"}
-              </span>
-            </button>
-          </div>
+        {photos.length > 0 && canShare && (
+          <button
+            onClick={handleShareAll}
+            className="flex items-center gap-2 bg-sp_midgreen hover:bg-sp_green text-sp_eggshell px-3 py-2 rounded-lg font-medium transition-all duration-200 shadow-lg"
+          >
+            <Share2 className="w-4 h-4" />
+            <span className="hidden sm:inline">Share All</span>
+          </button>
         )}
       </div>
 
@@ -496,24 +443,14 @@ export function GuestDashboard() {
               <span className="bg-sp_green/70 px-4 py-2 rounded-full text-sp_eggshell text-sm font-medium">
                 {selectedPhotoIndex + 1} of {photos.length}
               </span>
-              <div className="flex gap-2">
-                {canShare && (
-                  <button
-                    onClick={() => handleSharePhoto(photos[selectedPhotoIndex])}
-                    className="bg-sp_green/70 hover:bg-sp_green p-2 rounded-full transition-colors"
-                  >
-                    <Share2 className="w-5 h-5 text-sp_eggshell" />
-                  </button>
-                )}
+              {canShare && (
                 <button
-                  onClick={() =>
-                    downloadPhoto(photos[selectedPhotoIndex], selectedPhotoIndex)
-                  }
+                  onClick={() => handleSharePhoto(photos[selectedPhotoIndex])}
                   className="bg-sp_green/70 hover:bg-sp_green p-2 rounded-full transition-colors"
                 >
-                  <Download className="w-5 h-5 text-sp_eggshell" />
+                  <Share2 className="w-5 h-5 text-sp_eggshell" />
                 </button>
-              </div>
+              )}
             </div>
           </motion.div>
         )}

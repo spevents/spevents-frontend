@@ -98,66 +98,29 @@ const makeAuthenticatedRequest = async (
 // EVENT MANAGEMENT
 // ===============================
 
-// File: src/services/api.ts - Replace createEvent function
-
 export async function createEvent(eventData: CreateEventData): Promise<Event> {
-  try {
-    console.log("🎬 api.ts createEvent START");
-    console.log("📦 Data:", eventData);
-    console.log("🌐 Backend URL:", BACKEND_URL);
-
-    const user = auth.currentUser;
-    console.log("👤 Auth user:", user?.email || "NOT LOGGED IN");
-
-    if (!user) {
-      throw new Error("Must be logged in");
-    }
-
-    const token = await user.getIdToken();
-    console.log("🔑 Got token");
-
-    const url = `${BACKEND_URL}/api/events`;
-    console.log("📡 Calling:", url);
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(eventData),
-    });
-
-    console.log("📊 Response status:", response.status);
-
-    if (!response.ok) {
-      const error = await response.text();
-      console.error("❌ Backend error:", error);
-      throw new Error(error);
-    }
-
-    const result = await response.json();
-    console.log("✅ Event created:", result);
-    return result;
-  } catch (error) {
-    console.error("❌ createEvent failed:", error);
-    throw error;
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("Must be logged in");
   }
+
+  const token = await user.getIdToken();
+  const response = await fetch(`${BACKEND_URL}/api/events`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(eventData),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error);
+  }
+
+  return response.json();
 }
-
-// export async function createEvent(eventData: CreateEventData): Promise<Event> {
-//   try {
-//     const response = await makeAuthenticatedRequest("/api/events", {
-//       method: "POST",
-//       body: JSON.stringify(eventData),
-//     });
-
-//     return response.json();
-//   } catch (error) {
-//     console.error("Create event error:", error);
-//     throw error;
-//   }
-// }
 
 export async function getUserEvents(): Promise<Event[]> {
   try {
@@ -233,74 +196,8 @@ export async function getPresignedUrl({
   });
 }
 
-// export async function getPresignedUrl({
-//   eventId,
-//   fileName,
-//   contentType,
-//   isGuestPhoto = false,
-//   guestId,
-//   sessionCode,
-// }: {
-//   eventId?: string;
-//   fileName: string;
-//   contentType: string;
-//   isGuestPhoto?: boolean;
-//   guestId?: string;
-//   sessionCode?: string;
-// }): Promise<string> {
-//   try {
-//     console.log(`🔗 Requesting presigned URL:`, {
-//       eventId,
-//       fileName,
-//       contentType,
-//       isGuestPhoto,
-//       guestId,
-//       sessionCode,
-//     });
-
-//     const response = await fetch(`${BACKEND_URL}/api/upload`, {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//         Accept: "application/json",
-//       },
-//       body: JSON.stringify({
-//         eventId,
-//         fileName,
-//         contentType,
-//         isGuestPhoto,
-//         guestId,
-//         sessionCode,
-//       }),
-//     });
-
-//     if (!response.ok) {
-//       const errorText = await response.text();
-//       console.error(`❌ Presigned URL request failed:`, {
-//         status: response.status,
-//         statusText: response.statusText,
-//         errorText,
-//       });
-//       throw new Error(
-//         `Failed to get presigned URL: ${response.status} - ${errorText}`
-//       );
-//     }
-
-//     const { signedUrl } = await response.json();
-//     console.log(`✅ Got presigned URL successfully`);
-//     return signedUrl;
-//   } catch (error) {
-//     console.error(`❌ Error getting presigned URL:`, error);
-//     throw error;
-//   }
-// }
-
-// File: src/services/api.ts
-// Replace your uploadPhoto() function with this:
-
-// src/services/api.ts
 // Toggle between S3 (presigned URL) and Vercel Blob upload
-const USE_S3_UPLOAD = false; // Set to true to use S3, false for Vercel Blob
+const USE_S3_UPLOAD = false;
 
 export async function uploadPhoto({
   presignedUrl,
@@ -314,6 +211,7 @@ export async function uploadPhoto({
   photoUrl: string;
   guestId: string;
   fileName: string;
+  photoKey: string; // Full path for verification matching
 }> {
   try {
     const uploadParams = JSON.parse(presignedUrl);
@@ -344,7 +242,7 @@ async function uploadToS3(
   uploadParams: Record<string, unknown>,
   file: File,
   onProgress?: (progress: number) => void,
-): Promise<{ photoUrl: string; guestId: string; fileName: string }> {
+): Promise<{ photoUrl: string; guestId: string; fileName: string; photoKey: string }> {
   // Step 1: Get presigned URL from backend
   if (onProgress) onProgress(30);
 
@@ -376,7 +274,7 @@ async function uploadToS3(
     );
   }
 
-  const { signedUrl, photoUrl, fileName, guestId } = await response.json();
+  const { signedUrl, photoUrl, photoKey, fileName, guestId } = await response.json();
   console.log(`✅ Got presigned URL, uploading to S3...`);
 
   // Step 2: Upload directly to S3
@@ -400,7 +298,7 @@ async function uploadToS3(
   if (onProgress) onProgress(100);
   console.log(`✅ S3 upload successful: ${photoUrl}`);
 
-  return { photoUrl, guestId, fileName };
+  return { photoUrl, guestId, fileName, photoKey };
 }
 
 // Vercel Blob Upload - Uploads via backend
@@ -408,7 +306,7 @@ async function uploadToVercelBlob(
   uploadParams: Record<string, unknown>,
   file: File,
   onProgress?: (progress: number) => void,
-): Promise<{ photoUrl: string; guestId: string; fileName: string }> {
+): Promise<{ photoUrl: string; guestId: string; fileName: string; photoKey: string }> {
   if (onProgress) onProgress(30);
   const fileData = await fileToBase64(file);
 
@@ -450,82 +348,9 @@ async function uploadToVercelBlob(
     photoUrl: result.photoUrl,
     guestId: result.guestId,
     fileName: result.fileName,
+    photoKey: result.photoKey, // Full path for verification matching
   };
 }
-
-// OLD BUT KEEP FOR NOW
-// export async function uploadPhoto({
-//   presignedUrl,
-//   file,
-//   onProgress,
-// }: {
-//   presignedUrl: string;
-//   file: File;
-//   onProgress?: (progress: number) => void;
-// }): Promise<void> {
-//   try {
-//     const uploadParams = JSON.parse(presignedUrl);
-//     console.log(`🚀 Uploading to Vercel Blob:`, uploadParams);
-
-//     // Convert file to base64
-//     const fileData = await fileToBase64(file);
-
-//     // ✅ FIX: Only get auth header if user is authenticated
-//     let authHeader = {};
-//     const user = auth.currentUser;
-
-//     if (user) {
-//       try {
-//         const token = await user.getIdToken();
-//         authHeader = { Authorization: `Bearer ${token}` };
-//         console.log("✅ Using authenticated upload");
-//       } catch (error) {
-//         console.error("Failed to get auth token:", error);
-//       }
-//     } else {
-//       console.log("ℹ️ Using guest upload (no auth)");
-//     }
-
-//     // Upload directly to blob endpoint
-//     const response = await fetch(`${BACKEND_URL}/api/upload-blob`, {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//         Accept: "application/json",
-//         ...authHeader, // ← Will be empty for guest uploads
-//       },
-//       body: JSON.stringify({
-//         ...uploadParams,
-//         fileData,
-//       }),
-//     });
-
-//     if (!response.ok) {
-//       const errorText = await response.text();
-//       throw new Error(`Upload failed: ${response.status} - ${errorText}`);
-//     }
-
-//     if (onProgress) onProgress(100);
-//     console.log("✅ Upload successful");
-//   } catch (error) {
-//     console.error(`❌ Upload error:`, error);
-//     throw error;
-//   }
-// }
-
-// export async function getEventPhotos(eventId: string): Promise<EventPhoto[]> {
-//   try {
-//     // Fixed: Use the correct backend endpoint
-//     const response = await makeAuthenticatedRequest(
-//       `/api/photos/${eventId}/all`
-//     );
-//     const data = await response.json();
-//     return Array.isArray(data) ? data : data.photos || [];
-//   } catch (error) {
-//     console.error("Get photos error:", error);
-//     return [];
-//   }
-// }
 
 export async function getEventPhotos(eventId: string): Promise<EventPhoto[]> {
   try {

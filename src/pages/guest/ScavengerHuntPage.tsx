@@ -310,10 +310,11 @@ export function ScavengerHuntPage() {
       });
 
       // Create submission with PENDING status
+      // Use photoKey (full path) for matching with verifiedSubmissions
       const newSubmission: Submission = {
         taskId: currentTaskId,
         photoUrl: result.photoUrl,
-        photoKey: result.fileName, // Use fileName as key for matching
+        photoKey: result.photoKey || result.fileName, // Full path for verification matching
         submittedAt: new Date().toISOString(),
         status: "pending",
       };
