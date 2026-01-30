@@ -219,14 +219,24 @@ export function ScavengerHuntPage() {
 
   // Submit photo for task
   const submitPhoto = async () => {
-    if (
-      !capturedPhoto ||
-      !currentTaskId ||
-      !currentEvent?.id ||
-      !sessionCode ||
-      !guestId
-    )
+    // Use sessionCode from context or URL params
+    const activeSessionCode = sessionCode || params.sessionCode;
+
+    // Debug logging
+    console.log("🎯 Submit photo debug:", {
+      capturedPhoto: !!capturedPhoto,
+      currentTaskId,
+      eventId: currentEvent?.id,
+      sessionCode: activeSessionCode,
+      guestId,
+      guestName,
+    });
+
+    if (!capturedPhoto || !currentTaskId || !activeSessionCode || !guestId) {
+      console.error("❌ Missing required fields for upload");
+      alert("Missing required information. Please try again.");
       return;
+    }
 
     setIsUploading(true);
 
@@ -238,9 +248,17 @@ export function ScavengerHuntPage() {
         type: "image/jpeg",
       });
 
+      console.log("📤 Uploading hunt photo:", {
+        fileName: file.name,
+        sessionCode: activeSessionCode,
+        guestId,
+        guestName,
+        huntTaskId: currentTaskId,
+      });
+
       // Get presigned URL and upload - include guest name and task ID
       const presignedUrlParams = await getPresignedUrl({
-        sessionCode,
+        sessionCode: activeSessionCode,
         fileName: file.name,
         contentType: file.type,
         isGuestPhoto: true,
@@ -253,6 +271,8 @@ export function ScavengerHuntPage() {
         presignedUrl: presignedUrlParams,
         file,
       });
+
+      console.log("✅ Hunt photo uploaded successfully:", result);
 
       // Mark task as completed
       const task = tasks.find((t) => t.id === currentTaskId);
