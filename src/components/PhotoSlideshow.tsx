@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { listAllEventPhotos, EventPhoto } from "@/services/api";
 import { useEvent } from "@/contexts/EventContext";
 import { colors } from "@/types/eventTypes";
+import { HuntLeaderboard } from "./slideshow_modes/HuntLeaderboard";
 import FunSlideshow from "./slideshow_modes/FunSlideshow";
 import PresenterSlideshow from "./slideshow_modes/PresenterSlideshow";
 import MarqueeSlideshow from "./slideshow_modes/MarqueeSlideshow";
@@ -54,6 +55,7 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
   const [hideUI, setHideUI] = useState(false);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [displayedPhotos, setDisplayedPhotos] = useState<Photo[]>([]);
+  const [eventPhotos, setEventPhotos] = useState<EventPhoto[]>([]);
   const [containerDimensions, setContainerDimensions] = useState({
     width: 0,
     height: 0,
@@ -152,6 +154,7 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
       console.log(`🎨 ${withDepth} photos have depth maps`);
 
       setPhotos(loadedPhotos);
+      setEventPhotos(eventPhotos); // Store for leaderboard
       setIsLoading(false);
     } catch (error) {
       console.error("💥 Error loading slideshow photos:", error);
@@ -325,6 +328,16 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
   return (
     <div className="relative w-full h-screen bg-gray-900 overflow-hidden">
       {renderViewMode()}
+
+      {/* Scavenger Hunt Leaderboard */}
+      {currentEvent?.scavengerHunt?.enabled &&
+        currentEvent.scavengerHunt.settings.showLeaderboard && (
+          <HuntLeaderboard
+            photos={eventPhotos}
+            tasks={currentEvent.scavengerHunt.tasks}
+            themeColors={themeColors}
+          />
+        )}
 
       <AnimatePresence>
         {!hideUI && (

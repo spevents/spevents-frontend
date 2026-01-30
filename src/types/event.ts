@@ -31,6 +31,50 @@ export interface Event {
   slideshowViews?: SlideshowView[];
   liveMetrics?: LiveMetricsConfig;
   venue3D?: Venue3DConfig;
+
+  // Scavenger Hunt Mode
+  scavengerHunt?: ScavengerHuntConfig;
+}
+
+// Scavenger Hunt Types
+export interface ScavengerHuntConfig {
+  enabled: boolean;
+  tasks: ScavengerHuntTask[];
+  settings: ScavengerHuntSettings;
+}
+
+export interface ScavengerHuntTask {
+  id: string;
+  title: string;
+  description?: string;
+  points: number;
+  order: number;
+}
+
+export interface ScavengerHuntSettings {
+  requireName: boolean;
+  showLeaderboard: boolean;
+  maxPhotosPerTask: number;
+}
+
+export interface ScavengerHuntSubmission {
+  id: string;
+  eventId: string;
+  guestName: string;
+  guestId: string;
+  taskId: string;
+  photoUrl: string;
+  photoFileName: string;
+  submittedAt: string;
+  points: number;
+}
+
+export interface ScavengerHuntLeaderboardEntry {
+  guestName: string;
+  guestId: string;
+  totalPoints: number;
+  tasksCompleted: number;
+  submissions: ScavengerHuntSubmission[];
 }
 
 export interface CreateEventData {
@@ -55,6 +99,7 @@ export interface CreateEventData {
   slideshowViews?: SlideshowView[];
   liveMetrics?: LiveMetricsConfig;
   venue3D?: Venue3DConfig;
+  scavengerHunt?: ScavengerHuntConfig;
 }
 
 // Import interfaces from eventTypes for consistency

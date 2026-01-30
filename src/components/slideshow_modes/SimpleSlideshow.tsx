@@ -1,7 +1,30 @@
 // src/components/slideshow_modes/SimpleSlideshow.tsx
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "lucide-react";
+
+// Memoized image component to prevent re-renders
+const SlideshowImage = memo(function SlideshowImage({
+  src,
+  alt,
+}: {
+  src: string;
+  alt: string;
+}) {
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={`w-full h-full object-cover rounded transition-opacity duration-300 ${
+        isLoaded ? "opacity-100" : "opacity-0"
+      }`}
+      onLoad={() => setIsLoaded(true)}
+      decoding="async"
+    />
+  );
+});
 
 interface GridPhoto {
   src: string;
@@ -279,12 +302,7 @@ export default function SimpleSlideshow({
                   boxShadow: `0 0 20px ${themeColors.primary}30`,
                 }}
               >
-                <img
-                  src={photo.src}
-                  alt="Event photo"
-                  className="w-full h-full object-cover rounded"
-                  loading="lazy"
-                />
+                <SlideshowImage src={photo.src} alt="Event photo" />
               </div>
             </motion.div>
           );

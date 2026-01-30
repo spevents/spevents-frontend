@@ -14,6 +14,7 @@ import { CreateEventPage } from "./CreateEventPage";
 import ProfilePage from "../../pages/ProfilePage";
 import SubscriptionPage from "../../pages/SubscriptionPage";
 import { ModelsPage } from "./ModelsPage";
+import { ScavengerHuntEditor } from "./ScavengerHuntEditor";
 
 export const HostRoutes = () => {
   return (
@@ -44,6 +45,7 @@ export const HostRoutes = () => {
         <Route path="event/:eventId/gallery" element={<EventGallery />} />
         <Route path="event/:eventId/slideshow" element={<EventSlideshow />} />
         <Route path="event/:eventId/qr" element={<EventQRCode />} />
+        <Route path="event/:eventId/hunt" element={<ScavengerHuntEditor />} />
 
         {/* Legacy redirects */}
         <Route path="gallery" element={<Navigate to="/host" replace />} />

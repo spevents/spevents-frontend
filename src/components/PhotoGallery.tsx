@@ -1,10 +1,17 @@
 // src/components/PhotoGallery.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback, useMemo, memo } from "react";
 import { QrCode, Trash2, RefreshCw, CheckCircle } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { getPhotoUrl, listPhotos, deleteMultipleFiles } from "@/services/api";
+import {
+  getPhotoUrl,
+  listAllEventPhotos,
+  deleteMultipleFiles,
+  EventPhoto,
+} from "@/services/api";
 import { QRCodeModal } from "./QRCodeModal";
+import { OptimizedImage } from "./ui/OptimizedImage";
+import { usePhotoUpdates } from "@/hooks/usePhotoUpdates";
 
 interface StoragePhoto {
   url: string;
@@ -12,10 +19,66 @@ interface StoragePhoto {
   created_at: string;
 }
 
+// Memoized photo card to prevent unnecessary re-renders
+const PhotoCard = memo(function PhotoCard({
+  photo,
+  isDeleteMode,
+  isSelected,
+  isNew,
+  onSelect,
+  onClick,
+}: {
+  photo: StoragePhoto;
+  isDeleteMode: boolean;
+  isSelected: boolean;
+  isNew: boolean;
+  onSelect: () => void;
+  onClick: () => void;
+}) {
+  return (
+    <motion.div
+      initial={isNew ? { opacity: 0, scale: 0.8 } : false}
+      animate={{ opacity: 1, scale: 1 }}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      className={`relative aspect-square bg-gray-800 rounded-lg overflow-hidden cursor-pointer ${
+        isDeleteMode ? "ring-2 ring-offset-2 ring-offset-gray-900" : ""
+      } ${
+        isSelected ? "ring-red-500" : isDeleteMode ? "ring-gray-600" : ""
+      } ${isNew ? "ring-2 ring-green-500 ring-offset-2 ring-offset-gray-900" : ""}`}
+      onClick={isDeleteMode ? onSelect : onClick}
+    >
+      <OptimizedImage
+        src={photo.url}
+        alt={`Photo ${photo.name}`}
+        className="w-full h-full"
+        aspectRatio="square"
+        objectFit="cover"
+      />
+      {isDeleteMode && (
+        <div className="absolute top-2 right-2">
+          <div
+            className={`w-6 h-6 rounded-full border-2 border-white flex items-center justify-center ${
+              isSelected ? "bg-red-500" : "bg-gray-700 bg-opacity-50"
+            }`}
+          >
+            {isSelected && <CheckCircle size={16} className="text-white" />}
+          </div>
+        </div>
+      )}
+      {isNew && (
+        <div className="absolute top-2 left-2">
+          <span className="px-2 py-1 text-xs font-medium bg-green-500 text-white rounded-full">
+            New
+          </span>
+        </div>
+      )}
+    </motion.div>
+  );
+});
+
 const PhotoGallery: React.FC = () => {
   const { eventId } = useParams<{ eventId: string }>();
-  const [photos, setPhotos] = useState<StoragePhoto[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [_selectedPhoto, setSelectedPhoto] = useState<StoragePhoto | null>(
     null,
   );
@@ -24,82 +87,76 @@ const PhotoGallery: React.FC = () => {
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [isDeletingPhotos, setIsDeletingPhotos] = useState(false);
 
-  const loadPhotosFromStorage = async () => {
-    if (!eventId) return;
+  // Fetch function for the hook
+  const fetchPhotos = useCallback(async (): Promise<EventPhoto[]> => {
+    if (!eventId) return [];
+    return listAllEventPhotos(eventId);
+  }, [eventId]);
 
-    try {
-      const fileNames = await listPhotos(eventId);
-      const photoUrls: StoragePhoto[] = fileNames.map((fileName: string) => ({
-        url: getPhotoUrl(eventId, fileName),
-        name: fileName,
-        created_at: new Date().toISOString(),
-      }));
+  // Use smart polling hook with adaptive intervals
+  const {
+    photos: eventPhotos,
+    isLoading,
+    newPhotoIds,
+    refresh,
+  } = usePhotoUpdates({
+    eventId,
+    fetchPhotos,
+    enabled: !!eventId,
+    initialInterval: 3000, // 3 seconds when active
+    maxInterval: 15000, // Slow to 15 seconds when idle
+  });
 
-      const sortedPhotos = photoUrls.sort(
-        (a: StoragePhoto, b: StoragePhoto) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-      );
+  // Transform EventPhoto to StoragePhoto format
+  const photos = useMemo((): StoragePhoto[] => {
+    return eventPhotos.map((photo) => ({
+      url: eventId ? getPhotoUrl(eventId, photo.fileName) : photo.url,
+      name: photo.fileName,
+      created_at: photo.uploadedAt || new Date().toISOString(),
+    }));
+  }, [eventPhotos, eventId]);
 
-      setPhotos(sortedPhotos);
-    } catch (error) {
-      console.error("Error loading photos:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const togglePhotoSelection = (photo: StoragePhoto) => {
+  const togglePhotoSelection = useCallback((photoName: string) => {
     setSelectedPhotos((prev) => {
       const newSelection = new Set(prev);
-      if (newSelection.has(photo.name)) {
-        newSelection.delete(photo.name);
+      if (newSelection.has(photoName)) {
+        newSelection.delete(photoName);
       } else {
-        newSelection.add(photo.name);
+        newSelection.add(photoName);
       }
       return newSelection;
     });
-  };
+  }, []);
 
-  const selectAllPhotos = () => {
+  const selectAllPhotos = useCallback(() => {
     if (selectedPhotos.size === photos.length) {
       setSelectedPhotos(new Set());
     } else {
       setSelectedPhotos(new Set(photos.map((photo) => photo.name)));
     }
-  };
+  }, [selectedPhotos.size, photos]);
 
-  const deleteSelectedPhotos = async () => {
+  const deleteSelectedPhotos = useCallback(async () => {
     if (selectedPhotos.size === 0 || !eventId) return;
 
     setIsDeletingPhotos(true);
     try {
-      // Convert Set to Array and delete all selected photos at once
       await deleteMultipleFiles(eventId, Array.from(selectedPhotos));
-
-      // Refresh the gallery
-      await loadPhotosFromStorage();
-
-      // Clear selection and exit delete mode
+      // Optimistic update: remove deleted photos locally
       setSelectedPhotos(new Set());
       setIsDeleteMode(false);
+      // Refresh to get updated list
+      await refresh();
     } catch (error) {
       console.error("Error deleting photos:", error);
-      // Optionally show an error message to the user
     } finally {
       setIsDeletingPhotos(false);
     }
-  };
+  }, [selectedPhotos, eventId, refresh]);
 
-  useEffect(() => {
-    loadPhotosFromStorage();
-    const pollInterval = setInterval(loadPhotosFromStorage, 5000);
-    return () => clearInterval(pollInterval);
-  }, [eventId]);
-
-  const refreshPhotos = () => {
-    setIsLoading(true);
-    loadPhotosFromStorage();
-  };
+  const handleRefresh = useCallback(() => {
+    refresh();
+  }, [refresh]);
 
   if (!eventId) {
     return <div>No event ID provided</div>;
@@ -159,9 +216,12 @@ const PhotoGallery: React.FC = () => {
                 <Trash2 size={20} />
               </button>
               <button
-                onClick={refreshPhotos}
-                className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                onClick={handleRefresh}
+                className={`p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors ${
+                  isLoading ? "animate-spin" : ""
+                }`}
                 title="Refresh Gallery"
+                disabled={isLoading}
               >
                 <RefreshCw size={20} />
               </button>
@@ -179,7 +239,7 @@ const PhotoGallery: React.FC = () => {
 
       {/* Content */}
       <div className="flex-1 overflow-auto">
-        {isLoading ? (
+        {isLoading && photos.length === 0 ? (
           <div className="flex items-center justify-center h-64">
             <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" />
           </div>
@@ -197,51 +257,15 @@ const PhotoGallery: React.FC = () => {
           <div className="p-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
               {photos.map((photo) => (
-                <motion.div
+                <PhotoCard
                   key={photo.name}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`relative aspect-square bg-gray-800 rounded-lg overflow-hidden cursor-pointer ${
-                    isDeleteMode
-                      ? "ring-2 ring-offset-2 ring-offset-gray-900"
-                      : ""
-                  } ${
-                    selectedPhotos.has(photo.name)
-                      ? "ring-red-500"
-                      : isDeleteMode
-                        ? "ring-gray-600"
-                        : ""
-                  }`}
-                  onClick={() => {
-                    if (isDeleteMode) {
-                      togglePhotoSelection(photo);
-                    } else {
-                      setSelectedPhoto(photo);
-                    }
-                  }}
-                >
-                  <img
-                    src={photo.url}
-                    alt={`Photo ${photo.name}`}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                  {isDeleteMode && (
-                    <div className="absolute top-2 right-2">
-                      <div
-                        className={`w-6 h-6 rounded-full border-2 border-white flex items-center justify-center ${
-                          selectedPhotos.has(photo.name)
-                            ? "bg-red-500"
-                            : "bg-gray-700 bg-opacity-50"
-                        }`}
-                      >
-                        {selectedPhotos.has(photo.name) && (
-                          <CheckCircle size={16} className="text-white" />
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </motion.div>
+                  photo={photo}
+                  isDeleteMode={isDeleteMode}
+                  isSelected={selectedPhotos.has(photo.name)}
+                  isNew={newPhotoIds.has(photo.name)}
+                  onSelect={() => togglePhotoSelection(photo.name)}
+                  onClick={() => setSelectedPhoto(photo)}
+                />
               ))}
             </div>
           </div>

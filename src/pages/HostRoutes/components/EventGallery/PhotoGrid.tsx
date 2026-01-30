@@ -2,6 +2,7 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Check } from "lucide-react";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import type { DisplayPhoto } from "../../types";
 
 interface PhotoGridProps {
@@ -99,11 +100,13 @@ export function PhotoGrid({
                   className="relative aspect-square group cursor-pointer overflow-hidden rounded-lg border border-sp_lightgreen/30 bg-white"
                   onClick={() => handlePhotoClick(photo)}
                 >
-                  <img
+                  <OptimizedImage
                     src={photo.url || "/placeholder.svg"}
                     alt={photo.fileName}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    loading="lazy"
+                    className="transition-transform duration-300 group-hover:scale-105"
+                    containerClassName="w-full h-full"
+                    aspectRatio="auto"
+                    objectFit="cover"
                   />
 
                   {/* Selection Overlay */}

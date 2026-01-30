@@ -1,12 +1,10 @@
 // File: src/components/guest/GuestDashboard.tsx
 //
-// Only the pieces that matter changed vs your version:
-// - Removed the "Prize" tab
-// - "Download All" opens email modal and POSTs to /api/photos/email
-// - Subject/body are set server-side to your exact copy
-// (Full file kept for copy-paste clarity)
+// Guest dashboard with Spevents green theme
+// Features: Gallery, Camera, and Hunt tabs
+// Email photos functionality with Resend integration
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Camera,
@@ -19,9 +17,12 @@ import {
   Send,
   AlertCircle,
   Check,
+  Target,
+  User,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useActualEventId } from "../session/SessionValidator";
+import { useSession } from "@/contexts/SessionContext";
 
 interface Photo {
   url: string;
@@ -44,54 +45,53 @@ interface PhotoThumbnailProps {
   onError?: () => void;
 }
 
-const PhotoThumbnail = ({
-  photo,
-  index,
-  onLoad,
-  onError,
-}: PhotoThumbnailProps) => {
-  const [imageState, setImageState] = useState<"loading" | "loaded" | "error">(
-    "loading",
-  );
-  return (
-    <div className="w-full h-full relative">
-      {imageState === "loading" && (
-        <div className="absolute inset-0 bg-gray-800 rounded-lg flex items-center justify-center">
-          <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-        </div>
-      )}
-      {imageState === "error" && (
-        <div className="absolute inset-0 bg-gray-800 rounded-lg flex flex-col items-center justify-center text-white/60 text-xs p-2">
-          <span>Failed to load</span>
-          <span className="text-xs mt-1 opacity-60 truncate w-full text-center">
-            {photo.fileName || photo.name}
-          </span>
-        </div>
-      )}
-      <img
-        src={photo.url}
-        alt={`Photo ${index + 1}`}
-        className={`w-full h-full object-cover rounded-lg shadow-lg group-hover:shadow-xl transition-all duration-200 ${
-          imageState === "loaded" ? "opacity-100" : "opacity-0"
-        }`}
-        onLoad={() => {
-          setImageState("loaded");
-          onLoad?.();
-        }}
-        onError={() => {
-          setImageState("error");
-          onError?.();
-        }}
-      />
-    </div>
-  );
-};
+const PhotoThumbnail = memo(
+  ({ photo, index, onLoad, onError }: PhotoThumbnailProps) => {
+    const [imageState, setImageState] = useState<
+      "loading" | "loaded" | "error"
+    >("loading");
+    return (
+      <div className="w-full h-full relative">
+        {imageState === "loading" && (
+          <div className="absolute inset-0 bg-sp_lightgreen/30 rounded-lg flex items-center justify-center">
+            <div className="w-6 h-6 border-2 border-sp_green/30 border-t-sp_green rounded-full animate-spin" />
+          </div>
+        )}
+        {imageState === "error" && (
+          <div className="absolute inset-0 bg-sp_lightgreen/20 rounded-lg flex flex-col items-center justify-center text-sp_darkgreen/60 text-xs p-2">
+            <span>Failed to load</span>
+            <span className="text-xs mt-1 opacity-60 truncate w-full text-center">
+              {photo.fileName || photo.name}
+            </span>
+          </div>
+        )}
+        <img
+          src={photo.url}
+          alt={`Photo ${index + 1}`}
+          className={`w-full h-full object-cover rounded-lg shadow-lg group-hover:shadow-xl transition-all duration-200 ${
+            imageState === "loaded" ? "opacity-100" : "opacity-0"
+          }`}
+          loading="lazy"
+          onLoad={() => {
+            setImageState("loaded");
+            onLoad?.();
+          }}
+          onError={() => {
+            setImageState("error");
+            onError?.();
+          }}
+        />
+      </div>
+    );
+  },
+);
 
 export function GuestDashboard() {
   const navigate = useNavigate();
   const params = useParams();
   const sessionCode = params.sessionCode || params.eventId;
   const actualEventId = useActualEventId();
+  const { guestName, currentEvent } = useSession();
 
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -109,24 +109,30 @@ export function GuestDashboard() {
     "idle" | "sending" | "success" | "error"
   >("idle");
 
-  // Tabs (Prize removed)
+  // Check if hunt mode is enabled for this event
+  const huntEnabled = currentEvent?.scavengerHunt?.enabled ?? false;
+
+  // Tabs - dynamically include Hunt tab if enabled
   const tabs: TabConfig[] = [
     {
       id: "gallery",
-      icon: <Grid className="w-6 h-6 text-white font-bold" />,
+      icon: <Grid className="w-5 h-5" />,
       label: "Gallery",
     },
     {
       id: "camera",
-      icon: <Camera className="w-6 h-6 text-white font-bold" />,
+      icon: <Camera className="w-5 h-5" />,
       label: "Camera",
     },
-    // {
-    //   id: "create",
-    //   icon: <WandSparkles className="w-6 h-6 text-white font-bold" />,
-    //   label: "Create",
-    // },
-    // { id: "prize", icon: <Trophy ... />, label: "Prize" },
+    ...(huntEnabled
+      ? [
+          {
+            id: "hunt",
+            icon: <Target className="w-5 h-5" />,
+            label: "Hunt",
+          },
+        ]
+      : []),
   ];
 
   useEffect(() => {
@@ -195,6 +201,9 @@ export function GuestDashboard() {
     switch (tabId) {
       case "camera":
         navigate(`/${sessionCode}/guest/camera`);
+        break;
+      case "hunt":
+        navigate(`/${sessionCode}/guest/hunt`);
         break;
       case "create":
         navigate(`/${sessionCode}/guest/create`);
@@ -299,23 +308,32 @@ export function GuestDashboard() {
   };
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex flex-col">
+    <div className="fixed inset-0 bg-gradient-to-br from-sp_darkgreen via-sp_green to-sp_darkgreen flex flex-col">
       {/* Header */}
-      <div className="p-4 flex items-center justify-between border-b border-white/10 bg-black/20 backdrop-blur-md">
-        <div>
-          <h1 className="text-white text-xl font-semibold">Your Photos</h1>
-          <p className="text-white/60 text-sm">
-            {photos.length} captured moments
-          </p>
+      <div className="p-4 flex items-center justify-between border-b border-sp_lightgreen/20 bg-sp_darkgreen/50 backdrop-blur-md">
+        <div className="flex items-center gap-3">
+          {guestName && (
+            <div className="w-10 h-10 rounded-full bg-sp_lightgreen/20 flex items-center justify-center">
+              <User className="w-5 h-5 text-sp_eggshell" />
+            </div>
+          )}
+          <div>
+            <h1 className="text-sp_eggshell text-xl font-semibold">
+              {guestName ? `Hi, ${guestName}!` : "Your Photos"}
+            </h1>
+            <p className="text-sp_lightgreen text-sm">
+              {photos.length} captured moment{photos.length !== 1 ? "s" : ""}
+            </p>
+          </div>
         </div>
 
         {photos.length > 0 && (
           <button
             onClick={handleDownloadAll}
-            className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg"
+            className="flex items-center gap-2 bg-sp_midgreen hover:bg-sp_green text-sp_eggshell px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-lg"
           >
-            <Download className="w-4 h-4" />
-            <span>Email Me All</span>
+            <Mail className="w-4 h-4" />
+            <span className="hidden sm:inline">Email Me</span>
           </button>
         )}
       </div>
@@ -324,27 +342,27 @@ export function GuestDashboard() {
       <div className="flex-1 overflow-auto pb-20">
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
-            <div className="relative">
-              <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin" />
-              <div className="mt-4 text-white/60 text-sm text-center">
+            <div className="relative flex flex-col items-center">
+              <div className="w-12 h-12 border-4 border-sp_lightgreen/30 border-t-sp_eggshell rounded-full animate-spin" />
+              <div className="mt-4 text-sp_lightgreen text-sm text-center">
                 Loading photos...
               </div>
             </div>
           </div>
         ) : photos.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center px-6">
-            <div className="w-20 h-20 bg-gradient-to-br from-gray-700 to-gray-800 rounded-full flex items-center justify-center mb-4">
-              <Camera className="w-10 h-10 text-white/60" />
+            <div className="w-20 h-20 bg-sp_midgreen/30 rounded-full flex items-center justify-center mb-4">
+              <Camera className="w-10 h-10 text-sp_eggshell/70" />
             </div>
-            <h3 className="text-white text-lg font-medium mb-2">
+            <h3 className="text-sp_eggshell text-lg font-medium mb-2">
               No photos yet
             </h3>
-            <p className="text-white/60 text-sm mb-6 leading-relaxed">
+            <p className="text-sp_lightgreen text-sm mb-6 leading-relaxed">
               Start capturing memories by taking your first photo!
             </p>
             <button
               onClick={() => handleTabClick("camera")}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg"
+              className="bg-sp_midgreen hover:bg-sp_lightgreen text-sp_eggshell hover:text-sp_darkgreen px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-lg"
             >
               Take Photo
             </button>
@@ -355,15 +373,15 @@ export function GuestDashboard() {
               {photos.map((photo, index) => (
                 <motion.div
                   key={`${photo.name}-${index}`}
-                  initial={{ opacity: 0, scale: 0.8 }}
+                  initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="relative aspect-square group cursor-pointer"
+                  transition={{ delay: Math.min(index * 0.03, 0.3) }}
+                  className="relative aspect-square group cursor-pointer rounded-lg overflow-hidden"
                   onClick={() => handlePhotoTap(index)}
                 >
                   <PhotoThumbnail photo={photo} index={index} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                  <div className="absolute bottom-2 left-2 text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <div className="absolute inset-0 bg-gradient-to-t from-sp_darkgreen/70 via-transparent to-transparent rounded-lg opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-200" />
+                  <div className="absolute bottom-2 left-2 text-sp_eggshell text-xs font-medium opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-200">
                     #{index + 1}
                   </div>
                 </motion.div>
@@ -380,7 +398,7 @@ export function GuestDashboard() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/95 backdrop-blur-md z-50 flex items-center justify-center"
+            className="fixed inset-0 bg-sp_darkgreen/98 backdrop-blur-md z-50 flex items-center justify-center"
             onTouchStart={(e) => setTouchStart(e.targetTouches[0].clientX)}
             onTouchMove={(e) => setTouchEnd(e.targetTouches[0].clientX)}
             onTouchEnd={() => {
@@ -388,11 +406,13 @@ export function GuestDashboard() {
               const d = touchStart - touchEnd;
               if (d > 50) navigatePhoto("next");
               if (d < -50) navigatePhoto("prev");
+              setTouchStart(0);
+              setTouchEnd(0);
             }}
           >
             <button
               onClick={closePhotoModal}
-              className="absolute top-4 right-4 w-10 h-10 bg-black/50 rounded-full flex items-center justify-center text-white hover:bg-black/70 transition-colors z-10"
+              className="absolute top-4 right-4 w-10 h-10 bg-sp_green/70 rounded-full flex items-center justify-center text-sp_eggshell hover:bg-sp_midgreen transition-colors z-10"
             >
               <X className="w-5 h-5" />
             </button>
@@ -401,13 +421,13 @@ export function GuestDashboard() {
               <>
                 <button
                   onClick={() => navigatePhoto("prev")}
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-black/50 rounded-full flex items-center justify-center text-white hover:bg-black/70 transition-colors z-10"
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-sp_green/70 rounded-full flex items-center justify-center text-sp_eggshell hover:bg-sp_midgreen transition-colors z-10"
                 >
                   <ChevronLeft className="w-6 h-6" />
                 </button>
                 <button
                   onClick={() => navigatePhoto("next")}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-black/50 rounded-full flex items-center justify-center text-white hover:bg-black/70 transition-colors z-10"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-sp_green/70 rounded-full flex items-center justify-center text-sp_eggshell hover:bg-sp_midgreen transition-colors z-10"
                 >
                   <ChevronRight className="w-6 h-6" />
                 </button>
@@ -416,16 +436,18 @@ export function GuestDashboard() {
 
             <motion.img
               key={selectedPhotoIndex}
-              initial={{ scale: 0.8, opacity: 0 }}
+              initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
               src={photos[selectedPhotoIndex].url}
               alt={`Photo ${selectedPhotoIndex + 1}`}
-              className="max-w-full max-h-full object-contain"
+              className="max-w-full max-h-full object-contain px-4"
+              draggable={false}
             />
 
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 px-4 py-2 rounded-full">
-              <span className="text-white text-sm font-medium">
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-sp_green/70 px-4 py-2 rounded-full">
+              <span className="text-sp_eggshell text-sm font-medium">
                 {selectedPhotoIndex + 1} of {photos.length}
               </span>
             </div>
@@ -440,23 +462,28 @@ export function GuestDashboard() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-sp_darkgreen/90 backdrop-blur-md z-50 flex items-center justify-center p-4"
+            onClick={(e) => {
+              if (e.target === e.currentTarget && sendStatus === "idle") {
+                setShowEmailModal(false);
+              }
+            }}
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-gray-900 rounded-2xl p-6 w-full max-w-md border border-white/10"
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="bg-sp_eggshell rounded-2xl p-6 w-full max-w-md shadow-xl"
             >
               {sendStatus === "success" ? (
                 <div className="text-center">
-                  <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Check className="w-8 h-8 text-white" />
+                  <div className="w-16 h-16 bg-sp_green rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Check className="w-8 h-8 text-sp_eggshell" />
                   </div>
-                  <h3 className="text-white text-xl font-semibold mb-2">
+                  <h3 className="text-sp_darkgreen text-xl font-semibold mb-2">
                     Photos Sent!
                   </h3>
-                  <p className="text-white/70 text-sm mb-6">
+                  <p className="text-sp_midgreen text-sm mb-6">
                     Check your email for all {photos.length} photos.
                   </p>
                   <button
@@ -464,7 +491,7 @@ export function GuestDashboard() {
                       setShowEmailModal(false);
                       setSendStatus("idle");
                     }}
-                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-medium"
+                    className="w-full bg-sp_green hover:bg-sp_midgreen text-sp_eggshell py-3 rounded-lg font-medium transition-colors"
                   >
                     Done
                   </button>
@@ -474,16 +501,16 @@ export function GuestDashboard() {
                   <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
                     <AlertCircle className="w-8 h-8 text-white" />
                   </div>
-                  <h3 className="text-white text-xl font-semibold mb-2">
+                  <h3 className="text-sp_darkgreen text-xl font-semibold mb-2">
                     Send Failed
                   </h3>
-                  <p className="text-white/70 text-sm mb-6">
+                  <p className="text-sp_midgreen text-sm mb-6">
                     There was an error sending your photos. Please try again.
                   </p>
                   <div className="flex gap-3">
                     <button
                       onClick={() => setSendStatus("idle")}
-                      className="flex-1 bg-gray-700 text-white py-3 rounded-lg font-medium"
+                      className="flex-1 bg-sp_midgreen text-sp_eggshell py-3 rounded-lg font-medium hover:bg-sp_green transition-colors"
                     >
                       Try Again
                     </button>
@@ -492,7 +519,7 @@ export function GuestDashboard() {
                         setShowEmailModal(false);
                         setSendStatus("idle");
                       }}
-                      className="flex-1 bg-gray-600 text-white py-3 rounded-lg font-medium"
+                      className="flex-1 bg-sp_lightgreen text-sp_darkgreen py-3 rounded-lg font-medium hover:bg-sp_lightgreen/80 transition-colors"
                     >
                       Cancel
                     </button>
@@ -501,21 +528,21 @@ export function GuestDashboard() {
               ) : (
                 <>
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
-                      <Mail className="w-6 h-6 text-white" />
+                    <div className="w-12 h-12 bg-sp_green rounded-full flex items-center justify-center">
+                      <Mail className="w-6 h-6 text-sp_eggshell" />
                     </div>
                     <div>
-                      <h3 className="text-white text-xl font-semibold">
+                      <h3 className="text-sp_darkgreen text-xl font-semibold">
                         Email Your Photos
                       </h3>
-                      <p className="text-white/60 text-sm">
-                        Enter your email to receive all {photos.length} photos
+                      <p className="text-sp_midgreen text-sm">
+                        Receive all {photos.length} photos in your inbox
                       </p>
                     </div>
                   </div>
 
                   <div className="mb-6">
-                    <label className="block text-white text-sm font-medium mb-2">
+                    <label className="block text-sp_darkgreen text-sm font-medium mb-2">
                       Email Address
                     </label>
                     <input
@@ -523,15 +550,16 @@ export function GuestDashboard() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="your@email.com"
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      className="w-full bg-white border border-sp_lightgreen rounded-lg px-4 py-3 text-sp_darkgreen placeholder-sp_lightgreen focus:outline-none focus:border-sp_green focus:ring-1 focus:ring-sp_green"
                       disabled={isSending}
+                      autoFocus
                     />
                   </div>
 
                   <div className="flex gap-3">
                     <button
                       onClick={() => setShowEmailModal(false)}
-                      className="flex-1 bg-gray-700 text-white py-3 rounded-lg font-medium hover:bg-gray-600 transition-colors"
+                      className="flex-1 bg-sp_lightgreen/50 text-sp_darkgreen py-3 rounded-lg font-medium hover:bg-sp_lightgreen transition-colors"
                       disabled={isSending}
                     >
                       Cancel
@@ -539,17 +567,17 @@ export function GuestDashboard() {
                     <button
                       onClick={sendPhotosToEmail}
                       disabled={!email.trim() || isSending}
-                      className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="flex-1 bg-sp_green text-sp_eggshell py-3 rounded-lg font-medium hover:bg-sp_midgreen transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                       {isSending ? (
                         <>
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          <div className="w-4 h-4 border-2 border-sp_eggshell/30 border-t-sp_eggshell rounded-full animate-spin" />
                           <span>Sending...</span>
                         </>
                       ) : (
                         <>
                           <Send className="w-4 h-4" />
-                          <span>Send Photos</span>
+                          <span>Send</span>
                         </>
                       )}
                     </button>
@@ -562,16 +590,16 @@ export function GuestDashboard() {
       </AnimatePresence>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur-md border-t border-white/10">
-        <div className="flex items-center justify-around py-2">
+      <div className="fixed bottom-0 left-0 right-0 bg-sp_darkgreen/95 backdrop-blur-md border-t border-sp_lightgreen/20 safe-area-pb">
+        <div className="flex items-center justify-around py-2 px-2">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => handleTabClick(tab.id)}
-              className={`flex flex-col items-center justify-center p-3 rounded-lg transition-all duration-200 ${
+              className={`flex flex-col items-center justify-center px-4 py-2 rounded-xl transition-all duration-200 min-w-[70px] ${
                 activeTab === tab.id
-                  ? "bg-gradient-to-br from-blue-600/20 to-purple-600/20 text-white shadow-lg"
-                  : "text-white/60 hover:text-white/80 hover:bg-white/5"
+                  ? "bg-sp_green text-sp_eggshell shadow-lg"
+                  : "text-sp_lightgreen hover:text-sp_eggshell hover:bg-sp_green/30"
               }`}
             >
               {tab.icon}

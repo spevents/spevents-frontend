@@ -320,8 +320,8 @@ export const CameraInterface: React.FC<CameraInterfaceProps> = ({
   // Don't render if we don't have actualEventId yet
   if (!actualEventId) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+      <div className="min-h-screen bg-sp_darkgreen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-sp_lightgreen/30 border-t-sp_eggshell rounded-full animate-spin" />
       </div>
     );
   }

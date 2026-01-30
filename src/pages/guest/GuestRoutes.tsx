@@ -15,6 +15,7 @@ import { GuestDashboard } from "@/components/guest/GuestDashboard";
 import FeedbackPage from "@/components/guest/FeedbackPage";
 import { CollageCreator } from "@/components/guest/CollageCreator";
 import { SessionValidator } from "@/components/session/SessionValidator";
+import { ScavengerHuntPage } from "./ScavengerHuntPage";
 
 const isMobileDevice = () => {
   const userAgent = navigator.userAgent || navigator.vendor;
@@ -38,15 +39,15 @@ export const GuestRoutes = () => {
   // Mobile check with better error message
   if (!isMobileDevice()) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-6">
+      <div className="min-h-screen bg-gradient-to-br from-sp_darkgreen via-sp_green to-sp_darkgreen text-sp_eggshell flex items-center justify-center p-6">
         <div className="text-center">
-          <h2 className="text-xl mb-4">Desktop Not Supported</h2>
-          <p className="text-gray-400 mb-4">
+          <h2 className="text-xl mb-4 font-semibold">Desktop Not Supported</h2>
+          <p className="text-sp_lightgreen mb-4">
             Please use a mobile device to join events
           </p>
           <a
             href="https://app.spevents.live"
-            className="text-blue-400 underline"
+            className="text-sp_eggshell underline hover:text-sp_lightgreen transition-colors"
           >
             Host? Sign in here
           </a>
@@ -64,15 +65,15 @@ export const GuestRoutes = () => {
         <Route
           path="*"
           element={
-            <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-6">
+            <div className="min-h-screen bg-gradient-to-br from-sp_darkgreen via-sp_green to-sp_darkgreen text-sp_eggshell flex items-center justify-center p-6">
               <div className="text-center">
-                <h2 className="text-xl mb-4">Invalid QR Code</h2>
-                <p className="text-gray-400 mb-4">
+                <h2 className="text-xl mb-4 font-semibold">Invalid QR Code</h2>
+                <p className="text-sp_lightgreen mb-4">
                   Please scan a valid event QR code
                 </p>
                 <button
                   onClick={() => (window.location.href = "/")}
-                  className="bg-blue-600 px-4 py-2 rounded"
+                  className="bg-sp_midgreen hover:bg-sp_lightgreen text-sp_eggshell hover:text-sp_darkgreen px-4 py-2 rounded-lg transition-colors"
                 >
                   Try Again
                 </button>
@@ -101,6 +102,7 @@ export const GuestRoutes = () => {
               <Route path="review" element={<PhotoReview />} />
               <Route path="feedback" element={<FeedbackPage />} />
               <Route path="create" element={<CollageCreator />} />
+              <Route path="hunt" element={<ScavengerHuntPage />} />
             </Routes>
           </SessionValidator>
         }
