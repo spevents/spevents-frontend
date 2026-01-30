@@ -107,6 +107,46 @@ export function ScavengerHuntPage() {
     setPhase("tasks");
   };
 
+  // Initialize camera stream
+  const initCamera = async (facing: "user" | "environment") => {
+    // Stop any existing stream first
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+    }
+
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: facing,
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+        audio: false,
+      });
+
+      setStream(mediaStream);
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+
+        // Try to play and mark ready
+        try {
+          await videoRef.current.play();
+          setIsCameraReady(true);
+        } catch (playError) {
+          // Autoplay might handle it, set ready after short delay
+          console.log("Play promise rejected, using fallback");
+          setTimeout(() => setIsCameraReady(true), 300);
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Failed to access camera:", error);
+      return false;
+    }
+  };
+
   // Start camera for a task
   const startCamera = async (taskId: string) => {
     setCurrentTaskId(taskId);
@@ -114,24 +154,8 @@ export function ScavengerHuntPage() {
     setIsCameraReady(false);
     setPhase("camera");
 
-    try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode,
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-        },
-        audio: false,
-      });
-      setStream(mediaStream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-        videoRef.current.onloadedmetadata = () => {
-          setIsCameraReady(true);
-        };
-      }
-    } catch (error) {
-      console.error("Failed to access camera:", error);
+    const success = await initCamera(facingMode);
+    if (!success) {
       alert("Could not access camera. Please allow camera permissions.");
       setPhase("tasks");
     }
@@ -143,34 +167,23 @@ export function ScavengerHuntPage() {
       stream.getTracks().forEach((track) => track.stop());
       setStream(null);
     }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
     setIsCameraReady(false);
   };
 
   // Toggle camera (flip)
   const toggleCamera = async () => {
-    stopCamera();
     const newFacingMode = facingMode === "user" ? "environment" : "user";
     setFacingMode(newFacingMode);
     setIsCameraReady(false);
 
-    try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: newFacingMode,
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-        },
-        audio: false,
-      });
-      setStream(mediaStream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-        videoRef.current.onloadedmetadata = () => {
-          setIsCameraReady(true);
-        };
-      }
-    } catch (error) {
-      console.error("Failed to toggle camera:", error);
+    const success = await initCamera(newFacingMode);
+    if (!success) {
+      // Revert to previous facing mode
+      setFacingMode(facingMode);
+      await initCamera(facingMode);
     }
   };
 
