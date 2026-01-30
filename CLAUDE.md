@@ -263,14 +263,14 @@ const USE_S3_UPLOAD = true; // true = S3 (cheaper), false = Vercel Blob
 ## Development
 
 ```bash
-# Frontend
+# Frontend (uses pnpm)
 cd spevents-frontend
-npm install
-npm run dev          # Runs on localhost:5173
+pnpm install
+pnpm run dev          # Runs on localhost:5173
 
 # Backend
 cd spevents-backend
-npm install
+pnpm install
 vercel dev           # Runs on localhost:3001
 ```
 

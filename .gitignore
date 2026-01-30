@@ -13,10 +13,9 @@ dist
 dist-ssr
 *.local
 
-# Package files
+# Package files (keeping pnpm-lock.yaml for reproducible builds)
 package-lock.json
 yarn.lock
-pnpm-lock.yaml
 
 # Editor directories and files
 .vscode/*
