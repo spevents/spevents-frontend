@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useSession } from "@/contexts/SessionContext";
 import { useNavigate, useParams } from "react-router-dom";
-import { uploadPhoto, getPresignedUrl, getEventPhotos } from "@/services/api";
+import { uploadPhoto, getPresignedUrl, guestService } from "@/services/api";
 import { ScavengerHuntTask } from "@/types/event";
 
 type HuntPhase = "name" | "tasks" | "camera" | "success" | "complete";
@@ -85,28 +85,21 @@ export function ScavengerHuntPage() {
 
     const checkVerificationStatus = async () => {
       try {
-        // Refresh event data to get latest verifiedSubmissions
+        // Refresh event data and get fresh data directly
         await refreshCurrentEvent();
 
-        // Get verified submissions from updated event config
+        // Fetch fresh event data directly to avoid stale closure
+        const activeSessionCode = sessionCode || params.sessionCode;
+        if (!activeSessionCode) return;
+
+        const freshEvent = await guestService.getEventBySessionCode(activeSessionCode);
         const verifiedKeys = new Set(
-          currentEvent?.scavengerHunt?.verifiedSubmissions || [],
+          freshEvent?.scavengerHunt?.verifiedSubmissions || [],
         );
 
-        // Also fetch photos to check if any were deleted
-        const photos = await getEventPhotos(currentEvent.id);
-        const existingPhotoKeys = new Set(photos.map((p) => p.fullKey));
-
+        // Also check if any photos were deleted (use current submissions to check)
         let hasChanges = false;
         const updatedSubmissions = submissions.map((sub) => {
-          // Check if photo was deleted by host
-          if (
-            !existingPhotoKeys.has(sub.photoKey) &&
-            sub.status !== "rejected"
-          ) {
-            hasChanges = true;
-            return { ...sub, status: "rejected" as SubmissionStatus };
-          }
           // Check if photo was verified
           if (verifiedKeys.has(sub.photoKey) && sub.status === "pending") {
             hasChanges = true;
@@ -115,14 +108,9 @@ export function ScavengerHuntPage() {
           return sub;
         });
 
-        // Remove rejected submissions so user can retry
-        const activeSubmissions = updatedSubmissions.filter(
-          (s) => s.status !== "rejected",
-        );
-
         if (hasChanges) {
-          setSubmissions(activeSubmissions);
-          saveSubmissions(activeSubmissions);
+          setSubmissions(updatedSubmissions);
+          saveSubmissions(updatedSubmissions);
         }
       } catch (error) {
         console.error("Failed to check verification status:", error);
@@ -133,7 +121,7 @@ export function ScavengerHuntPage() {
     checkVerificationStatus();
     const interval = setInterval(checkVerificationStatus, 5000);
     return () => clearInterval(interval);
-  }, [currentEvent?.id, guestId, submissions.length, refreshCurrentEvent]);
+  }, [currentEvent?.id, guestId, submissions.length, refreshCurrentEvent, sessionCode, params.sessionCode]);
 
   // Calculate points (only from verified submissions)
   const totalPoints = submissions

@@ -136,28 +136,29 @@ export function ScavengerHuntEditor() {
     loadEvent();
   }, [eventId]);
 
-  // Load photos for submissions tab
-  const loadPhotos = useCallback(async () => {
+  // Load photos for submissions tab (with optional silent mode for polling)
+  const loadPhotos = useCallback(async (silent = false) => {
     if (!eventId) return;
-    setIsLoadingPhotos(true);
+    if (!silent) setIsLoadingPhotos(true);
     try {
       const eventPhotos = await getEventPhotos(eventId);
       setPhotos(eventPhotos);
     } catch (error) {
       console.error("Failed to load photos:", error);
     } finally {
-      setIsLoadingPhotos(false);
+      if (!silent) setIsLoadingPhotos(false);
     }
   }, [eventId]);
 
   // Load photos when switching to submissions tab + auto-poll every 5 seconds
   useEffect(() => {
     if (activeTab === "submissions") {
-      loadPhotos();
+      // Initial load with loading indicator
+      loadPhotos(false);
 
-      // Auto-poll for new submissions every 5 seconds
+      // Auto-poll silently (no flicker)
       const pollInterval = setInterval(() => {
-        loadPhotos();
+        loadPhotos(true);
       }, 5000);
 
       return () => clearInterval(pollInterval);
@@ -355,9 +356,11 @@ export function ScavengerHuntEditor() {
                 <h1 className="text-lg font-bold text-sp_darkgreen truncate">
                   Scavenger Hunt
                 </h1>
-                <p className="text-xs text-sp_darkgreen/60 truncate">
-                  {event?.name || "Loading..."}
-                </p>
+                {event?.name && (
+                  <p className="text-xs text-sp_darkgreen/60 truncate">
+                    {event.name}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -728,7 +731,7 @@ export function ScavengerHuntEditor() {
             {/* Refresh Button */}
             <div className="flex justify-end">
               <button
-                onClick={loadPhotos}
+                onClick={() => loadPhotos(false)}
                 disabled={isLoadingPhotos}
                 className="flex items-center gap-2 px-3 py-1.5 text-sm text-sp_darkgreen hover:bg-sp_lightgreen/20 rounded-lg transition-colors"
               >
