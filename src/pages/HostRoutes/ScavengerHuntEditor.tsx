@@ -20,6 +20,9 @@ import {
   Medal,
   Award,
   RefreshCw,
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { eventService, getEventPhotos, EventPhoto } from "@/services/api";
@@ -103,6 +106,9 @@ export function ScavengerHuntEditor() {
   const [photos, setPhotos] = useState<EventPhoto[]>([]);
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
   const [verifiedPhotos, setVerifiedPhotos] = useState<Set<string>>(new Set());
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(
+    null,
+  );
 
   // Load event data
   useEffect(() => {
@@ -144,10 +150,17 @@ export function ScavengerHuntEditor() {
     }
   }, [eventId]);
 
-  // Load photos when switching to submissions tab
+  // Load photos when switching to submissions tab + auto-poll every 5 seconds
   useEffect(() => {
     if (activeTab === "submissions") {
       loadPhotos();
+
+      // Auto-poll for new submissions every 5 seconds
+      const pollInterval = setInterval(() => {
+        loadPhotos();
+      }, 5000);
+
+      return () => clearInterval(pollInterval);
     }
   }, [activeTab, loadPhotos]);
 
@@ -805,7 +818,7 @@ export function ScavengerHuntEditor() {
                   </h3>
                 </div>
                 <div className="divide-y divide-sp_lightgreen/20">
-                  {huntSubmissions.map((photo) => {
+                  {huntSubmissions.map((photo, index) => {
                     const task = config.tasks.find(
                       (t) => t.id === photo.huntTaskId,
                     );
@@ -815,14 +828,17 @@ export function ScavengerHuntEditor() {
                         key={photo.fullKey}
                         className="p-3 flex items-center gap-3"
                       >
-                        {/* Photo thumbnail */}
-                        <div className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-sp_lightgreen/20">
+                        {/* Photo thumbnail - clickable */}
+                        <button
+                          onClick={() => setSelectedPhotoIndex(index)}
+                          className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-sp_lightgreen/20 hover:ring-2 hover:ring-sp_green transition-all cursor-pointer"
+                        >
                           <img
                             src={photo.url}
                             alt="Submission"
                             className="w-full h-full object-cover"
                           />
-                        </div>
+                        </button>
 
                         {/* Info */}
                         <div className="flex-1 min-w-0">
@@ -874,7 +890,7 @@ export function ScavengerHuntEditor() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
-              className="fixed bottom-4 left-4 right-4 max-w-2xl mx-auto bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-between shadow-lg"
+              className="fixed bottom-4 left-4 right-4 max-w-2xl mx-auto bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-between shadow-lg z-40"
             >
               <span className="text-sm text-amber-800">
                 You have unsaved changes
@@ -890,6 +906,118 @@ export function ScavengerHuntEditor() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Photo Lightbox */}
+      <AnimatePresence>
+        {selectedPhotoIndex !== null && huntSubmissions[selectedPhotoIndex] && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center"
+            onClick={() => setSelectedPhotoIndex(null)}
+          >
+            {/* Close button */}
+            <button
+              onClick={() => setSelectedPhotoIndex(null)}
+              className="absolute top-4 right-4 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white z-10"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Navigation */}
+            {huntSubmissions.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedPhotoIndex(
+                      selectedPhotoIndex > 0
+                        ? selectedPhotoIndex - 1
+                        : huntSubmissions.length - 1,
+                    );
+                  }}
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white z-10"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedPhotoIndex(
+                      selectedPhotoIndex < huntSubmissions.length - 1
+                        ? selectedPhotoIndex + 1
+                        : 0,
+                    );
+                  }}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white z-10"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </>
+            )}
+
+            {/* Photo */}
+            <motion.img
+              key={selectedPhotoIndex}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              src={huntSubmissions[selectedPhotoIndex].url}
+              alt="Submission"
+              className="max-w-full max-h-[80vh] object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+
+            {/* Info bar at bottom */}
+            <div
+              className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="bg-black/60 backdrop-blur-sm px-4 py-2 rounded-lg text-white text-sm">
+                <span className="font-medium">
+                  {huntSubmissions[selectedPhotoIndex].guestName || "Anonymous"}
+                </span>
+                <span className="mx-2 text-white/50">•</span>
+                <span className="text-white/70">
+                  {config.tasks.find(
+                    (t) =>
+                      t.id === huntSubmissions[selectedPhotoIndex].huntTaskId,
+                  )?.title || "Unknown task"}
+                </span>
+              </div>
+
+              {/* Verify button */}
+              <button
+                onClick={() =>
+                  toggleVerification(
+                    huntSubmissions[selectedPhotoIndex].fullKey,
+                  )
+                }
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                  verifiedPhotos.has(huntSubmissions[selectedPhotoIndex].fullKey)
+                    ? "bg-green-500 text-white"
+                    : "bg-white text-gray-800 hover:bg-green-100"
+                }`}
+              >
+                {verifiedPhotos.has(
+                  huntSubmissions[selectedPhotoIndex].fullKey,
+                ) ? (
+                  <>
+                    <CheckCircle className="w-5 h-5" />
+                    Verified
+                  </>
+                ) : (
+                  <>
+                    <div className="w-5 h-5 rounded-full border-2 border-current" />
+                    Verify
+                  </>
+                )}
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

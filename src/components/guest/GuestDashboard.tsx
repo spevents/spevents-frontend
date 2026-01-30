@@ -12,10 +12,8 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
-  Mail,
-  Send,
-  AlertCircle,
-  Check,
+  Download,
+  Share2,
   Target,
   User,
 } from "lucide-react";
@@ -101,12 +99,17 @@ export function GuestDashboard() {
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
 
-  const [showEmailModal, setShowEmailModal] = useState(false);
-  const [email, setEmail] = useState("");
-  const [isSending, setIsSending] = useState(false);
-  const [sendStatus, setSendStatus] = useState<
-    "idle" | "sending" | "success" | "error"
-  >("idle");
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [canShare, setCanShare] = useState(false);
+
+  // Check if Web Share API is available
+  useEffect(() => {
+    setCanShare(
+      typeof navigator !== "undefined" &&
+        !!navigator.share &&
+        !!navigator.canShare,
+    );
+  }, []);
 
   // Check if hunt mode is enabled for this event
   const huntEnabled = currentEvent?.scavengerHunt?.enabled ?? false;
@@ -239,70 +242,96 @@ export function GuestDashboard() {
   //   if (d < -50) navigatePhoto("prev");
   // };
 
-  // -------- Email sending (hits /api/photos/email on your backend) --------
+  // -------- Download and Share functions --------
 
-  const apiBase =
-    (import.meta as any).env?.VITE_API_URL || "https://api.spevents.live";
-
-  const validEmail = (val: string) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
-  const normalizeName = (p: Photo) => {
-    const n = p.fileName || p.name || "photo";
-    return /\.[a-z0-9]+$/i.test(n) ? n : `${n}.jpg`;
-  };
-
-  const handleDownloadAll = () => {
-    if (photos.length === 0) return;
-    const cached = localStorage.getItem("spevents-user-email");
-    if (cached) setEmail(cached);
-    setShowEmailModal(true);
-  };
-
-  const sendPhotosToEmail = async () => {
-    if (!email.trim() || photos.length === 0) return;
-    if (!validEmail(email)) {
-      alert("Please enter a valid email address.");
-      return;
-    }
-
-    setSendStatus("sending");
-    setIsSending(true);
-
+  const downloadPhoto = async (photo: Photo, index: number) => {
     try {
-      const payload = {
-        to: email.trim(),
-        eventName: (window as any).__currentEventName || "Event",
-        attachments: photos.map((p) => ({
-          url: p.url,
-          name: normalizeName(p),
-        })),
-      };
-
-      const res = await fetch(`${apiBase}/api/photos/email`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        let msg = "Failed to send photos";
-        try {
-          const j = await res.json();
-          if (j?.error) msg = j.error;
-        } catch {
-          const t = await res.text();
-          if (t) msg = t;
-        }
-        throw new Error(msg);
-      }
-
-      localStorage.setItem("spevents-user-email", email.trim());
-      setSendStatus("success");
+      const response = await fetch(photo.url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = photo.fileName || photo.name || `photo-${index + 1}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
     } catch (e) {
-      console.error("Email send error:", e);
-      setSendStatus("error");
+      console.error("Download error:", e);
+    }
+  };
+
+  const handleDownloadAll = async () => {
+    if (photos.length === 0) return;
+    setIsDownloading(true);
+    try {
+      for (let i = 0; i < photos.length; i++) {
+        await downloadPhoto(photos[i], i);
+        // Small delay between downloads
+        if (i < photos.length - 1) {
+          await new Promise((r) => setTimeout(r, 300));
+        }
+      }
     } finally {
-      setIsSending(false);
+      setIsDownloading(false);
+    }
+  };
+
+  const handleSharePhoto = async (photo: Photo) => {
+    if (!canShare) return;
+    try {
+      const response = await fetch(photo.url);
+      const blob = await response.blob();
+      const file = new File(
+        [blob],
+        photo.fileName || photo.name || "photo.jpg",
+        { type: "image/jpeg" },
+      );
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: "Photo from SPEvents",
+        });
+      } else {
+        // Fallback to URL share
+        await navigator.share({
+          title: "Photo from SPEvents",
+          url: photo.url,
+        });
+      }
+    } catch (e: any) {
+      if (e.name !== "AbortError") {
+        console.error("Share error:", e);
+      }
+    }
+  };
+
+  const handleShareAll = async () => {
+    if (!canShare || photos.length === 0) return;
+    try {
+      const files = await Promise.all(
+        photos.map(async (photo, i) => {
+          const response = await fetch(photo.url);
+          const blob = await response.blob();
+          return new File(
+            [blob],
+            photo.fileName || photo.name || `photo-${i + 1}.jpg`,
+            { type: "image/jpeg" },
+          );
+        }),
+      );
+
+      if (navigator.canShare && navigator.canShare({ files })) {
+        await navigator.share({
+          files,
+          title: `${photos.length} Photos from SPEvents`,
+        });
+      }
+    } catch (e: any) {
+      if (e.name !== "AbortError") {
+        console.error("Share all error:", e);
+      }
     }
   };
 
@@ -327,13 +356,31 @@ export function GuestDashboard() {
         </div>
 
         {photos.length > 0 && (
-          <button
-            onClick={handleDownloadAll}
-            className="flex items-center gap-2 bg-sp_midgreen hover:bg-sp_green text-sp_eggshell px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-lg"
-          >
-            <Mail className="w-4 h-4" />
-            <span className="hidden sm:inline">Email Me</span>
-          </button>
+          <div className="flex items-center gap-2">
+            {canShare && (
+              <button
+                onClick={handleShareAll}
+                className="flex items-center gap-2 bg-sp_midgreen hover:bg-sp_green text-sp_eggshell px-3 py-2 rounded-lg font-medium transition-all duration-200 shadow-lg"
+              >
+                <Share2 className="w-4 h-4" />
+                <span className="hidden sm:inline">Share</span>
+              </button>
+            )}
+            <button
+              onClick={handleDownloadAll}
+              disabled={isDownloading}
+              className="flex items-center gap-2 bg-sp_midgreen hover:bg-sp_green text-sp_eggshell px-3 py-2 rounded-lg font-medium transition-all duration-200 shadow-lg disabled:opacity-50"
+            >
+              {isDownloading ? (
+                <div className="w-4 h-4 border-2 border-sp_eggshell/30 border-t-sp_eggshell rounded-full animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+              <span className="hidden sm:inline">
+                {isDownloading ? "..." : "Download"}
+              </span>
+            </button>
+          </div>
         )}
       </div>
 
@@ -445,148 +492,33 @@ export function GuestDashboard() {
               draggable={false}
             />
 
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-sp_green/70 px-4 py-2 rounded-full">
-              <span className="text-sp_eggshell text-sm font-medium">
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-3">
+              <span className="bg-sp_green/70 px-4 py-2 rounded-full text-sp_eggshell text-sm font-medium">
                 {selectedPhotoIndex + 1} of {photos.length}
               </span>
+              <div className="flex gap-2">
+                {canShare && (
+                  <button
+                    onClick={() => handleSharePhoto(photos[selectedPhotoIndex])}
+                    className="bg-sp_green/70 hover:bg-sp_green p-2 rounded-full transition-colors"
+                  >
+                    <Share2 className="w-5 h-5 text-sp_eggshell" />
+                  </button>
+                )}
+                <button
+                  onClick={() =>
+                    downloadPhoto(photos[selectedPhotoIndex], selectedPhotoIndex)
+                  }
+                  className="bg-sp_green/70 hover:bg-sp_green p-2 rounded-full transition-colors"
+                >
+                  <Download className="w-5 h-5 text-sp_eggshell" />
+                </button>
+              </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Email Modal */}
-      <AnimatePresence>
-        {showEmailModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-sp_darkgreen/90 backdrop-blur-md z-50 flex items-center justify-center p-4"
-            onClick={(e) => {
-              if (e.target === e.currentTarget && sendStatus === "idle") {
-                setShowEmailModal(false);
-              }
-            }}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="bg-sp_eggshell rounded-2xl p-6 w-full max-w-md shadow-xl"
-            >
-              {sendStatus === "success" ? (
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-sp_green rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Check className="w-8 h-8 text-sp_eggshell" />
-                  </div>
-                  <h3 className="text-sp_darkgreen text-xl font-semibold mb-2">
-                    Photos Sent!
-                  </h3>
-                  <p className="text-sp_midgreen text-sm mb-6">
-                    Check your email for all {photos.length} photos.
-                  </p>
-                  <button
-                    onClick={() => {
-                      setShowEmailModal(false);
-                      setSendStatus("idle");
-                    }}
-                    className="w-full bg-sp_green hover:bg-sp_midgreen text-sp_eggshell py-3 rounded-lg font-medium transition-colors"
-                  >
-                    Done
-                  </button>
-                </div>
-              ) : sendStatus === "error" ? (
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <AlertCircle className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-sp_darkgreen text-xl font-semibold mb-2">
-                    Send Failed
-                  </h3>
-                  <p className="text-sp_midgreen text-sm mb-6">
-                    There was an error sending your photos. Please try again.
-                  </p>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => setSendStatus("idle")}
-                      className="flex-1 bg-sp_midgreen text-sp_eggshell py-3 rounded-lg font-medium hover:bg-sp_green transition-colors"
-                    >
-                      Try Again
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowEmailModal(false);
-                        setSendStatus("idle");
-                      }}
-                      className="flex-1 bg-sp_lightgreen text-sp_darkgreen py-3 rounded-lg font-medium hover:bg-sp_lightgreen/80 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 bg-sp_green rounded-full flex items-center justify-center">
-                      <Mail className="w-6 h-6 text-sp_eggshell" />
-                    </div>
-                    <div>
-                      <h3 className="text-sp_darkgreen text-xl font-semibold">
-                        Email Your Photos
-                      </h3>
-                      <p className="text-sp_midgreen text-sm">
-                        Receive all {photos.length} photos in your inbox
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mb-6">
-                    <label className="block text-sp_darkgreen text-sm font-medium mb-2">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="your@email.com"
-                      className="w-full bg-white border border-sp_lightgreen rounded-lg px-4 py-3 text-sp_darkgreen placeholder-sp_lightgreen focus:outline-none focus:border-sp_green focus:ring-1 focus:ring-sp_green"
-                      disabled={isSending}
-                      autoFocus
-                    />
-                  </div>
-
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => setShowEmailModal(false)}
-                      className="flex-1 bg-sp_lightgreen/50 text-sp_darkgreen py-3 rounded-lg font-medium hover:bg-sp_lightgreen transition-colors"
-                      disabled={isSending}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={sendPhotosToEmail}
-                      disabled={!email.trim() || isSending}
-                      className="flex-1 bg-sp_green text-sp_eggshell py-3 rounded-lg font-medium hover:bg-sp_midgreen transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                      {isSending ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-sp_eggshell/30 border-t-sp_eggshell rounded-full animate-spin" />
-                          <span>Sending...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Send className="w-4 h-4" />
-                          <span>Send</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-sp_darkgreen/95 backdrop-blur-md border-t border-sp_lightgreen/20 safe-area-pb">

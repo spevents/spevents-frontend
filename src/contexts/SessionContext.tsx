@@ -15,6 +15,7 @@ interface SessionContextType {
   // Event management for guests
   currentEvent: Event | null;
   setCurrentEvent: (event: Event | null) => void;
+  refreshCurrentEvent: () => Promise<void>;
 
   // Guest identity - persists across page reloads
   guestName: string | null;
@@ -79,18 +80,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const isValidSession = useCallback(
     async (sessionCode: string): Promise<boolean> => {
       try {
-        console.log("Validating session for sessionCode:", sessionCode);
-
-        // Check if this session code exists in Firestore
         const event = await guestService.getEventBySessionCode(sessionCode);
-        const isValid = event !== null;
-
-        console.log("Session validation result:", {
-          sessionCode,
-          isValid,
-          event,
-        });
-        return isValid;
+        return event !== null;
       } catch (error) {
         console.error("Error in isValidSession:", error);
         return false;
@@ -98,6 +89,19 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     },
     [],
   );
+
+  // Refresh current event data (for polling verification status etc.)
+  const refreshCurrentEvent = useCallback(async () => {
+    if (!sessionCode) return;
+    try {
+      const event = await guestService.getEventBySessionCode(sessionCode);
+      if (event) {
+        setCurrentEvent(event);
+      }
+    } catch (error) {
+      console.error("Error refreshing event:", error);
+    }
+  }, [sessionCode]);
 
   return (
     <SessionContext.Provider
@@ -110,6 +114,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         isHost,
         currentEvent,
         setCurrentEvent,
+        refreshCurrentEvent,
         guestName,
         guestId,
         setGuestIdentity,

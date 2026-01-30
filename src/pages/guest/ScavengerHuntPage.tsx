@@ -29,7 +29,7 @@ interface Submission {
 }
 
 export function ScavengerHuntPage() {
-  const { currentEvent, sessionCode } = useSession();
+  const { currentEvent, sessionCode, refreshCurrentEvent } = useSession();
   const navigate = useNavigate();
   const params = useParams();
   const [phase, setPhase] = useState<HuntPhase>("name");
@@ -85,7 +85,10 @@ export function ScavengerHuntPage() {
 
     const checkVerificationStatus = async () => {
       try {
-        // Get verified submissions from event config
+        // Refresh event data to get latest verifiedSubmissions
+        await refreshCurrentEvent();
+
+        // Get verified submissions from updated event config
         const verifiedKeys = new Set(
           currentEvent?.scavengerHunt?.verifiedSubmissions || [],
         );
@@ -130,12 +133,7 @@ export function ScavengerHuntPage() {
     checkVerificationStatus();
     const interval = setInterval(checkVerificationStatus, 5000);
     return () => clearInterval(interval);
-  }, [
-    currentEvent?.id,
-    currentEvent?.scavengerHunt?.verifiedSubmissions,
-    guestId,
-    submissions.length,
-  ]);
+  }, [currentEvent?.id, guestId, submissions.length, refreshCurrentEvent]);
 
   // Calculate points (only from verified submissions)
   const totalPoints = submissions
