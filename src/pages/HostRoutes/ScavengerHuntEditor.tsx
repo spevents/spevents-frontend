@@ -14,9 +14,12 @@ import {
   Copy,
   Check,
   QrCode,
+  CheckCircle,
+  AlertCircle,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { eventService } from "@/services/api";
+import { useEvent } from "@/contexts/EventContext";
 import { Event, ScavengerHuntTask, ScavengerHuntConfig } from "@/types/event";
 
 // Default tasks for Mock Shaadi
@@ -78,18 +81,24 @@ const DEFAULT_CONFIG: ScavengerHuntConfig = {
 export function ScavengerHuntEditor() {
   const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
+  const { loadEvents } = useEvent();
 
   const [event, setEvent] = useState<Event | null>(null);
   const [config, setConfig] = useState<ScavengerHuntConfig>(DEFAULT_CONFIG);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [hasChanges, setHasChanges] = useState(false);
   const [showQR, setShowQR] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "success" | "error">(
+    "idle",
+  );
 
   // Load event data
   useEffect(() => {
     const loadEvent = async () => {
       if (!eventId) return;
+      setIsLoading(true);
       try {
         const eventData = await eventService.getEvent(eventId);
         setEvent(eventData);
@@ -98,6 +107,8 @@ export function ScavengerHuntEditor() {
         }
       } catch (error) {
         console.error("Failed to load event:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
     loadEvent();
@@ -107,11 +118,22 @@ export function ScavengerHuntEditor() {
   const handleSave = async () => {
     if (!eventId) return;
     setIsSaving(true);
+    setSaveStatus("idle");
     try {
+      console.log("Saving scavenger hunt config:", config);
       await eventService.updateEvent(eventId, { scavengerHunt: config });
       setHasChanges(false);
+      setSaveStatus("success");
+
+      // Refresh the event context so other components see the update
+      await loadEvents();
+
+      // Clear success message after 3 seconds
+      setTimeout(() => setSaveStatus("idle"), 3000);
     } catch (error) {
       console.error("Failed to save:", error);
+      setSaveStatus("error");
+      setTimeout(() => setSaveStatus("idle"), 3000);
     } finally {
       setIsSaving(false);
     }
@@ -123,18 +145,23 @@ export function ScavengerHuntEditor() {
     setHasChanges(true);
   };
 
-  // Add new task
+  // Add new task - AT THE TOP
   const addTask = () => {
     const newTask: ScavengerHuntTask = {
       id: `task-${Date.now()}`,
       title: "",
       description: "",
       points: 10,
-      order: config.tasks.length + 1,
+      order: 0,
     };
+    // Add at the beginning and re-order
+    const updatedTasks = [newTask, ...config.tasks].map((t, i) => ({
+      ...t,
+      order: i + 1,
+    }));
     setConfig((prev) => ({
       ...prev,
-      tasks: [...prev.tasks, newTask],
+      tasks: updatedTasks,
     }));
     setHasChanges(true);
   };
@@ -171,7 +198,7 @@ export function ScavengerHuntEditor() {
 
   // Load default tasks
   const loadDefaults = () => {
-    setConfig((prev) => ({ ...prev, tasks: DEFAULT_TASKS }));
+    setConfig((prev) => ({ ...prev, tasks: DEFAULT_TASKS, enabled: true }));
     setHasChanges(true);
   };
 
@@ -188,64 +215,91 @@ export function ScavengerHuntEditor() {
     ? `https://join.spevents.live/${event.sessionCode}/guest/hunt`
     : "";
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-sp_eggshell flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-sp_green/30 border-t-sp_green rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sp_eggshell to-sp_lightgreen/20">
-      {/* Header */}
-      <div className="bg-white border-b border-sp_lightgreen/30 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-sp_eggshell">
+      {/* Header - Fixed */}
+      <div className="bg-white border-b border-sp_lightgreen/30 sticky top-0 z-10 shadow-sm">
+        <div className="max-w-2xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
               <button
                 onClick={() => navigate(`/host/event/${eventId}/gallery`)}
-                className="p-2 hover:bg-sp_lightgreen/20 rounded-lg transition-colors"
+                className="p-2 hover:bg-sp_lightgreen/20 rounded-lg transition-colors flex-shrink-0"
               >
                 <ArrowLeft className="w-5 h-5 text-sp_darkgreen" />
               </button>
-              <div>
-                <h1 className="text-xl font-bold text-sp_darkgreen">
-                  Scavenger Hunt Setup
+              <div className="min-w-0">
+                <h1 className="text-lg font-bold text-sp_darkgreen truncate">
+                  Scavenger Hunt
                 </h1>
-                <p className="text-sm text-sp_darkgreen/60">
+                <p className="text-xs text-sp_darkgreen/60 truncate">
                   {event?.name || "Loading..."}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              {hasChanges && (
-                <span className="text-sm text-amber-600">Unsaved changes</span>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {saveStatus === "success" && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="flex items-center gap-1 text-green-600 text-sm"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  <span className="hidden sm:inline">Saved!</span>
+                </motion.div>
+              )}
+              {saveStatus === "error" && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="flex items-center gap-1 text-red-600 text-sm"
+                >
+                  <AlertCircle className="w-4 h-4" />
+                  <span className="hidden sm:inline">Error</span>
+                </motion.div>
               )}
               <button
                 onClick={handleSave}
                 disabled={isSaving || !hasChanges}
-                className="flex items-center gap-2 px-4 py-2 bg-sp_green text-white rounded-lg hover:bg-sp_darkgreen disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 bg-sp_green text-white rounded-lg hover:bg-sp_darkgreen disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
               >
                 <Save className="w-4 h-4" />
-                {isSaving ? "Saving..." : "Save"}
+                {isSaving ? "..." : "Save"}
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
-        {/* Enable Toggle & QR Code */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-sp_lightgreen/30">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
+      <div className="max-w-2xl mx-auto px-4 py-4 space-y-4 pb-24">
+        {/* Enable Toggle Card */}
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-sp_lightgreen/30">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
               <div
-                className={`p-3 rounded-xl ${config.enabled ? "bg-sp_green/10" : "bg-gray-100"}`}
+                className={`p-2.5 rounded-xl ${config.enabled ? "bg-sp_green/10" : "bg-gray-100"}`}
               >
                 <Trophy
-                  className={`w-6 h-6 ${config.enabled ? "text-sp_green" : "text-gray-400"}`}
+                  className={`w-5 h-5 ${config.enabled ? "text-sp_green" : "text-gray-400"}`}
                 />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-sp_darkgreen">
-                  Scavenger Hunt Mode
+                <h2 className="font-semibold text-sp_darkgreen">
+                  Enable Hunt Mode
                 </h2>
-                <p className="text-sm text-sp_darkgreen/60">
-                  Guests complete tasks and earn points
+                <p className="text-xs text-sp_darkgreen/60">
+                  {config.enabled
+                    ? "Guests can see the Hunt tab"
+                    : "Hunt is hidden from guests"}
                 </p>
               </div>
             </div>
@@ -264,96 +318,96 @@ export function ScavengerHuntEditor() {
             </button>
           </div>
 
-          {config.enabled && event?.sessionCode && (
-            <div className="pt-4 border-t border-sp_lightgreen/30">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-sp_darkgreen mb-1">
-                    Hunt QR Code & Link
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <code className="text-xs bg-sp_lightgreen/20 px-2 py-1 rounded">
-                      {huntUrl}
-                    </code>
+          {/* QR Code Section - Only when enabled */}
+          <AnimatePresence>
+            {config.enabled && event?.sessionCode && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="pt-4 mt-4 border-t border-sp_lightgreen/30">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-sp_darkgreen mb-1">
+                        Guest Hunt Link
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <code className="text-xs bg-sp_lightgreen/20 px-2 py-1 rounded truncate max-w-[200px]">
+                          {huntUrl}
+                        </code>
+                        <button
+                          onClick={copyHuntUrl}
+                          className="p-1.5 hover:bg-sp_lightgreen/20 rounded transition-colors flex-shrink-0"
+                        >
+                          {copied ? (
+                            <Check className="w-4 h-4 text-sp_green" />
+                          ) : (
+                            <Copy className="w-4 h-4 text-sp_darkgreen/60" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
                     <button
-                      onClick={copyHuntUrl}
-                      className="p-1.5 hover:bg-sp_lightgreen/20 rounded transition-colors"
+                      onClick={() => setShowQR(!showQR)}
+                      className="flex items-center justify-center gap-2 px-3 py-2 bg-sp_lightgreen/20 rounded-lg hover:bg-sp_lightgreen/30 transition-colors text-sm"
                     >
-                      {copied ? (
-                        <Check className="w-4 h-4 text-sp_green" />
-                      ) : (
-                        <Copy className="w-4 h-4 text-sp_darkgreen/60" />
-                      )}
+                      <QrCode className="w-4 h-4" />
+                      {showQR ? "Hide" : "QR"}
                     </button>
                   </div>
-                </div>
-                <button
-                  onClick={() => setShowQR(!showQR)}
-                  className="flex items-center gap-2 px-3 py-2 bg-sp_lightgreen/20 rounded-lg hover:bg-sp_lightgreen/30 transition-colors"
-                >
-                  <QrCode className="w-4 h-4" />
-                  {showQR ? "Hide QR" : "Show QR"}
-                </button>
-              </div>
 
-              <AnimatePresence>
-                {showQR && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="mt-4 flex justify-center"
-                  >
-                    <div className="p-4 bg-white rounded-xl border-2 border-sp_green">
-                      <QRCodeSVG value={huntUrl} size={200} level="H" />
-                      <p className="text-center text-sm text-sp_darkgreen/60 mt-2">
-                        Scan to join the hunt!
-                      </p>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
+                  <AnimatePresence>
+                    {showQR && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="mt-4 flex justify-center overflow-hidden"
+                      >
+                        <div className="p-3 bg-white rounded-xl border-2 border-sp_green">
+                          <QRCodeSVG value={huntUrl} size={160} level="H" />
+                          <p className="text-center text-xs text-sp_darkgreen/60 mt-2">
+                            Scan to join hunt
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Tasks Editor */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-sp_lightgreen/30">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <Camera className="w-5 h-5 text-sp_green" />
-              <h2 className="text-lg font-semibold text-sp_darkgreen">
-                Hunt Tasks ({config.tasks.length})
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-sp_lightgreen/30">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Camera className="w-4 h-4 text-sp_green" />
+              <h2 className="font-semibold text-sp_darkgreen">
+                Tasks ({config.tasks.length})
               </h2>
             </div>
-            <div className="flex items-center gap-2">
-              {config.tasks.length === 0 && (
-                <button
-                  onClick={loadDefaults}
-                  className="text-sm px-3 py-1.5 text-sp_green hover:bg-sp_lightgreen/20 rounded-lg transition-colors"
-                >
-                  Load Mock Shaadi Defaults
-                </button>
-              )}
-              <button
-                onClick={addTask}
-                className="flex items-center gap-2 px-3 py-1.5 bg-sp_green text-white rounded-lg hover:bg-sp_darkgreen transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                Add Task
-              </button>
-            </div>
+            <button
+              onClick={addTask}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-sp_green text-white rounded-lg hover:bg-sp_darkgreen transition-colors text-sm"
+            >
+              <Plus className="w-4 h-4" />
+              Add
+            </button>
           </div>
 
           {config.tasks.length === 0 ? (
-            <div className="text-center py-12 text-sp_darkgreen/60">
-              <Camera className="w-12 h-12 mx-auto mb-3 opacity-30" />
-              <p>No tasks yet. Add some tasks for guests to complete!</p>
+            <div className="text-center py-8 text-sp_darkgreen/60">
+              <Camera className="w-10 h-10 mx-auto mb-2 opacity-30" />
+              <p className="text-sm mb-3">No tasks yet</p>
               <button
                 onClick={loadDefaults}
-                className="mt-4 text-sp_green hover:underline"
+                className="text-sm text-sp_green hover:underline"
               >
-                Or load Mock Shaadi defaults
+                Load sample tasks
               </button>
             </div>
           ) : (
@@ -361,43 +415,40 @@ export function ScavengerHuntEditor() {
               axis="y"
               values={config.tasks}
               onReorder={handleReorder}
-              className="space-y-3"
+              className="space-y-2"
             >
               {config.tasks.map((task) => (
                 <Reorder.Item
                   key={task.id}
                   value={task}
-                  className="bg-sp_eggshell rounded-lg p-4 border border-sp_lightgreen/30 cursor-grab active:cursor-grabbing"
+                  className="bg-sp_eggshell rounded-lg p-3 border border-sp_lightgreen/30 cursor-grab active:cursor-grabbing touch-none"
                 >
-                  <div className="flex items-start gap-3">
-                    <div className="mt-2 text-sp_darkgreen/30">
-                      <GripVertical className="w-5 h-5" />
+                  <div className="flex items-start gap-2">
+                    <div className="mt-2 text-sp_darkgreen/30 flex-shrink-0">
+                      <GripVertical className="w-4 h-4" />
                     </div>
 
-                    <div className="flex-1 space-y-3">
+                    <div className="flex-1 min-w-0 space-y-2">
                       <input
                         type="text"
                         value={task.title}
                         onChange={(e) =>
                           updateTask(task.id, { title: e.target.value })
                         }
-                        placeholder="Task title (e.g., Take a selfie with the bride)"
-                        className="w-full px-3 py-2 bg-white border border-sp_lightgreen/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-sp_green/50"
+                        placeholder="Task title"
+                        className="w-full px-2.5 py-1.5 text-sm bg-white border border-sp_lightgreen/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-sp_green/50"
                       />
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
                         <input
                           type="text"
                           value={task.description || ""}
                           onChange={(e) =>
                             updateTask(task.id, { description: e.target.value })
                           }
-                          placeholder="Optional description"
-                          className="flex-1 px-3 py-1.5 text-sm bg-white border border-sp_lightgreen/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-sp_green/50"
+                          placeholder="Description (optional)"
+                          className="flex-1 min-w-0 px-2.5 py-1 text-xs bg-white border border-sp_lightgreen/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-sp_green/50"
                         />
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-sp_darkgreen/60">
-                            Points:
-                          </span>
+                        <div className="flex items-center gap-1 flex-shrink-0">
                           <input
                             type="number"
                             value={task.points}
@@ -406,15 +457,18 @@ export function ScavengerHuntEditor() {
                                 points: parseInt(e.target.value) || 0,
                               })
                             }
-                            className="w-16 px-2 py-1.5 text-sm text-center bg-white border border-sp_lightgreen/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-sp_green/50"
+                            className="w-12 px-1.5 py-1 text-xs text-center bg-white border border-sp_lightgreen/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-sp_green/50"
                           />
+                          <span className="text-xs text-sp_darkgreen/60">
+                            pts
+                          </span>
                         </div>
                       </div>
                     </div>
 
                     <button
                       onClick={() => deleteTask(task.id)}
-                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                      className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -426,18 +480,16 @@ export function ScavengerHuntEditor() {
         </div>
 
         {/* Settings */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-sp_lightgreen/30">
-          <div className="flex items-center gap-3 mb-6">
-            <Settings className="w-5 h-5 text-sp_green" />
-            <h2 className="text-lg font-semibold text-sp_darkgreen">
-              Hunt Settings
-            </h2>
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-sp_lightgreen/30">
+          <div className="flex items-center gap-2 mb-4">
+            <Settings className="w-4 h-4 text-sp_green" />
+            <h2 className="font-semibold text-sp_darkgreen">Settings</h2>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             <label className="flex items-center justify-between">
-              <span className="text-sp_darkgreen">
-                Show live leaderboard on slideshow
+              <span className="text-sm text-sp_darkgreen">
+                Show leaderboard on slideshow
               </span>
               <button
                 onClick={() => {
@@ -450,7 +502,7 @@ export function ScavengerHuntEditor() {
                   }));
                   setHasChanges(true);
                 }}
-                className={`relative w-12 h-6 rounded-full transition-colors ${
+                className={`relative w-11 h-6 rounded-full transition-colors ${
                   config.settings.showLeaderboard
                     ? "bg-sp_green"
                     : "bg-gray-300"
@@ -469,8 +521,8 @@ export function ScavengerHuntEditor() {
             </label>
 
             <label className="flex items-center justify-between">
-              <span className="text-sp_darkgreen">
-                Require guest name before playing
+              <span className="text-sm text-sp_darkgreen">
+                Require guest name
               </span>
               <button
                 onClick={() => {
@@ -483,7 +535,7 @@ export function ScavengerHuntEditor() {
                   }));
                   setHasChanges(true);
                 }}
-                className={`relative w-12 h-6 rounded-full transition-colors ${
+                className={`relative w-11 h-6 rounded-full transition-colors ${
                   config.settings.requireName ? "bg-sp_green" : "bg-gray-300"
                 }`}
               >
@@ -500,6 +552,29 @@ export function ScavengerHuntEditor() {
             </label>
           </div>
         </div>
+
+        {/* Unsaved Changes Warning */}
+        <AnimatePresence>
+          {hasChanges && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="fixed bottom-4 left-4 right-4 max-w-2xl mx-auto bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-between shadow-lg"
+            >
+              <span className="text-sm text-amber-800">
+                You have unsaved changes
+              </span>
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="px-4 py-1.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium"
+              >
+                {isSaving ? "Saving..." : "Save Now"}
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
