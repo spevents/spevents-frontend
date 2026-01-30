@@ -1,6 +1,6 @@
 // File: src/components/PhotoSlideshow.tsx
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   EyeOff,
@@ -12,9 +12,10 @@ import {
   AlignHorizontalSpaceAround,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { listAllEventPhotos, EventPhoto } from "@/services/api";
+import { listAllEventPhotos } from "@/services/api";
 import { useEvent } from "@/contexts/EventContext";
 import { colors } from "@/types/eventTypes";
+import { usePhotoUpdates } from "@/hooks/usePhotoUpdates";
 import { HuntLeaderboard } from "./slideshow_modes/HuntLeaderboard";
 import FunSlideshow from "./slideshow_modes/FunSlideshow";
 import PresenterSlideshow from "./slideshow_modes/PresenterSlideshow";
@@ -46,7 +47,6 @@ type ViewMode = "simple" | "fun" | "presenter" | "model" | "marquee";
 
 const MAX_PHOTOS = 16;
 const PHOTO_DISPLAY_TIME = 8000 + Math.random() * 2000;
-const PHOTO_REFRESH_INTERVAL = 10000;
 
 export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
   const navigate = useNavigate();
@@ -55,12 +55,10 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
   const [hideUI, setHideUI] = useState(false);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [displayedPhotos, setDisplayedPhotos] = useState<Photo[]>([]);
-  const [eventPhotos, setEventPhotos] = useState<EventPhoto[]>([]);
   const [containerDimensions, setContainerDimensions] = useState({
     width: 0,
     height: 0,
   });
-  const [isLoading, setIsLoading] = useState(true);
   const timeoutsRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
   const photosRef = useRef(photos);
 
@@ -68,6 +66,25 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
     primary: colors.green,
     secondary: colors.lightGreen,
   };
+
+  // Fetch photos function for the hook
+  const fetchPhotos = useCallback(async () => {
+    if (!eventId) return [];
+    return listAllEventPhotos(eventId);
+  }, [eventId]);
+
+  // Use adaptive polling hook (3s when active, 15s when idle)
+  const {
+    photos: eventPhotos,
+    isLoading,
+    refresh: loadPhotos,
+  } = usePhotoUpdates({
+    eventId,
+    fetchPhotos,
+    enabled: !!eventId,
+    initialInterval: 3000, // Start polling every 3s
+    maxInterval: 10000, // Slow down to 10s when idle
+  });
 
   useEffect(() => {
     photosRef.current = photos;
@@ -116,52 +133,24 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
     return Date.now();
   };
 
-  const loadPhotos = async () => {
-    if (!eventId) {
-      console.log("❌ No eventId provided to slideshow");
-      setIsLoading(false);
+  // Convert eventPhotos from hook to Photo format when they change
+  useEffect(() => {
+    if (eventPhotos.length === 0) {
+      setPhotos([]);
       return;
     }
 
-    try {
-      console.log("🎬 Slideshow loading photos for eventId:", eventId);
+    const loadedPhotos: Photo[] = eventPhotos.map((eventPhoto) => ({
+      src: eventPhoto.url,
+      id: eventPhoto.fileName,
+      createdAt: getTimestampFromFilename(eventPhoto.fileName),
+      transitionId: `${eventPhoto.fileName}-${Date.now()}`,
+      expiryTime: Date.now() + PHOTO_DISPLAY_TIME,
+      depthMap: (eventPhoto as any).depthMap,
+    }));
 
-      const eventPhotos: EventPhoto[] = await listAllEventPhotos(eventId);
-      console.log("📸 Slideshow found photos:", eventPhotos.length);
-
-      if (eventPhotos.length === 0) {
-        console.log("📭 No photos found, setting empty array");
-        setPhotos([]);
-        setIsLoading(false);
-        return;
-      }
-
-      const loadedPhotos: Photo[] = eventPhotos.map((eventPhoto) => {
-        console.log("🔗 Using Vercel Blob URL:", eventPhoto.url);
-
-        return {
-          src: eventPhoto.url,
-          id: eventPhoto.fileName,
-          createdAt: getTimestampFromFilename(eventPhoto.fileName),
-          transitionId: `${eventPhoto.fileName}-${Date.now()}`,
-          expiryTime: Date.now() + PHOTO_DISPLAY_TIME,
-          depthMap: (eventPhoto as any).depthMap,
-        };
-      });
-
-      console.log("✅ Slideshow photos loaded:", loadedPhotos.length);
-      const withDepth = loadedPhotos.filter((p) => p.depthMap).length;
-      console.log(`🎨 ${withDepth} photos have depth maps`);
-
-      setPhotos(loadedPhotos);
-      setEventPhotos(eventPhotos); // Store for leaderboard
-      setIsLoading(false);
-    } catch (error) {
-      console.error("💥 Error loading slideshow photos:", error);
-      setPhotos([]);
-      setIsLoading(false);
-    }
-  };
+    setPhotos(loadedPhotos);
+  }, [eventPhotos]);
 
   const addNewPhoto = () => {
     if (photosRef.current.length === 0) {
@@ -230,20 +219,7 @@ export default function PhotoSlideshow({ eventId }: PhotoSlideshowProps) {
     });
   };
 
-  useEffect(() => {
-    if (eventId) {
-      console.log("🎬 Starting slideshow for eventId:", eventId);
-      loadPhotos();
-      const refreshInterval = setInterval(() => {
-        console.log("🔄 Refreshing slideshow photos");
-        loadPhotos();
-      }, PHOTO_REFRESH_INTERVAL);
-      return () => clearInterval(refreshInterval);
-    } else {
-      console.log("❌ No eventId provided, cannot start slideshow");
-      setIsLoading(false);
-    }
-  }, [eventId]);
+  // usePhotoUpdates hook handles all polling - removed manual interval
 
   useEffect(() => {
     if (photos.length > 0 && displayedPhotos.length === 0 && !isLoading) {
