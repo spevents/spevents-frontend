@@ -1,12 +1,12 @@
 // src/components/slideshow_modes/HuntLeaderboard.tsx
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, Medal, Award } from "lucide-react";
 import {
   ScavengerHuntLeaderboardEntry,
   ScavengerHuntTask,
-  EventPhoto,
 } from "@/types/event";
+import { EventPhoto } from "@/services/api";
 
 interface HuntLeaderboardProps {
   photos: EventPhoto[];

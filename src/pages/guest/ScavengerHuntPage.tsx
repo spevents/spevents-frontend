@@ -12,8 +12,8 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { useSession } from "@/contexts/SessionContext";
-import { guestService, uploadPhoto, getPresignedUrl } from "@/services/api";
-import { ScavengerHuntTask, ScavengerHuntSubmission } from "@/types/event";
+import { uploadPhoto, getPresignedUrl } from "@/services/api";
+import { ScavengerHuntTask } from "@/types/event";
 
 type HuntPhase = "name" | "tasks" | "camera" | "complete";
 

@@ -37,7 +37,6 @@ function OptimizedImageComponent({
   onError,
   priority = false,
 }: OptimizedImageProps) {
-  const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(priority);
   const [hasError, setHasError] = useState(false);
   const [showImage, setShowImage] = useState(false);
@@ -70,7 +69,6 @@ function OptimizedImageComponent({
 
   // Handle image load
   const handleLoad = () => {
-    setIsLoaded(true);
     // Small delay for smoother animation
     requestAnimationFrame(() => {
       setShowImage(true);
@@ -86,7 +84,6 @@ function OptimizedImageComponent({
 
   // Reset state when src changes
   useEffect(() => {
-    setIsLoaded(false);
     setShowImage(false);
     setHasError(false);
   }, [src]);

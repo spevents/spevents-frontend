@@ -12,7 +12,6 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
-  Download,
   Mail,
   Send,
   AlertCircle,
