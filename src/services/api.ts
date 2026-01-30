@@ -300,7 +300,7 @@ export async function getPresignedUrl({
 
 // src/services/api.ts
 // Toggle between S3 (presigned URL) and Vercel Blob upload
-const USE_S3_UPLOAD = true; // Set to true to use S3, false for Vercel Blob
+const USE_S3_UPLOAD = false; // Set to true to use S3, false for Vercel Blob
 
 export async function uploadPhoto({
   presignedUrl,
