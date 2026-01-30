@@ -16,6 +16,7 @@ import {
   Pause,
   Check,
   Sparkles,
+  Target,
 } from "lucide-react";
 import type { DisplayPhoto } from "../../types";
 import { useEvent } from "@/contexts/EventContext";
@@ -128,6 +129,15 @@ export function EventGalleryHeader({
                 title="Show QR Code"
               >
                 <QrCode className="w-4 h-4" />
+              </button>
+
+              {/* Scavenger Hunt Button */}
+              <button
+                onClick={() => navigate(`/host/event/${eventId}/hunt`)}
+                className="p-2 rounded-md hover:bg-orange-100 text-orange-600 transition-colors"
+                title="Scavenger Hunt"
+              >
+                <Target className="w-4 h-4" />
               </button>
 
               {/* AI Caption Button */}
