@@ -222,19 +222,11 @@ export function ScavengerHuntPage() {
     // Use sessionCode from context or URL params
     const activeSessionCode = sessionCode || params.sessionCode;
 
-    // Debug logging
-    console.log("🎯 Submit photo debug:", {
-      capturedPhoto: !!capturedPhoto,
-      currentTaskId,
-      eventId: currentEvent?.id,
-      sessionCode: activeSessionCode,
-      guestId,
-      guestName,
-    });
+    // Debug - show what we have
+    const debugInfo = `photo: ${!!capturedPhoto}, task: ${currentTaskId}, session: ${activeSessionCode}, guestId: ${guestId}`;
 
     if (!capturedPhoto || !currentTaskId || !activeSessionCode || !guestId) {
-      console.error("❌ Missing required fields for upload");
-      alert("Missing required information. Please try again.");
+      alert(`Missing fields: ${debugInfo}`);
       return;
     }
 
@@ -246,14 +238,6 @@ export function ScavengerHuntPage() {
       const blob = await response.blob();
       const file = new File([blob], `hunt_${currentTaskId}_${Date.now()}.jpg`, {
         type: "image/jpeg",
-      });
-
-      console.log("📤 Uploading hunt photo:", {
-        fileName: file.name,
-        sessionCode: activeSessionCode,
-        guestId,
-        guestName,
-        huntTaskId: currentTaskId,
       });
 
       // Get presigned URL and upload - include guest name and task ID
@@ -271,8 +255,6 @@ export function ScavengerHuntPage() {
         presignedUrl: presignedUrlParams,
         file,
       });
-
-      console.log("✅ Hunt photo uploaded successfully:", result);
 
       // Mark task as completed
       const task = tasks.find((t) => t.id === currentTaskId);
@@ -295,9 +277,9 @@ export function ScavengerHuntPage() {
 
       // Show success screen
       setPhase("success");
-    } catch (error) {
-      console.error("Failed to upload photo:", error);
-      alert("Failed to upload photo. Please try again.");
+    } catch (error: any) {
+      const errMsg = error?.message || String(error);
+      alert(`Upload failed: ${errMsg}`);
       setIsUploading(false);
     }
   };
