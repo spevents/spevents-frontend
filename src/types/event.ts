@@ -41,6 +41,7 @@ export interface ScavengerHuntConfig {
   enabled: boolean;
   tasks: ScavengerHuntTask[];
   settings: ScavengerHuntSettings;
+  verifiedSubmissions?: string[]; // Array of verified photo keys
 }
 
 export interface ScavengerHuntTask {

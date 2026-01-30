@@ -7,15 +7,17 @@ import {
   Check,
   ChevronRight,
   User,
-  Sparkles,
   X,
-  RotateCcw,
+  RefreshCw,
+  CheckCircle,
+  ArrowLeft,
 } from "lucide-react";
 import { useSession } from "@/contexts/SessionContext";
+import { useNavigate, useParams } from "react-router-dom";
 import { uploadPhoto, getPresignedUrl } from "@/services/api";
 import { ScavengerHuntTask } from "@/types/event";
 
-type HuntPhase = "name" | "tasks" | "camera" | "complete";
+type HuntPhase = "name" | "tasks" | "camera" | "success" | "complete";
 
 interface CompletedTask {
   taskId: string;
@@ -25,6 +27,8 @@ interface CompletedTask {
 
 export function ScavengerHuntPage() {
   const { currentEvent, sessionCode } = useSession();
+  const navigate = useNavigate();
+  const params = useParams();
   const [phase, setPhase] = useState<HuntPhase>("name");
   const [guestName, setGuestName] = useState("");
   const [guestId, setGuestId] = useState<string | null>(null);
@@ -33,6 +37,7 @@ export function ScavengerHuntPage() {
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [totalPoints, setTotalPoints] = useState(0);
+  const [lastEarnedPoints, setLastEarnedPoints] = useState(0);
 
   // Camera state
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -42,6 +47,7 @@ export function ScavengerHuntPage() {
     "environment",
   );
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
+  const [isCameraReady, setIsCameraReady] = useState(false);
 
   // Load tasks from event
   useEffect(() => {
@@ -105,6 +111,7 @@ export function ScavengerHuntPage() {
   const startCamera = async (taskId: string) => {
     setCurrentTaskId(taskId);
     setCapturedPhoto(null);
+    setIsCameraReady(false);
     setPhase("camera");
 
     try {
@@ -119,6 +126,9 @@ export function ScavengerHuntPage() {
       setStream(mediaStream);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
+        videoRef.current.onloadedmetadata = () => {
+          setIsCameraReady(true);
+        };
       }
     } catch (error) {
       console.error("Failed to access camera:", error);
@@ -133,13 +143,15 @@ export function ScavengerHuntPage() {
       stream.getTracks().forEach((track) => track.stop());
       setStream(null);
     }
+    setIsCameraReady(false);
   };
 
-  // Toggle camera
+  // Toggle camera (flip)
   const toggleCamera = async () => {
     stopCamera();
     const newFacingMode = facingMode === "user" ? "environment" : "user";
     setFacingMode(newFacingMode);
+    setIsCameraReady(false);
 
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -153,6 +165,9 @@ export function ScavengerHuntPage() {
       setStream(mediaStream);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
+        videoRef.current.onloadedmetadata = () => {
+          setIsCameraReady(true);
+        };
       }
     } catch (error) {
       console.error("Failed to toggle camera:", error);
@@ -217,8 +232,8 @@ export function ScavengerHuntPage() {
         contentType: file.type,
         isGuestPhoto: true,
         guestId,
-        guestName, // Send guest name to backend
-        huntTaskId: currentTaskId, // Send task ID for leaderboard
+        guestName,
+        huntTaskId: currentTaskId,
       });
 
       const result = await uploadPhoto({
@@ -228,6 +243,9 @@ export function ScavengerHuntPage() {
 
       // Mark task as completed
       const task = tasks.find((t) => t.id === currentTaskId);
+      const earnedPoints = task?.points || 0;
+      setLastEarnedPoints(earnedPoints);
+
       const newCompleted: CompletedTask = {
         taskId: currentTaskId,
         photoUrl: result.photoUrl,
@@ -236,23 +254,28 @@ export function ScavengerHuntPage() {
 
       const updatedCompleted = [...completedTasks, newCompleted];
       setCompletedTasks(updatedCompleted);
-      setTotalPoints((prev) => prev + (task?.points || 0));
+      setTotalPoints((prev) => prev + earnedPoints);
       saveProgress(guestName, guestId, updatedCompleted);
-
-      // Check if all tasks done
-      if (updatedCompleted.length === tasks.length) {
-        setPhase("complete");
-      } else {
-        setPhase("tasks");
-      }
 
       setCapturedPhoto(null);
       setCurrentTaskId(null);
+
+      // Show success screen
+      setPhase("success");
     } catch (error) {
       console.error("Failed to upload photo:", error);
       alert("Failed to upload photo. Please try again.");
-    } finally {
       setIsUploading(false);
+    }
+  };
+
+  // After success, go to tasks or complete
+  const handleSuccessContinue = () => {
+    setIsUploading(false);
+    if (completedTasks.length === tasks.length) {
+      setPhase("complete");
+    } else {
+      setPhase("tasks");
     }
   };
 
@@ -280,7 +303,7 @@ export function ScavengerHuntPage() {
   // If hunt not enabled
   if (!currentEvent?.scavengerHunt?.enabled) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-sp_darkgreen via-sp_green to-sp_darkgreen flex items-center justify-center p-6">
+      <div className="min-h-screen bg-gradient-to-br from-sp_darkgreen via-sp_green to-sp_darkgreen flex flex-col items-center justify-center p-6">
         <div className="text-center text-sp_eggshell">
           <Trophy className="w-16 h-16 mx-auto mb-4 text-sp_lightgreen/50" />
           <h2 className="text-xl font-bold mb-2">Scavenger Hunt</h2>
@@ -288,6 +311,15 @@ export function ScavengerHuntPage() {
           <p className="text-sp_lightgreen/60 text-sm mt-2">
             Check back when it begins.
           </p>
+          <button
+            onClick={() =>
+              navigate(`/${params.sessionCode || sessionCode}/guest`)
+            }
+            className="mt-6 flex items-center gap-2 text-sp_lightgreen hover:text-sp_eggshell transition-colors mx-auto"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-sm">Back to Dashboard</span>
+          </button>
         </div>
       </div>
     );
@@ -305,6 +337,17 @@ export function ScavengerHuntPage() {
             exit={{ opacity: 0, y: -20 }}
             className="min-h-screen flex flex-col items-center justify-center p-6"
           >
+            {/* Back button */}
+            <button
+              onClick={() =>
+                navigate(`/${params.sessionCode || sessionCode}/guest`)
+              }
+              className="absolute top-4 left-4 flex items-center gap-2 text-sp_lightgreen hover:text-sp_eggshell transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="text-sm">Back</span>
+            </button>
+
             <div className="text-center mb-8">
               <div className="w-20 h-20 bg-sp_midgreen rounded-full flex items-center justify-center mx-auto mb-4">
                 <Trophy className="w-10 h-10 text-sp_eggshell" />
@@ -358,6 +401,17 @@ export function ScavengerHuntPage() {
             {/* Header */}
             <div className="sticky top-0 z-10 bg-gradient-to-b from-sp_darkgreen to-transparent pb-4">
               <div className="p-4">
+                {/* Back button */}
+                <button
+                  onClick={() =>
+                    navigate(`/${params.sessionCode || sessionCode}/guest`)
+                  }
+                  className="flex items-center gap-2 text-sp_lightgreen hover:text-sp_eggshell mb-3 transition-colors"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span className="text-sm">Back to Dashboard</span>
+                </button>
+
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className="text-sp_lightgreen text-sm">Welcome back,</p>
@@ -456,23 +510,25 @@ export function ScavengerHuntPage() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black z-50"
           >
-            {/* Task info */}
-            <div className="absolute top-0 left-0 right-0 z-10 p-4 bg-gradient-to-b from-sp_darkgreen/90 to-transparent">
+            {/* Task info header */}
+            <div className="absolute top-0 left-0 right-0 z-10 p-4 bg-gradient-to-b from-black/80 to-transparent">
               <div className="flex items-center gap-3">
                 <button
                   onClick={cancelCamera}
-                  className="p-2 bg-sp_green/50 rounded-full"
+                  className="p-2.5 bg-white/20 rounded-full backdrop-blur-sm"
                 >
-                  <X className="w-5 h-5 text-sp_eggshell" />
+                  <X className="w-5 h-5 text-white" />
                 </button>
                 <div className="flex-1">
-                  <p className="text-sp_lightgreen text-xs">Current Task</p>
-                  <p className="text-sp_eggshell font-medium text-sm line-clamp-1">
+                  <p className="text-white/70 text-xs">Task</p>
+                  <p className="text-white font-medium text-sm line-clamp-1">
                     {currentTask?.title}
                   </p>
                 </div>
-                <div className="text-sp_eggshell font-bold bg-sp_midgreen px-3 py-1 rounded-full text-sm">
-                  +{currentTask?.points} pts
+                <div className="bg-sp_green px-3 py-1.5 rounded-full">
+                  <span className="text-white font-bold text-sm">
+                    +{currentTask?.points}
+                  </span>
                 </div>
               </div>
             </div>
@@ -480,6 +536,18 @@ export function ScavengerHuntPage() {
             {/* Camera/Preview */}
             {!capturedPhoto ? (
               <>
+                {/* Camera loading indicator */}
+                {!isCameraReady && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black z-10">
+                    <div className="text-center">
+                      <div className="w-10 h-10 border-3 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-3" />
+                      <p className="text-white/70 text-sm">
+                        Starting camera...
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 <video
                   ref={videoRef}
                   autoPlay
@@ -490,21 +558,30 @@ export function ScavengerHuntPage() {
                 <canvas ref={canvasRef} className="hidden" />
 
                 {/* Camera controls */}
-                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-sp_darkgreen/90 to-transparent safe-area-pb">
-                  <div className="flex items-center justify-center gap-8">
+                <div className="absolute bottom-0 left-0 right-0 p-6 pb-10 bg-gradient-to-t from-black/80 to-transparent">
+                  <div className="flex items-center justify-center gap-6">
+                    {/* Flip camera button - more prominent */}
                     <button
                       onClick={toggleCamera}
-                      className="p-4 bg-sp_green/50 rounded-full"
+                      className="flex flex-col items-center gap-1"
                     >
-                      <RotateCcw className="w-6 h-6 text-sp_eggshell" />
+                      <div className="p-4 bg-white/20 rounded-full backdrop-blur-sm active:bg-white/30 transition-colors">
+                        <RefreshCw className="w-6 h-6 text-white" />
+                      </div>
+                      <span className="text-white/70 text-xs">Flip</span>
                     </button>
+
+                    {/* Capture button */}
                     <button
                       onClick={capturePhoto}
-                      className="w-20 h-20 rounded-full border-4 border-sp_eggshell bg-sp_eggshell/20 flex items-center justify-center active:scale-95 transition-transform"
+                      disabled={!isCameraReady}
+                      className="w-20 h-20 rounded-full border-4 border-white bg-white/20 flex items-center justify-center active:scale-95 transition-transform disabled:opacity-50"
                     >
-                      <div className="w-14 h-14 rounded-full bg-sp_eggshell" />
+                      <div className="w-14 h-14 rounded-full bg-white" />
                     </button>
-                    <div className="w-14" /> {/* Spacer */}
+
+                    {/* Spacer for centering */}
+                    <div className="w-[72px]" />
                   </div>
                 </div>
               </>
@@ -517,29 +594,32 @@ export function ScavengerHuntPage() {
                 />
 
                 {/* Review controls */}
-                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-sp_darkgreen/90 to-transparent safe-area-pb">
-                  <div className="flex items-center justify-center gap-4">
+                <div className="absolute bottom-0 left-0 right-0 p-4 pb-10 bg-gradient-to-t from-black/80 to-transparent">
+                  <p className="text-white/80 text-center text-sm mb-4">
+                    Happy with this photo?
+                  </p>
+                  <div className="flex items-center gap-3">
                     <button
                       onClick={retakePhoto}
                       disabled={isUploading}
-                      className="flex-1 py-4 bg-sp_green/50 text-sp_eggshell font-semibold rounded-xl disabled:opacity-50 transition-colors"
+                      className="flex-1 py-4 bg-white/20 text-white font-semibold rounded-xl disabled:opacity-50 backdrop-blur-sm active:bg-white/30 transition-colors"
                     >
                       Retake
                     </button>
                     <button
                       onClick={submitPhoto}
                       disabled={isUploading}
-                      className="flex-1 py-4 bg-sp_midgreen text-sp_eggshell font-semibold rounded-xl disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+                      className="flex-1 py-4 bg-sp_green text-white font-semibold rounded-xl disabled:opacity-70 flex items-center justify-center gap-2 active:bg-sp_darkgreen transition-colors"
                     >
                       {isUploading ? (
                         <>
-                          <div className="w-5 h-5 border-2 border-sp_eggshell/30 border-t-sp_eggshell rounded-full animate-spin" />
-                          Uploading...
+                          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          <span>Submitting...</span>
                         </>
                       ) : (
                         <>
                           <Check className="w-5 h-5" />
-                          Submit
+                          <span>Submit</span>
                         </>
                       )}
                     </button>
@@ -550,50 +630,167 @@ export function ScavengerHuntPage() {
           </motion.div>
         )}
 
+        {/* SUCCESS PHASE - New! */}
+        {phase === "success" && (
+          <motion.div
+            key="success"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-gradient-to-br from-sp_darkgreen via-sp_green to-sp_darkgreen z-50 flex flex-col items-center justify-center p-6"
+          >
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: "spring", delay: 0.1 }}
+              className="w-24 h-24 bg-sp_lightgreen rounded-full flex items-center justify-center mb-6"
+            >
+              <CheckCircle className="w-12 h-12 text-sp_darkgreen" />
+            </motion.div>
+
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-2xl font-bold text-sp_eggshell mb-2"
+            >
+              Task Complete!
+            </motion.h2>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3 }}
+              className="bg-sp_eggshell/10 rounded-2xl px-8 py-4 mb-6 border border-sp_lightgreen/30"
+            >
+              <p className="text-sp_lightgreen text-sm text-center">
+                Points earned
+              </p>
+              <p className="text-4xl font-bold text-sp_eggshell text-center">
+                +{lastEarnedPoints}
+              </p>
+            </motion.div>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="text-sp_lightgreen text-center mb-8"
+            >
+              {completedTasks.length === tasks.length
+                ? "You've completed all tasks!"
+                : `${tasks.length - completedTasks.length} tasks remaining`}
+            </motion.p>
+
+            <motion.button
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              onClick={handleSuccessContinue}
+              className="w-full max-w-xs py-4 bg-sp_eggshell text-sp_darkgreen font-semibold rounded-xl active:scale-[0.98] transition-transform"
+            >
+              {completedTasks.length === tasks.length
+                ? "View Results"
+                : "Continue Hunting"}
+            </motion.button>
+          </motion.div>
+        )}
+
         {/* COMPLETE PHASE */}
         {phase === "complete" && (
           <motion.div
             key="complete"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="min-h-screen flex flex-col items-center justify-center p-6"
+            className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-amber-900 via-amber-700 to-yellow-600"
           >
+            {/* Gold trophy with sparkles */}
             <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
               transition={{ type: "spring", delay: 0.2 }}
-              className="w-32 h-32 bg-sp_midgreen rounded-full flex items-center justify-center mb-6"
+              className="relative w-32 h-32 mb-6"
             >
-              <Sparkles className="w-16 h-16 text-sp_eggshell" />
+              <div className="absolute inset-0 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full shadow-2xl shadow-yellow-500/50" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Trophy className="w-16 h-16 text-amber-900" />
+              </div>
+              {/* Sparkle effects */}
+              <motion.div
+                animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+                transition={{ repeat: Infinity, duration: 2 }}
+                className="absolute -top-2 -right-2 w-8 h-8 bg-yellow-300 rounded-full blur-sm"
+              />
+              <motion.div
+                animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
+                transition={{ repeat: Infinity, duration: 2, delay: 0.5 }}
+                className="absolute -bottom-2 -left-2 w-6 h-6 bg-yellow-200 rounded-full blur-sm"
+              />
             </motion.div>
 
-            <h1 className="text-3xl font-bold text-sp_eggshell mb-2 text-center">
-              Hunt Complete!
-            </h1>
-            <p className="text-sp_lightgreen text-center mb-8">
-              Amazing job, {guestName}!
-            </p>
-
-            <div className="bg-sp_eggshell/10 rounded-2xl p-6 text-center mb-8 border border-sp_lightgreen/30">
-              <p className="text-sp_lightgreen text-sm mb-1">
-                Your Final Score
-              </p>
-              <p className="text-5xl font-bold text-sp_eggshell">
-                {totalPoints}
-              </p>
-              <p className="text-sp_lightgreen/60 text-sm mt-1">points</p>
-            </div>
-
-            <p className="text-sp_lightgreen text-sm text-center">
-              Show the MC your completed tasks to claim your prize!
-            </p>
-
-            <button
-              onClick={() => setPhase("tasks")}
-              className="mt-8 text-sp_lightgreen underline hover:text-sp_eggshell transition-colors"
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="text-4xl font-bold text-white mb-2 text-center"
             >
-              View your submissions
-            </button>
+              Hunt Complete!
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="text-yellow-200 text-center text-lg mb-8"
+            >
+              Amazing job, {guestName}!
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5 }}
+              className="bg-white/20 backdrop-blur-md rounded-2xl p-6 text-center mb-6 border border-yellow-300/50 w-full max-w-xs"
+            >
+              <p className="text-yellow-200 text-sm mb-1">Your Final Score</p>
+              <p className="text-6xl font-bold text-white">{totalPoints}</p>
+              <p className="text-yellow-300/80 text-sm mt-1">points</p>
+              <div className="mt-3 pt-3 border-t border-yellow-300/30">
+                <p className="text-yellow-200 text-xs">
+                  {completedTasks.length} / {tasks.length} tasks completed
+                </p>
+              </div>
+            </motion.div>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="text-yellow-200 text-sm text-center mb-8 px-4"
+            >
+              The host will verify submissions and announce the winners soon!
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7 }}
+              className="flex flex-col gap-3 w-full max-w-xs"
+            >
+              <button
+                onClick={() => setPhase("tasks")}
+                className="w-full py-3 bg-white text-amber-700 font-semibold rounded-xl active:scale-[0.98] transition-transform"
+              >
+                View Your Submissions
+              </button>
+              <button
+                onClick={() =>
+                  navigate(`/${params.sessionCode || sessionCode}/guest`)
+                }
+                className="w-full py-3 bg-white/20 text-white font-medium rounded-xl active:scale-[0.98] transition-transform border border-white/30"
+              >
+                Back to Dashboard
+              </button>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -1,5 +1,5 @@
 // src/pages/HostRoutes/ScavengerHuntEditor.tsx
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
 import {
@@ -16,9 +16,13 @@ import {
   QrCode,
   CheckCircle,
   AlertCircle,
+  Users,
+  Medal,
+  Award,
+  RefreshCw,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
-import { eventService } from "@/services/api";
+import { eventService, getEventPhotos, EventPhoto } from "@/services/api";
 import { useEvent } from "@/contexts/EventContext";
 import { Event, ScavengerHuntTask, ScavengerHuntConfig } from "@/types/event";
 
@@ -94,6 +98,12 @@ export function ScavengerHuntEditor() {
     "idle",
   );
 
+  // Submissions tab state
+  const [activeTab, setActiveTab] = useState<"tasks" | "submissions">("tasks");
+  const [photos, setPhotos] = useState<EventPhoto[]>([]);
+  const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
+  const [verifiedPhotos, setVerifiedPhotos] = useState<Set<string>>(new Set());
+
   // Load event data
   useEffect(() => {
     const loadEvent = async () => {
@@ -104,6 +114,12 @@ export function ScavengerHuntEditor() {
         setEvent(eventData);
         if (eventData.scavengerHunt) {
           setConfig(eventData.scavengerHunt);
+          // Load verified photos from config
+          if (eventData.scavengerHunt.verifiedSubmissions) {
+            setVerifiedPhotos(
+              new Set(eventData.scavengerHunt.verifiedSubmissions),
+            );
+          }
         }
       } catch (error) {
         console.error("Failed to load event:", error);
@@ -114,14 +130,100 @@ export function ScavengerHuntEditor() {
     loadEvent();
   }, [eventId]);
 
+  // Load photos for submissions tab
+  const loadPhotos = useCallback(async () => {
+    if (!eventId) return;
+    setIsLoadingPhotos(true);
+    try {
+      const eventPhotos = await getEventPhotos(eventId);
+      setPhotos(eventPhotos);
+    } catch (error) {
+      console.error("Failed to load photos:", error);
+    } finally {
+      setIsLoadingPhotos(false);
+    }
+  }, [eventId]);
+
+  // Load photos when switching to submissions tab
+  useEffect(() => {
+    if (activeTab === "submissions") {
+      loadPhotos();
+    }
+  }, [activeTab, loadPhotos]);
+
+  // Filter hunt submissions and calculate leaderboard
+  const huntSubmissions = useMemo(() => {
+    return photos.filter((p) => p.huntTaskId && p.guestId);
+  }, [photos]);
+
+  // Calculate leaderboard from hunt submissions
+  const leaderboard = useMemo(() => {
+    const guestData = new Map<
+      string,
+      {
+        guestId: string;
+        guestName: string;
+        submissions: EventPhoto[];
+        verifiedCount: number;
+        totalPoints: number;
+      }
+    >();
+
+    huntSubmissions.forEach((photo) => {
+      if (!photo.guestId) return;
+
+      const existing = guestData.get(photo.guestId);
+      const isVerified = verifiedPhotos.has(photo.fullKey);
+      const task = config.tasks.find((t) => t.id === photo.huntTaskId);
+      const points = isVerified && task ? task.points : 0;
+
+      if (existing) {
+        existing.submissions.push(photo);
+        if (isVerified) existing.verifiedCount++;
+        existing.totalPoints += points;
+      } else {
+        guestData.set(photo.guestId, {
+          guestId: photo.guestId,
+          guestName: photo.guestName || "Anonymous",
+          submissions: [photo],
+          verifiedCount: isVerified ? 1 : 0,
+          totalPoints: points,
+        });
+      }
+    });
+
+    return Array.from(guestData.values()).sort(
+      (a, b) => b.totalPoints - a.totalPoints,
+    );
+  }, [huntSubmissions, verifiedPhotos, config.tasks]);
+
+  // Toggle verification
+  const toggleVerification = (photoKey: string) => {
+    setVerifiedPhotos((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(photoKey)) {
+        newSet.delete(photoKey);
+      } else {
+        newSet.add(photoKey);
+      }
+      return newSet;
+    });
+    setHasChanges(true);
+  };
+
   // Save config
   const handleSave = async () => {
     if (!eventId) return;
     setIsSaving(true);
     setSaveStatus("idle");
     try {
-      console.log("Saving scavenger hunt config:", config);
-      await eventService.updateEvent(eventId, { scavengerHunt: config });
+      // Include verified submissions in the config
+      const updatedConfig = {
+        ...config,
+        verifiedSubmissions: Array.from(verifiedPhotos),
+      };
+      console.log("Saving scavenger hunt config:", updatedConfig);
+      await eventService.updateEvent(eventId, { scavengerHunt: updatedConfig });
       setHasChanges(false);
       setSaveStatus("success");
 
@@ -281,277 +383,489 @@ export function ScavengerHuntEditor() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-4 space-y-4 pb-24">
-        {/* Enable Toggle Card */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-sp_lightgreen/30">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div
-                className={`p-2.5 rounded-xl ${config.enabled ? "bg-sp_green/10" : "bg-gray-100"}`}
+        {/* Tab Navigation */}
+        <div className="flex gap-2 bg-white rounded-xl p-1 shadow-sm border border-sp_lightgreen/30">
+          <button
+            onClick={() => setActiveTab("tasks")}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium ${
+              activeTab === "tasks"
+                ? "bg-sp_green text-white"
+                : "text-sp_darkgreen hover:bg-sp_lightgreen/20"
+            }`}
+          >
+            <Camera className="w-4 h-4" />
+            Tasks
+          </button>
+          <button
+            onClick={() => setActiveTab("submissions")}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium ${
+              activeTab === "submissions"
+                ? "bg-sp_green text-white"
+                : "text-sp_darkgreen hover:bg-sp_lightgreen/20"
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            Submissions
+            {huntSubmissions.length > 0 && (
+              <span
+                className={`text-xs px-1.5 py-0.5 rounded-full ${
+                  activeTab === "submissions" ? "bg-white/20" : "bg-sp_green/20"
+                }`}
               >
-                <Trophy
-                  className={`w-5 h-5 ${config.enabled ? "text-sp_green" : "text-gray-400"}`}
-                />
+                {huntSubmissions.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Tasks Tab Content */}
+        {activeTab === "tasks" && (
+          <>
+            {/* Enable Toggle Card */}
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-sp_lightgreen/30">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`p-2.5 rounded-xl ${config.enabled ? "bg-sp_green/10" : "bg-gray-100"}`}
+                  >
+                    <Trophy
+                      className={`w-5 h-5 ${config.enabled ? "text-sp_green" : "text-gray-400"}`}
+                    />
+                  </div>
+                  <div>
+                    <h2 className="font-semibold text-sp_darkgreen">
+                      Enable Hunt Mode
+                    </h2>
+                    <p className="text-xs text-sp_darkgreen/60">
+                      {config.enabled
+                        ? "Guests can see the Hunt tab"
+                        : "Hunt is hidden from guests"}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={toggleEnabled}
+                  className={`relative w-14 h-8 rounded-full transition-colors ${
+                    config.enabled ? "bg-sp_green" : "bg-gray-300"
+                  }`}
+                >
+                  <motion.div
+                    className="absolute top-1 w-6 h-6 bg-white rounded-full shadow"
+                    animate={{
+                      left: config.enabled ? "calc(100% - 28px)" : "4px",
+                    }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  />
+                </button>
               </div>
-              <div>
-                <h2 className="font-semibold text-sp_darkgreen">
-                  Enable Hunt Mode
-                </h2>
-                <p className="text-xs text-sp_darkgreen/60">
-                  {config.enabled
-                    ? "Guests can see the Hunt tab"
-                    : "Hunt is hidden from guests"}
-                </p>
-              </div>
+
+              {/* QR Code Section - Only when enabled */}
+              <AnimatePresence>
+                {config.enabled && event?.sessionCode && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="pt-4 mt-4 border-t border-sp_lightgreen/30">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-sp_darkgreen mb-1">
+                            Guest Hunt Link
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <code className="text-xs bg-sp_lightgreen/20 px-2 py-1 rounded truncate max-w-[200px]">
+                              {huntUrl}
+                            </code>
+                            <button
+                              onClick={copyHuntUrl}
+                              className="p-1.5 hover:bg-sp_lightgreen/20 rounded transition-colors flex-shrink-0"
+                            >
+                              {copied ? (
+                                <Check className="w-4 h-4 text-sp_green" />
+                              ) : (
+                                <Copy className="w-4 h-4 text-sp_darkgreen/60" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setShowQR(!showQR)}
+                          className="flex items-center justify-center gap-2 px-3 py-2 bg-sp_lightgreen/20 rounded-lg hover:bg-sp_lightgreen/30 transition-colors text-sm"
+                        >
+                          <QrCode className="w-4 h-4" />
+                          {showQR ? "Hide" : "QR"}
+                        </button>
+                      </div>
+
+                      <AnimatePresence>
+                        {showQR && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="mt-4 flex justify-center overflow-hidden"
+                          >
+                            <div className="p-3 bg-white rounded-xl border-2 border-sp_green">
+                              <QRCodeSVG value={huntUrl} size={160} level="H" />
+                              <p className="text-center text-xs text-sp_darkgreen/60 mt-2">
+                                Scan to join hunt
+                              </p>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
-            <button
-              onClick={toggleEnabled}
-              className={`relative w-14 h-8 rounded-full transition-colors ${
-                config.enabled ? "bg-sp_green" : "bg-gray-300"
-              }`}
-            >
-              <motion.div
-                className="absolute top-1 w-6 h-6 bg-white rounded-full shadow"
-                animate={{ left: config.enabled ? "calc(100% - 28px)" : "4px" }}
-                transition={{ type: "spring", stiffness: 500, damping: 30 }}
-              />
-            </button>
-          </div>
+            {/* Tasks Editor */}
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-sp_lightgreen/30">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Camera className="w-4 h-4 text-sp_green" />
+                  <h2 className="font-semibold text-sp_darkgreen">
+                    Tasks ({config.tasks.length})
+                  </h2>
+                </div>
+                <button
+                  onClick={addTask}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-sp_green text-white rounded-lg hover:bg-sp_darkgreen transition-colors text-sm"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add
+                </button>
+              </div>
 
-          {/* QR Code Section - Only when enabled */}
-          <AnimatePresence>
-            {config.enabled && event?.sessionCode && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden"
-              >
-                <div className="pt-4 mt-4 border-t border-sp_lightgreen/30">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-sp_darkgreen mb-1">
-                        Guest Hunt Link
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <code className="text-xs bg-sp_lightgreen/20 px-2 py-1 rounded truncate max-w-[200px]">
-                          {huntUrl}
-                        </code>
+              {config.tasks.length === 0 ? (
+                <div className="text-center py-8 text-sp_darkgreen/60">
+                  <Camera className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm mb-3">No tasks yet</p>
+                  <button
+                    onClick={loadDefaults}
+                    className="text-sm text-sp_green hover:underline"
+                  >
+                    Load sample tasks
+                  </button>
+                </div>
+              ) : (
+                <Reorder.Group
+                  axis="y"
+                  values={config.tasks}
+                  onReorder={handleReorder}
+                  className="space-y-2"
+                >
+                  {config.tasks.map((task) => (
+                    <Reorder.Item
+                      key={task.id}
+                      value={task}
+                      className="bg-sp_eggshell rounded-lg p-3 border border-sp_lightgreen/30 cursor-grab active:cursor-grabbing touch-none"
+                    >
+                      <div className="flex items-start gap-2">
+                        <div className="mt-2 text-sp_darkgreen/30 flex-shrink-0">
+                          <GripVertical className="w-4 h-4" />
+                        </div>
+
+                        <div className="flex-1 min-w-0 space-y-2">
+                          <input
+                            type="text"
+                            value={task.title}
+                            onChange={(e) =>
+                              updateTask(task.id, { title: e.target.value })
+                            }
+                            placeholder="Task title"
+                            className="w-full px-2.5 py-1.5 text-sm bg-white border border-sp_lightgreen/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-sp_green/50"
+                          />
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={task.description || ""}
+                              onChange={(e) =>
+                                updateTask(task.id, {
+                                  description: e.target.value,
+                                })
+                              }
+                              placeholder="Description (optional)"
+                              className="flex-1 min-w-0 px-2.5 py-1 text-xs bg-white border border-sp_lightgreen/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-sp_green/50"
+                            />
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              <input
+                                type="number"
+                                value={task.points}
+                                onChange={(e) =>
+                                  updateTask(task.id, {
+                                    points: parseInt(e.target.value) || 0,
+                                  })
+                                }
+                                className="w-12 px-1.5 py-1 text-xs text-center bg-white border border-sp_lightgreen/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-sp_green/50"
+                              />
+                              <span className="text-xs text-sp_darkgreen/60">
+                                pts
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
                         <button
-                          onClick={copyHuntUrl}
-                          className="p-1.5 hover:bg-sp_lightgreen/20 rounded transition-colors flex-shrink-0"
+                          onClick={() => deleteTask(task.id)}
+                          className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
                         >
-                          {copied ? (
-                            <Check className="w-4 h-4 text-sp_green" />
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </Reorder.Item>
+                  ))}
+                </Reorder.Group>
+              )}
+            </div>
+
+            {/* Settings */}
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-sp_lightgreen/30">
+              <div className="flex items-center gap-2 mb-4">
+                <Settings className="w-4 h-4 text-sp_green" />
+                <h2 className="font-semibold text-sp_darkgreen">Settings</h2>
+              </div>
+
+              <div className="space-y-3">
+                <label className="flex items-center justify-between">
+                  <span className="text-sm text-sp_darkgreen">
+                    Show leaderboard on slideshow
+                  </span>
+                  <button
+                    onClick={() => {
+                      setConfig((prev) => ({
+                        ...prev,
+                        settings: {
+                          ...prev.settings,
+                          showLeaderboard: !prev.settings.showLeaderboard,
+                        },
+                      }));
+                      setHasChanges(true);
+                    }}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${
+                      config.settings.showLeaderboard
+                        ? "bg-sp_green"
+                        : "bg-gray-300"
+                    }`}
+                  >
+                    <motion.div
+                      className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow"
+                      animate={{
+                        left: config.settings.showLeaderboard
+                          ? "calc(100% - 22px)"
+                          : "2px",
+                      }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 500,
+                        damping: 30,
+                      }}
+                    />
+                  </button>
+                </label>
+
+                <label className="flex items-center justify-between">
+                  <span className="text-sm text-sp_darkgreen">
+                    Require guest name
+                  </span>
+                  <button
+                    onClick={() => {
+                      setConfig((prev) => ({
+                        ...prev,
+                        settings: {
+                          ...prev.settings,
+                          requireName: !prev.settings.requireName,
+                        },
+                      }));
+                      setHasChanges(true);
+                    }}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${
+                      config.settings.requireName
+                        ? "bg-sp_green"
+                        : "bg-gray-300"
+                    }`}
+                  >
+                    <motion.div
+                      className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow"
+                      animate={{
+                        left: config.settings.requireName
+                          ? "calc(100% - 22px)"
+                          : "2px",
+                      }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 500,
+                        damping: 30,
+                      }}
+                    />
+                  </button>
+                </label>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Submissions Tab Content */}
+        {activeTab === "submissions" && (
+          <div className="space-y-4">
+            {/* Refresh Button */}
+            <div className="flex justify-end">
+              <button
+                onClick={loadPhotos}
+                disabled={isLoadingPhotos}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm text-sp_darkgreen hover:bg-sp_lightgreen/20 rounded-lg transition-colors"
+              >
+                <RefreshCw
+                  className={`w-4 h-4 ${isLoadingPhotos ? "animate-spin" : ""}`}
+                />
+                Refresh
+              </button>
+            </div>
+
+            {/* Leaderboard Summary */}
+            {leaderboard.length > 0 && (
+              <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 shadow-sm border border-amber-200">
+                <div className="flex items-center gap-2 mb-3">
+                  <Trophy className="w-5 h-5 text-amber-600" />
+                  <h2 className="font-semibold text-amber-800">Leaderboard</h2>
+                </div>
+                <div className="space-y-2">
+                  {leaderboard.slice(0, 5).map((entry, index) => (
+                    <div
+                      key={entry.guestId}
+                      className={`flex items-center gap-3 p-2 rounded-lg ${
+                        index === 0 ? "bg-amber-100" : "bg-white/60"
+                      }`}
+                    >
+                      {/* Rank badge */}
+                      {index === 0 ? (
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center">
+                          <Trophy className="w-4 h-4 text-white" />
+                        </div>
+                      ) : index === 1 ? (
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center">
+                          <Medal className="w-4 h-4 text-white" />
+                        </div>
+                      ) : index === 2 ? (
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-600 to-amber-700 flex items-center justify-center">
+                          <Award className="w-4 h-4 text-white" />
+                        </div>
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                          <span className="text-sm font-bold text-gray-600">
+                            {index + 1}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-800 truncate">
+                          {entry.guestName}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {entry.verifiedCount} verified /{" "}
+                          {entry.submissions.length} submitted
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-lg text-amber-600">
+                          {entry.totalPoints}
+                        </p>
+                        <p className="text-xs text-gray-400">pts</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Submissions List */}
+            {isLoadingPhotos ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="w-8 h-8 border-4 border-sp_green/30 border-t-sp_green rounded-full animate-spin" />
+              </div>
+            ) : huntSubmissions.length === 0 ? (
+              <div className="bg-white rounded-xl p-8 text-center shadow-sm border border-sp_lightgreen/30">
+                <Users className="w-12 h-12 mx-auto mb-3 text-sp_darkgreen/30" />
+                <p className="text-sp_darkgreen/60 text-sm">
+                  No submissions yet
+                </p>
+                <p className="text-sp_darkgreen/40 text-xs mt-1">
+                  Submissions will appear here when guests complete tasks
+                </p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl shadow-sm border border-sp_lightgreen/30 overflow-hidden">
+                <div className="p-3 border-b border-sp_lightgreen/20 bg-sp_lightgreen/10">
+                  <h3 className="font-medium text-sp_darkgreen text-sm">
+                    All Submissions ({huntSubmissions.length})
+                  </h3>
+                </div>
+                <div className="divide-y divide-sp_lightgreen/20">
+                  {huntSubmissions.map((photo) => {
+                    const task = config.tasks.find(
+                      (t) => t.id === photo.huntTaskId,
+                    );
+                    const isVerified = verifiedPhotos.has(photo.fullKey);
+                    return (
+                      <div
+                        key={photo.fullKey}
+                        className="p-3 flex items-center gap-3"
+                      >
+                        {/* Photo thumbnail */}
+                        <div className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-sp_lightgreen/20">
+                          <img
+                            src={photo.url}
+                            alt="Submission"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sp_darkgreen truncate">
+                            {photo.guestName || "Anonymous"}
+                          </p>
+                          <p className="text-xs text-sp_darkgreen/60 truncate">
+                            {task?.title || "Unknown task"}
+                          </p>
+                          <p className="text-xs text-sp_darkgreen/40">
+                            {task?.points || 0} points
+                          </p>
+                        </div>
+
+                        {/* Verify toggle */}
+                        <button
+                          onClick={() => toggleVerification(photo.fullKey)}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors text-sm font-medium ${
+                            isVerified
+                              ? "bg-green-100 text-green-700 border border-green-200"
+                              : "bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200"
+                          }`}
+                        >
+                          {isVerified ? (
+                            <>
+                              <CheckCircle className="w-4 h-4" />
+                              Verified
+                            </>
                           ) : (
-                            <Copy className="w-4 h-4 text-sp_darkgreen/60" />
+                            <>
+                              <div className="w-4 h-4 rounded-full border-2 border-current" />
+                              Verify
+                            </>
                           )}
                         </button>
                       </div>
-                    </div>
-                    <button
-                      onClick={() => setShowQR(!showQR)}
-                      className="flex items-center justify-center gap-2 px-3 py-2 bg-sp_lightgreen/20 rounded-lg hover:bg-sp_lightgreen/30 transition-colors text-sm"
-                    >
-                      <QrCode className="w-4 h-4" />
-                      {showQR ? "Hide" : "QR"}
-                    </button>
-                  </div>
-
-                  <AnimatePresence>
-                    {showQR && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="mt-4 flex justify-center overflow-hidden"
-                      >
-                        <div className="p-3 bg-white rounded-xl border-2 border-sp_green">
-                          <QRCodeSVG value={huntUrl} size={160} level="H" />
-                          <p className="text-center text-xs text-sp_darkgreen/60 mt-2">
-                            Scan to join hunt
-                          </p>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                    );
+                  })}
                 </div>
-              </motion.div>
+              </div>
             )}
-          </AnimatePresence>
-        </div>
-
-        {/* Tasks Editor */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-sp_lightgreen/30">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Camera className="w-4 h-4 text-sp_green" />
-              <h2 className="font-semibold text-sp_darkgreen">
-                Tasks ({config.tasks.length})
-              </h2>
-            </div>
-            <button
-              onClick={addTask}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-sp_green text-white rounded-lg hover:bg-sp_darkgreen transition-colors text-sm"
-            >
-              <Plus className="w-4 h-4" />
-              Add
-            </button>
           </div>
-
-          {config.tasks.length === 0 ? (
-            <div className="text-center py-8 text-sp_darkgreen/60">
-              <Camera className="w-10 h-10 mx-auto mb-2 opacity-30" />
-              <p className="text-sm mb-3">No tasks yet</p>
-              <button
-                onClick={loadDefaults}
-                className="text-sm text-sp_green hover:underline"
-              >
-                Load sample tasks
-              </button>
-            </div>
-          ) : (
-            <Reorder.Group
-              axis="y"
-              values={config.tasks}
-              onReorder={handleReorder}
-              className="space-y-2"
-            >
-              {config.tasks.map((task) => (
-                <Reorder.Item
-                  key={task.id}
-                  value={task}
-                  className="bg-sp_eggshell rounded-lg p-3 border border-sp_lightgreen/30 cursor-grab active:cursor-grabbing touch-none"
-                >
-                  <div className="flex items-start gap-2">
-                    <div className="mt-2 text-sp_darkgreen/30 flex-shrink-0">
-                      <GripVertical className="w-4 h-4" />
-                    </div>
-
-                    <div className="flex-1 min-w-0 space-y-2">
-                      <input
-                        type="text"
-                        value={task.title}
-                        onChange={(e) =>
-                          updateTask(task.id, { title: e.target.value })
-                        }
-                        placeholder="Task title"
-                        className="w-full px-2.5 py-1.5 text-sm bg-white border border-sp_lightgreen/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-sp_green/50"
-                      />
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={task.description || ""}
-                          onChange={(e) =>
-                            updateTask(task.id, { description: e.target.value })
-                          }
-                          placeholder="Description (optional)"
-                          className="flex-1 min-w-0 px-2.5 py-1 text-xs bg-white border border-sp_lightgreen/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-sp_green/50"
-                        />
-                        <div className="flex items-center gap-1 flex-shrink-0">
-                          <input
-                            type="number"
-                            value={task.points}
-                            onChange={(e) =>
-                              updateTask(task.id, {
-                                points: parseInt(e.target.value) || 0,
-                              })
-                            }
-                            className="w-12 px-1.5 py-1 text-xs text-center bg-white border border-sp_lightgreen/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-sp_green/50"
-                          />
-                          <span className="text-xs text-sp_darkgreen/60">
-                            pts
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => deleteTask(task.id)}
-                      className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </Reorder.Item>
-              ))}
-            </Reorder.Group>
-          )}
-        </div>
-
-        {/* Settings */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-sp_lightgreen/30">
-          <div className="flex items-center gap-2 mb-4">
-            <Settings className="w-4 h-4 text-sp_green" />
-            <h2 className="font-semibold text-sp_darkgreen">Settings</h2>
-          </div>
-
-          <div className="space-y-3">
-            <label className="flex items-center justify-between">
-              <span className="text-sm text-sp_darkgreen">
-                Show leaderboard on slideshow
-              </span>
-              <button
-                onClick={() => {
-                  setConfig((prev) => ({
-                    ...prev,
-                    settings: {
-                      ...prev.settings,
-                      showLeaderboard: !prev.settings.showLeaderboard,
-                    },
-                  }));
-                  setHasChanges(true);
-                }}
-                className={`relative w-11 h-6 rounded-full transition-colors ${
-                  config.settings.showLeaderboard
-                    ? "bg-sp_green"
-                    : "bg-gray-300"
-                }`}
-              >
-                <motion.div
-                  className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow"
-                  animate={{
-                    left: config.settings.showLeaderboard
-                      ? "calc(100% - 22px)"
-                      : "2px",
-                  }}
-                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                />
-              </button>
-            </label>
-
-            <label className="flex items-center justify-between">
-              <span className="text-sm text-sp_darkgreen">
-                Require guest name
-              </span>
-              <button
-                onClick={() => {
-                  setConfig((prev) => ({
-                    ...prev,
-                    settings: {
-                      ...prev.settings,
-                      requireName: !prev.settings.requireName,
-                    },
-                  }));
-                  setHasChanges(true);
-                }}
-                className={`relative w-11 h-6 rounded-full transition-colors ${
-                  config.settings.requireName ? "bg-sp_green" : "bg-gray-300"
-                }`}
-              >
-                <motion.div
-                  className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow"
-                  animate={{
-                    left: config.settings.requireName
-                      ? "calc(100% - 22px)"
-                      : "2px",
-                  }}
-                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                />
-              </button>
-            </label>
-          </div>
-        </div>
+        )}
 
         {/* Unsaved Changes Warning */}
         <AnimatePresence>
