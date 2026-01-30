@@ -8,7 +8,7 @@ import {
   Sphere,
   Line,
 } from "@react-three/drei";
-import { useRef, useState, useEffect, Suspense } from "react";
+import { useRef, useState, useEffect, Suspense, memo } from "react";
 import * as THREE from "three";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -154,7 +154,7 @@ function BoundingBox({ bounds }: { bounds: any }) {
   return <Line points={points} color={0x00ff00} lineWidth={2} />;
 }
 
-function Scene({ photos }: { photos: Photo[] }) {
+const Scene = memo(function Scene({ photos }: { photos: Photo[] }) {
   const [reconstruction, setReconstruction] =
     useState<VenueReconstruction | null>(null);
   const [isReconstructing, setIsReconstructing] = useState(false);
@@ -162,16 +162,12 @@ function Scene({ photos }: { photos: Photo[] }) {
   useEffect(() => {
     if (photos.length > 0) {
       const photosWithDepth = photos.filter((p) => p.depthMap);
-      console.log("🎬 Photos with depth maps:", photosWithDepth.length);
 
       if (photosWithDepth.length > 0) {
         setIsReconstructing(true);
         reconstructVenue(photosWithDepth.map((p) => p.src))
-          .then((result) => {
-            console.log("✅ Venue reconstruction complete:", result);
-            setReconstruction(result);
-          })
-          .catch((err) => console.error("❌ Reconstruction error:", err))
+          .then((result) => setReconstruction(result))
+          .catch(() => {})
           .finally(() => setIsReconstructing(false));
       }
     }
@@ -257,7 +253,7 @@ function Scene({ photos }: { photos: Photo[] }) {
       <gridHelper args={[30, 30, 0x444444, 0x222222]} position={[0, -5, 0]} />
     </>
   );
-}
+});
 
 function LoadingFallback() {
   return (
@@ -277,47 +273,22 @@ export default function ParallaxSlideshow({
   const [stats, setStats] = useState({
     total: 0,
     withDepth: 0,
-    reconstructing: true,
-    positioned: 0,
-    clusters: 0,
   });
   const [showGenerator, setShowGenerator] = useState(false);
-
-  // 🐛 DEBUG: Log component mount and state changes
-  useEffect(() => {
-    console.log("🎬 ParallaxSlideshow mounted");
-    console.log("📊 Initial state:", { showGenerator, hideUI, eventId });
-    console.log("📸 Photos received:", photos.length);
-  }, []);
 
   useEffect(() => {
     const withDepth = photos.filter((p) => p.depthMap).length;
 
-    console.log("📊 Stats update:", {
+    setStats({
       total: photos.length,
       withDepth,
-      showGenerator,
     });
-
-    setStats((prev) => ({
-      ...prev,
-      total: photos.length,
-      withDepth,
-    }));
 
     // Auto-show generator if no depth maps exist
     if (photos.length > 0 && withDepth === 0) {
-      console.log("🎨 Auto-showing generator (no depth maps)");
       setShowGenerator(true);
-    } else if (withDepth > 0) {
-      console.log("✅ Depth maps detected:", withDepth);
     }
   }, [photos]);
-
-  // 🐛 DEBUG: Log generator visibility
-  useEffect(() => {
-    console.log("👁️ Generator visibility changed:", showGenerator);
-  }, [showGenerator]);
 
   return (
     <div className="relative w-full h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
@@ -329,16 +300,7 @@ export default function ParallaxSlideshow({
 
       {!hideUI && (
         <>
-          {/* 🐛 DEBUG: Always visible debug panel */}
-          <div className="absolute bottom-4 left-4 bg-red-500/90 text-white p-3 rounded-lg text-xs font-mono z-[100]">
-            <div>DEBUG INFO:</div>
-            <div>Photos: {stats.total}</div>
-            <div>With Depth: {stats.withDepth}</div>
-            <div>Show Generator: {showGenerator ? "TRUE" : "FALSE"}</div>
-            <div>Hide UI: {hideUI ? "TRUE" : "FALSE"}</div>
-          </div>
-
-          {/* ⭐ DEPTH MAP GENERATOR - Top Left with higher z-index */}
+          {/* Depth Map Generator */}
           <AnimatePresence>
             {showGenerator && (
               <motion.div
@@ -348,15 +310,9 @@ export default function ParallaxSlideshow({
                 className="absolute top-4 left-4 z-[60]"
                 style={{ pointerEvents: "auto" }}
               >
-                <div className="bg-red-500 p-2 text-white mb-2 rounded">
-                  🐛 GENERATOR SHOULD BE VISIBLE HERE
-                </div>
                 <DepthMapGenerator
                   eventId={eventId}
                   onComplete={() => {
-                    console.log(
-                      "✅ Depth maps generated, refreshing photos...",
-                    );
                     onPhotosRefresh?.();
                     setTimeout(() => setShowGenerator(false), 3000);
                   }}
@@ -365,15 +321,12 @@ export default function ParallaxSlideshow({
             )}
           </AnimatePresence>
 
-          {/* ⭐ Toggle Generator Button */}
+          {/* Toggle Generator Button */}
           {!showGenerator && stats.withDepth === 0 && stats.total > 0 && (
             <motion.button
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              onClick={() => {
-                console.log("🖱️ Generator button clicked");
-                setShowGenerator(true);
-              }}
+              onClick={() => setShowGenerator(true)}
               className="absolute top-4 left-4 bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-6 rounded-lg shadow-lg transition-all z-[60] flex items-center gap-2"
               style={{ pointerEvents: "auto" }}
             >
@@ -452,10 +405,7 @@ export default function ParallaxSlideshow({
                   above to generate them.
                 </div>
                 <button
-                  onClick={() => {
-                    console.log("🖱️ Warning button clicked");
-                    setShowGenerator(true);
-                  }}
+                  onClick={() => setShowGenerator(true)}
                   className="mt-4 bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 px-6 rounded-lg transition-all"
                 >
                   Generate Depth Maps Now

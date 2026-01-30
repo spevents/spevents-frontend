@@ -1,5 +1,5 @@
 // File: src/components/slideshow_modes/PresenterSlideshow.tsx
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Props {
@@ -9,8 +9,31 @@ interface Props {
   hideUI?: boolean;
 }
 
-const DISPLAY_DURATION = 5000; // 5 seconds per set
+const DISPLAY_DURATION = 5000;
 const PHOTOS_PER_SET = 3;
+
+// Memoized image component
+const SlideshowImage = memo(function SlideshowImage({
+  src,
+  alt,
+}: {
+  src: string;
+  alt: string;
+}) {
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={`w-full h-full object-cover transition-opacity duration-300 ${
+        isLoaded ? "opacity-100" : "opacity-0"
+      }`}
+      onLoad={() => setIsLoaded(true)}
+      decoding="async"
+    />
+  );
+});
 
 export default function PresenterSlideshow({
   photos,
@@ -60,20 +83,23 @@ export default function PresenterSlideshow({
     return () => clearInterval(interval);
   }, [totalSets]);
 
-  const handleKeyDown = (event: KeyboardEvent) => {
-    if (isTransitioning || totalSets <= 1) return;
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      if (isTransitioning || totalSets <= 1) return;
 
-    if (event.key === "ArrowLeft") {
-      setCurrentSetIndex((prev) => (prev === 0 ? totalSets - 1 : prev - 1));
-    } else if (event.key === "ArrowRight") {
-      setCurrentSetIndex((prev) => (prev + 1) % totalSets);
-    }
-  };
+      if (event.key === "ArrowLeft") {
+        setCurrentSetIndex((prev) => (prev === 0 ? totalSets - 1 : prev - 1));
+      } else if (event.key === "ArrowRight") {
+        setCurrentSetIndex((prev) => (prev + 1) % totalSets);
+      }
+    },
+    [isTransitioning, totalSets],
+  );
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [totalSets, isTransitioning]);
+  }, [handleKeyDown]);
 
   if (photos.length === 0) {
     return (
@@ -128,11 +154,7 @@ export default function PresenterSlideshow({
                   {!hideUI && (
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   )}
-                  <img
-                    src={photo.src}
-                    alt="Event photo"
-                    className="w-full h-full object-cover"
-                  />
+                  <SlideshowImage src={photo.src} alt="Event photo" />
                   <div
                     className="absolute inset-0 rounded-xl"
                     style={{

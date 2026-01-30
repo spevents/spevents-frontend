@@ -1,7 +1,31 @@
 // File: src/components/slideshow_modes/FunSlideshow.tsx
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, memo, useCallback } from "react";
 import { AnimatePresence } from "motion/react";
 import * as motion from "motion/react-client";
+
+// Memoized image component to prevent re-renders
+const SlideshowImage = memo(function SlideshowImage({
+  src,
+  alt,
+}: {
+  src: string;
+  alt: string;
+}) {
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={`w-full h-full object-cover rounded transition-opacity duration-300 ${
+        isLoaded ? "opacity-100" : "opacity-0"
+      }`}
+      onLoad={() => setIsLoaded(true)}
+      loading="lazy"
+      decoding="async"
+    />
+  );
+});
 
 interface FunPhoto {
   src: string;
@@ -180,7 +204,7 @@ export default function FunSlideshow({
     dimensionsRef.current = containerDimensions;
   }, [photos, containerDimensions]);
 
-  const addNewPhoto = () => {
+  const addNewPhoto = useCallback(() => {
     setDisplayedPhotos((current) => {
       if (current.length >= MAX_PHOTOS) return current;
 
@@ -201,7 +225,7 @@ export default function FunSlideshow({
       );
 
       // Schedule removal of this photo
-      const removalJitter = Math.random() * 1000; // Up to 1 second extra random delay
+      const removalJitter = Math.random() * 1000;
 
       timeoutsRef.current[newPhoto.transitionId] = setTimeout(() => {
         setDisplayedPhotos((photos) =>
@@ -209,12 +233,12 @@ export default function FunSlideshow({
         );
         delete timeoutsRef.current[newPhoto.transitionId];
         // Add a new photo with a slight delay to desynchronize
-        setTimeout(addNewPhoto, Math.random() * 2000); // Up to 2 seconds random delay
+        setTimeout(addNewPhoto, Math.random() * 2000);
       }, PHOTO_DISPLAY_TIME + removalJitter);
 
       return [...current, newPhoto];
     });
-  };
+  }, []);
 
   useEffect(() => {
     // Clear any existing timeouts
@@ -270,12 +294,7 @@ export default function FunSlideshow({
                 boxShadow: `0 0 20px ${themeColors.primary}30`,
               }}
             >
-              <img
-                src={photo.src}
-                alt="Event photo"
-                className="w-full h-full object-cover rounded"
-                loading="lazy"
-              />
+              <SlideshowImage src={photo.src} alt="Event photo" />
             </div>
           </motion.div>
         ))}

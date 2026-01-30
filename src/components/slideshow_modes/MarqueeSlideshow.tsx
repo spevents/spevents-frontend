@@ -1,5 +1,5 @@
 // File: src/components/slideshow_modes/MarqueeSlideshow.tsx
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import { motion } from "framer-motion";
 
 interface Photo {
@@ -7,6 +7,36 @@ interface Photo {
   id: string;
   createdAt: string;
 }
+
+// Memoized image component
+const MarqueeImage = memo(function MarqueeImage({
+  src,
+  borderColor,
+  shadowColor,
+}: {
+  src: string;
+  borderColor: string;
+  shadowColor: string;
+}) {
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  return (
+    <img
+      src={src}
+      alt="Event"
+      className={`w-full h-full object-cover rounded-lg transition-opacity duration-300 ${
+        isLoaded ? "opacity-100" : "opacity-0"
+      }`}
+      style={{
+        border: `2px solid ${borderColor}`,
+        boxShadow: `0 0 10px ${shadowColor}`,
+      }}
+      loading="lazy"
+      decoding="async"
+      onLoad={() => setIsLoaded(true)}
+    />
+  );
+});
 
 interface MarqueeSlideshowProps {
   photos: Photo[];
@@ -136,15 +166,10 @@ export default function MarqueeSlideshow({
                     key={`${photo.id}-${idx}`}
                     className="relative flex-none w-full aspect-[9/16]"
                   >
-                    <img
+                    <MarqueeImage
                       src={photo.src}
-                      alt="Event"
-                      className="w-full h-full object-cover rounded-lg"
-                      style={{
-                        border: `2px solid ${themeColors.secondary}`,
-                        boxShadow: `0 0 10px ${themeColors.primary}30`,
-                      }}
-                      loading="lazy"
+                      borderColor={themeColors.secondary}
+                      shadowColor={`${themeColors.primary}30`}
                     />
                   </div>
                 ))}
