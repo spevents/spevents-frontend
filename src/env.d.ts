@@ -12,13 +12,12 @@ interface ImportMetaEnv {
   readonly VITE_FIREBASE_STORAGE_BUCKET: string;
   readonly VITE_FIREBASE_MESSAGING_SENDER_ID: string;
   readonly VITE_FIREBASE_APP_ID: string;
-  readonly VITE_AWS_REGION: string;
-  readonly VITE_AWS_ACCESS_KEY_ID: string;
-  readonly VITE_AWS_SECRET_ACCESS_KEY: string;
-  readonly VITE_S3_BUCKET_NAME: string;
+  // NOTE: AWS credentials (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY) and
+  // third-party API keys (HUGGING_FACE_API_KEY, GITHUB_TOKEN) must NEVER
+  // be declared as VITE_* variables — they would be inlined into the browser
+  // bundle. These belong exclusively in the backend .env.
   readonly VITE_CLOUDFRONT_URL: string;
   readonly VITE_BYPASS_AUTH: string;
-  readonly VITE_HUGGING_FACE_API_KEY: string;
 }
 
 interface ImportMeta {

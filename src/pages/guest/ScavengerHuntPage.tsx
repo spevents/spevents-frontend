@@ -92,7 +92,8 @@ export function ScavengerHuntPage() {
         const activeSessionCode = sessionCode || params.sessionCode;
         if (!activeSessionCode) return;
 
-        const freshEvent = await guestService.getEventBySessionCode(activeSessionCode);
+        const freshEvent =
+          await guestService.getEventBySessionCode(activeSessionCode);
         const verifiedKeys = new Set(
           freshEvent?.scavengerHunt?.verifiedSubmissions || [],
         );
@@ -121,7 +122,14 @@ export function ScavengerHuntPage() {
     checkVerificationStatus();
     const interval = setInterval(checkVerificationStatus, 5000);
     return () => clearInterval(interval);
-  }, [currentEvent?.id, guestId, submissions.length, refreshCurrentEvent, sessionCode, params.sessionCode]);
+  }, [
+    currentEvent?.id,
+    guestId,
+    submissions.length,
+    refreshCurrentEvent,
+    sessionCode,
+    params.sessionCode,
+  ]);
 
   // Calculate points (only from verified submissions)
   const totalPoints = submissions

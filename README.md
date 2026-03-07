@@ -46,55 +46,68 @@ Events have a "photo problem" - guests take lots of photos but sharing them is f
 
 ## Progress & Traction
 
-In three months (Nov 2024 - Jan 2025), I've:
+In three months (Nov 2024 - Jan 2025):
 
 - Built and launched complete MVP
-- Successfully demoed at 3 events:
+- Successfully demoed at events:
   - Roth n Roll (Dec 2024)
   - Holud Night (Jan 2025)
   - Mock Shaadi (Jan 2025)
   - Pohela Falgun (Feb 2025)
-  - ... more upcoming
 
 ## Features
 
-- **Camera Interface**: Mobile-optimized browser-based camera
+- **Camera Interface**: Mobile-optimized browser-based camera (WebRTC)
 - **Photo Review**: Intuitive swipe-based photo management
 - **Display Modes**:
   - Grid Gallery View
   - Dynamic Slideshow
   - Presenter Mode
+  - Marquee / Parallax modes
   - 3D Model View
-- **Real-time Updates**: Instant photo synchronization
+- **Real-time Updates**: Adaptive polling (3 s → 15 s when idle)
 - **QR Integration**: Easy access and sharing
+- **Scavenger Hunt**: Host-configurable photo challenge system
 - **Collage Creation**: Built-in photo collage tools
-- **Secure Storage**: AWS-powered photo management
+- **NSFW Filtering**: Automatic content moderation via Hugging Face
+- **AI Captions**: Claude-generated captions for photos
+- **Secure Storage**: AWS S3 + CloudFront CDN
 
 ## Tech Stack
 
-- **Frontend**: React (TypeScript)
-- **Styling**: Tailwind CSS
+- **Frontend**: React 19 + TypeScript (Vite)
+- **Styling**: Tailwind CSS + Framer Motion
 - **3D Graphics**: Three.js with React Three Fiber
-- **Storage**: AWS S3
-- **CDN**: CloudFront
-- **Build Tool**: Vite
+- **Storage**: AWS S3 + CloudFront CDN (or Vercel Blob)
+- **Auth/DB**: Firebase Auth + Firestore
+- **UI Primitives**: Radix UI
 
 ## Setup Requirements
 
-- Node.js (v16+)
-- AWS account with S3 bucket
-- SSL certificate for local development
+- Node.js v18+
+- pnpm (`npm i -g pnpm`)
+- Firebase project
+- AWS account with S3 bucket + CloudFront (or Vercel Blob token)
 
 ## Environment Variables
 
+Create a `.env` file in the frontend root. **Never commit it.**
+
 ```env
-VITE_AWS_REGION=
-VITE_S3_BUCKET_NAME=
-VITE_CLOUDFRONT_URL=
-VITE_AWS_ACCESS_KEY_ID=
-VITE_AWS_SECRET_ACCESS_KEY=
-VITE_EVENT_ID=
+VITE_BACKEND_URL=https://api.spevents.live
+VITE_FIREBASE_API_KEY=...
+VITE_FIREBASE_AUTH_DOMAIN=...
+VITE_FIREBASE_PROJECT_ID=...
+VITE_FIREBASE_STORAGE_BUCKET=...
+VITE_FIREBASE_MESSAGING_SENDER_ID=...
+VITE_FIREBASE_APP_ID=...
+VITE_CLOUDFRONT_URL=https://your-distribution.cloudfront.net
+VITE_BYPASS_AUTH=false
 ```
+
+> **Security:** AWS credentials, GitHub tokens, and third-party API keys must
+> NEVER use the `VITE_` prefix — they would be statically inlined into the
+> browser bundle. All sensitive keys belong exclusively in the backend `.env`.
 
 ## Installation
 
@@ -102,37 +115,44 @@ VITE_EVENT_ID=
 
 ```bash
 git clone https://github.com/yourusername/spevents.git
-cd spevents
+cd spevents-frontend
 ```
 
 2. Install dependencies:
 
 ```bash
-npm install
+pnpm install
 ```
 
 3. Start development server:
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 ## Project Structure
 
 ```
-/src
-  /components    # React components
-  /contexts      # Context providers
-  /lib           # AWS integration & utilities
-  /pages         # Route components
+src/
+├── components/    # React components (auth, camera, slideshow_modes, ui, …)
+├── contexts/      # EventContext, SessionContext, NgrokContext
+├── hooks/         # usePhotoUpdates (adaptive polling), useDarkMode, …
+├── lib/           # imageUtils, utils (clsx), paymentService (stub)
+├── pages/
+│   ├── guest/     # GuestLanding, GuestRoutes, ScavengerHuntPage
+│   ├── HostRoutes/# Host dashboard, event management, gallery, metrics
+│   └── landing/   # Public marketing page
+├── services/
+│   ├── api.ts     # Backend API client (event CRUD, photo upload, guest)
+│   ├── nsfw.ts    # NSFW pre-check before upload
+│   └── depthService.ts
+└── types/         # TypeScript interfaces (event.ts, eventTypes.ts)
 ```
 
-## Development
-
-To create a production build:
+## Development Build
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 ## [LICENSE](LICENSE)

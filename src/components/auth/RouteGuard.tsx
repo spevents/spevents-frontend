@@ -13,7 +13,7 @@ export function RouteGuard({
   children,
   requireAuth = false,
   requireOnboarding = false,
-  redirectTo = "/login",
+  redirectTo = "/signin",
 }: RouteGuardProps) {
   const { user, loading } = useAuth();
   const location = useLocation();

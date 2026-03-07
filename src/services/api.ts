@@ -4,7 +4,8 @@ import { auth, db } from "@/components/config/firebase";
 import { collection, query, where, limit, getDocs } from "firebase/firestore";
 import { compressForUpload } from "@/lib/imageUtils";
 
-const BACKEND_URL = "https://api.spevents.live";
+const BACKEND_URL =
+  import.meta.env.VITE_BACKEND_URL || "https://api.spevents.live";
 
 // ===============================
 // TYPES & INTERFACES
@@ -242,7 +243,12 @@ async function uploadToS3(
   uploadParams: Record<string, unknown>,
   file: File,
   onProgress?: (progress: number) => void,
-): Promise<{ photoUrl: string; guestId: string; fileName: string; photoKey: string }> {
+): Promise<{
+  photoUrl: string;
+  guestId: string;
+  fileName: string;
+  photoKey: string;
+}> {
   // Step 1: Get presigned URL from backend
   if (onProgress) onProgress(30);
 
@@ -274,7 +280,8 @@ async function uploadToS3(
     );
   }
 
-  const { signedUrl, photoUrl, photoKey, fileName, guestId } = await response.json();
+  const { signedUrl, photoUrl, photoKey, fileName, guestId } =
+    await response.json();
   console.log(`✅ Got presigned URL, uploading to S3...`);
 
   // Step 2: Upload directly to S3
@@ -306,7 +313,12 @@ async function uploadToVercelBlob(
   uploadParams: Record<string, unknown>,
   file: File,
   onProgress?: (progress: number) => void,
-): Promise<{ photoUrl: string; guestId: string; fileName: string; photoKey: string }> {
+): Promise<{
+  photoUrl: string;
+  guestId: string;
+  fileName: string;
+  photoKey: string;
+}> {
   if (onProgress) onProgress(30);
   const fileData = await fileToBase64(file);
 

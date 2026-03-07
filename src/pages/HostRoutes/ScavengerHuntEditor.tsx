@@ -137,18 +137,21 @@ export function ScavengerHuntEditor() {
   }, [eventId]);
 
   // Load photos for submissions tab (with optional silent mode for polling)
-  const loadPhotos = useCallback(async (silent = false) => {
-    if (!eventId) return;
-    if (!silent) setIsLoadingPhotos(true);
-    try {
-      const eventPhotos = await getEventPhotos(eventId);
-      setPhotos(eventPhotos);
-    } catch (error) {
-      console.error("Failed to load photos:", error);
-    } finally {
-      if (!silent) setIsLoadingPhotos(false);
-    }
-  }, [eventId]);
+  const loadPhotos = useCallback(
+    async (silent = false) => {
+      if (!eventId) return;
+      if (!silent) setIsLoadingPhotos(true);
+      try {
+        const eventPhotos = await getEventPhotos(eventId);
+        setPhotos(eventPhotos);
+      } catch (error) {
+        console.error("Failed to load photos:", error);
+      } finally {
+        if (!silent) setIsLoadingPhotos(false);
+      }
+    },
+    [eventId],
+  );
 
   // Load photos when switching to submissions tab + auto-poll every 5 seconds
   useEffect(() => {
@@ -998,7 +1001,9 @@ export function ScavengerHuntEditor() {
                   )
                 }
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                  verifiedPhotos.has(huntSubmissions[selectedPhotoIndex].fullKey)
+                  verifiedPhotos.has(
+                    huntSubmissions[selectedPhotoIndex].fullKey,
+                  )
                     ? "bg-green-500 text-white"
                     : "bg-white text-gray-800 hover:bg-green-100"
                 }`}

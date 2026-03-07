@@ -13,6 +13,9 @@ export function DebugPanel({ eventData, isCreating, error }: DebugPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { events, currentEvent, isLoading, error: contextError } = useEvent();
 
+  // Only render in development — never in production builds
+  if (!import.meta.env.DEV) return null;
+
   if (!isOpen) {
     return (
       <div className="fixed bottom-4 right-4 z-50">

@@ -456,7 +456,6 @@ export function GuestDashboard() {
         )}
       </AnimatePresence>
 
-
       {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-sp_darkgreen/95 backdrop-blur-md border-t border-sp_lightgreen/20 safe-area-pb">
         <div className="flex items-center justify-around py-2 px-2">
