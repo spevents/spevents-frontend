@@ -125,17 +125,14 @@ export async function checkNSFW(file: File): Promise<NSFWCheckResponse> {
       const errorText = await response.text();
       console.error("NSFW Check API Error:", response.status, errorText);
 
-      // Handle specific error for file size
+      // File too large — tell the caller but don't block (compression should have prevented this)
       if (response.status === 413) {
-        return {
-          isNSFW: false,
-          score: 0,
-          label: "file_too_large",
-        };
+        return { isNSFW: false, score: 0, label: "file_too_large" };
       }
 
-      // Fail open - allow upload if API fails
-      return { isNSFW: false, score: 0, label: "error" };
+      // All other API errors: fail closed — block the upload rather than silently allowing it.
+      // A degraded NSFW check is not a reason to let unreviewed content through.
+      throw new Error(`NSFW check failed with status ${response.status}`);
     }
 
     const result: NSFWCheckResponse = await response.json();
@@ -145,7 +142,8 @@ export async function checkNSFW(file: File): Promise<NSFWCheckResponse> {
     return result;
   } catch (error) {
     console.error("Error checking NSFW:", error);
-    // Fail open - allow upload if exception occurs
-    return { isNSFW: false, score: 0, label: "exception" };
+    // Fail closed — re-throw so the caller (PhotoReview) can surface the error
+    // to the user and block the upload rather than silently approving it.
+    throw error;
   }
 }

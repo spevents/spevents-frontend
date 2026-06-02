@@ -52,9 +52,10 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const BYPASS_AUTH = import.meta.env.VITE_BYPASS_AUTH === "true";
-
-  console.log("🔧 EventProvider initialized, BYPASS_AUTH:", BYPASS_AUTH);
+  // BYPASS_AUTH is only honoured in dev builds.
+  // Setting VITE_BYPASS_AUTH=true in a production Vercel deployment will have no effect.
+  const BYPASS_AUTH =
+    import.meta.env.DEV && import.meta.env.VITE_BYPASS_AUTH === "true";
 
   const loadEvents = useCallback(async () => {
     console.log("📂 loadEvents called, BYPASS_AUTH:", BYPASS_AUTH);
@@ -102,7 +103,10 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
           hostEmail: "dev@spevents.local",
           status: "draft",
           photoCount: 0,
-          sessionCode: Math.random().toString(36).substring(2, 8).toUpperCase(),
+          sessionCode: Array.from(
+            crypto.getRandomValues(new Uint8Array(6)),
+            (b) => "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"[b % 36],
+          ).join(""),
           // Include advanced fields if provided
           ...(data.date && { date: data.date }),
           ...(data.startTime && { startTime: data.startTime }),
@@ -267,18 +271,6 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
       }
     }
   }, [events]);
-
-  // Debug current state
-  useEffect(() => {
-    console.log("📊 EventContext State Update:", {
-      eventsCount: events.length,
-      currentEvent: currentEvent
-        ? { id: currentEvent.id, name: currentEvent.name }
-        : null,
-      isLoading,
-      error,
-    });
-  }, [events, currentEvent, isLoading, error]);
 
   return (
     <EventContext.Provider

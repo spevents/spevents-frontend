@@ -27,7 +27,13 @@ export async function compressImage(
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
 
+    // Always revoke the object URL — in both success and error paths —
+    // to prevent memory leaks when compressing many images.
+    const objectUrl = URL.createObjectURL(file);
+
     img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+
       let { width, height } = img;
 
       // Calculate new dimensions maintaining aspect ratio
@@ -68,13 +74,12 @@ export async function compressImage(
       );
     };
 
-    img.onerror = () => reject(new Error("Failed to load image"));
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Failed to load image"));
+    };
 
-    if (file instanceof File) {
-      img.src = URL.createObjectURL(file);
-    } else {
-      img.src = URL.createObjectURL(file);
-    }
+    img.src = objectUrl;
   });
 }
 
@@ -108,13 +113,18 @@ export async function generateImageVariants(file: File): Promise<{
   const getDimensions = async (
     blob: Blob,
   ): Promise<{ width: number; height: number }> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const img = new Image();
+      const objectUrl = URL.createObjectURL(blob);
       img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
         resolve({ width: img.width, height: img.height });
-        URL.revokeObjectURL(img.src);
       };
-      img.src = URL.createObjectURL(blob);
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("Failed to load image for dimension check"));
+      };
+      img.src = objectUrl;
     });
   };
 
