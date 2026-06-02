@@ -2,6 +2,7 @@
 
 import { auth } from "@/components/config/firebase";
 import { compressForUpload } from "@/lib/imageUtils";
+import { upload } from "@vercel/blob/client";
 
 const BACKEND_URL =
   import.meta.env.VITE_BACKEND_URL || "https://api.spevents.live";
@@ -196,8 +197,11 @@ export async function getPresignedUrl({
   });
 }
 
-// Toggle between S3 (presigned URL) and Vercel Blob upload
-const USE_S3_UPLOAD = false;
+// Photo uploads use Vercel Blob CLIENT uploads: the browser streams the file
+// bytes directly to Blob storage; the backend only mints a short-lived, scoped
+// token (see api/upload-blob.ts). No base64 inflation, no routing file bytes
+// through a serverless function, no 4.5 MB request-body cap, and large files
+// upload via parallel multipart automatically.
 
 export async function uploadPhoto({
   presignedUrl,
@@ -213,162 +217,101 @@ export async function uploadPhoto({
   fileName: string;
   photoKey: string; // Full path for verification matching
 }> {
-  try {
-    const uploadParams = JSON.parse(presignedUrl);
-    console.log(`🚀 Uploading photo:`, uploadParams);
+  // `presignedUrl` is a JSON marker from getPresignedUrl() (kept for a stable
+  // call signature) — it carries the upload params, not an actual URL.
+  const params = JSON.parse(presignedUrl) as {
+    eventId?: string;
+    fileName?: string;
+    contentType?: string;
+    isGuestPhoto?: boolean;
+    guestId?: string;
+    guestName?: string;
+    sessionCode?: string;
+    huntTaskId?: string;
+  };
 
-    // Compress image before upload to reduce size and improve loading
-    if (onProgress) onProgress(10);
-    const compressedFile = await compressForUpload(file);
-    console.log(
-      `📦 Compressed: ${file.size} -> ${compressedFile.size} bytes (${Math.round((compressedFile.size / file.size) * 100)}%)`,
-    );
+  if (onProgress) onProgress(5);
 
-    if (USE_S3_UPLOAD) {
-      // S3 Presigned URL Upload (cheaper, recommended)
-      return await uploadToS3(uploadParams, compressedFile, onProgress);
-    } else {
-      // Vercel Blob Upload (more expensive)
-      return await uploadToVercelBlob(uploadParams, compressedFile, onProgress);
-    }
-  } catch (error) {
-    console.error(`❌ Upload error:`, error);
-    throw error;
-  }
-}
+  // Compress first — fewer bytes = faster upload and faster gallery load.
+  const compressedFile = await compressForUpload(file);
+  console.log(
+    `📦 Compressed: ${file.size} -> ${compressedFile.size} bytes (${Math.round(
+      (compressedFile.size / file.size) * 100,
+    )}%)`,
+  );
 
-// S3 Presigned URL Upload - Direct upload to S3
-async function uploadToS3(
-  uploadParams: Record<string, unknown>,
-  file: File,
-  onProgress?: (progress: number) => void,
-): Promise<{
-  photoUrl: string;
-  guestId: string;
-  fileName: string;
-  photoKey: string;
-}> {
-  // Step 1: Get presigned URL from backend
-  if (onProgress) onProgress(30);
-
-  let authHeader: Record<string, string> = {};
-  const user = auth.currentUser;
-  if (user) {
-    try {
-      const token = await user.getIdToken();
-      authHeader = { Authorization: `Bearer ${token}` };
-    } catch (error) {
-      console.error("Failed to get auth token:", error);
-    }
+  const eventId = params.eventId;
+  if (!eventId) {
+    throw new Error("Missing eventId for upload");
   }
 
-  const response = await fetch(`${BACKEND_URL}/api/upload`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      ...authHeader,
-    },
-    body: JSON.stringify(uploadParams),
-  });
+  const isGuest = !!params.isGuestPhoto;
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Failed to get presigned URL: ${response.status} - ${errorText}`,
-    );
+  // Resolve a stable guestId for the path + later verification matching.
+  let guestId = params.guestId || "";
+  if (isGuest && !guestId) {
+    guestId =
+      localStorage.getItem("spevents-guest-id") ||
+      `guest_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    localStorage.setItem("spevents-guest-id", guestId);
   }
 
-  const { signedUrl, photoUrl, photoKey, fileName, guestId } =
-    await response.json();
-  console.log(`✅ Got presigned URL, uploading to S3...`);
+  const safeName = (params.fileName || compressedFile.name || "photo.jpg")
+    .replace(/[/\\]/g, "_")
+    .replace(/[^\w.\-]/g, "_");
 
-  // Step 2: Upload directly to S3
-  if (onProgress) onProgress(50);
+  // Client proposes the path; the backend token route validates it is scoped
+  // to this event before issuing a token.
+  const pathname = isGuest
+    ? `events/${eventId}/guests/${guestId}/${Date.now()}-${safeName}`
+    : `events/${eventId}/${Date.now()}-${safeName}`;
 
-  const uploadResponse = await fetch(signedUrl, {
-    method: "PUT",
-    body: file,
-    headers: {
-      "Content-Type": file.type,
-    },
-  });
-
-  if (!uploadResponse.ok) {
-    const errorText = await uploadResponse.text();
-    throw new Error(
-      `S3 upload failed: ${uploadResponse.status} - ${errorText}`,
-    );
-  }
-
-  if (onProgress) onProgress(100);
-  console.log(`✅ S3 upload successful: ${photoUrl}`);
-
-  return { photoUrl, guestId, fileName, photoKey };
-}
-
-// Vercel Blob Upload - Uploads via backend
-async function uploadToVercelBlob(
-  uploadParams: Record<string, unknown>,
-  file: File,
-  onProgress?: (progress: number) => void,
-): Promise<{
-  photoUrl: string;
-  guestId: string;
-  fileName: string;
-  photoKey: string;
-}> {
-  if (onProgress) onProgress(30);
-  const fileData = await fileToBase64(file);
-
-  let authHeader: Record<string, string> = {};
-  const user = auth.currentUser;
-  if (user) {
-    try {
-      const token = await user.getIdToken();
-      authHeader = { Authorization: `Bearer ${token}` };
-    } catch (error) {
-      console.error("Failed to get auth token:", error);
+  // Hosts authenticate with a Firebase token forwarded to the token route;
+  // guests authenticate via the sessionCode carried in clientPayload.
+  let headers: Record<string, string> | undefined;
+  if (!isGuest) {
+    const user = auth.currentUser;
+    if (user) {
+      try {
+        headers = { Authorization: `Bearer ${await user.getIdToken()}` };
+      } catch (error) {
+        console.error("Failed to get auth token:", error);
+      }
     }
   }
 
-  const response = await fetch(`${BACKEND_URL}/api/upload-blob`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      ...authHeader,
-    },
-    body: JSON.stringify({
-      ...uploadParams,
-      fileData,
+  const blob = await upload(pathname, compressedFile, {
+    access: "public",
+    handleUploadUrl: `${BACKEND_URL}/api/upload-blob`,
+    contentType: compressedFile.type || params.contentType || "image/jpeg",
+    // Stream large files in parallel chunks with automatic per-part retry.
+    multipart: compressedFile.size > 8 * 1024 * 1024,
+    clientPayload: JSON.stringify({
+      sessionCode: params.sessionCode,
+      eventId,
+      isGuestPhoto: isGuest,
+      guestId: guestId || undefined,
+      guestName: params.guestName,
+      huntTaskId: params.huntTaskId,
     }),
+    ...(headers ? { headers } : {}),
+    onUploadProgress: ({ percentage }) => onProgress?.(percentage),
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Upload failed: ${response.status} - ${errorText}`);
-  }
-
-  const result = await response.json();
-  console.log("✅ Vercel Blob upload response:", result);
-
-  if (onProgress) onProgress(100);
+  const fileName = blob.pathname.split("/").pop() || safeName;
+  console.log(`✅ Blob client upload complete: ${blob.url}`);
 
   return {
-    photoUrl: result.photoUrl,
-    guestId: result.guestId,
-    fileName: result.fileName,
-    photoKey: result.photoKey, // Full path for verification matching
+    photoUrl: blob.url,
+    guestId,
+    fileName,
+    photoKey: blob.pathname,
   };
 }
 
 export async function getEventPhotos(eventId: string): Promise<EventPhoto[]> {
   try {
-    // Use S3 endpoint when S3 upload is enabled
-    const endpoint = USE_S3_UPLOAD
-      ? `/api/upload?eventId=${eventId}`
-      : `/api/upload-blob?eventId=${eventId}`;
+    const endpoint = `/api/upload-blob?eventId=${eventId}`;
 
     const response = await makeAuthenticatedRequest(endpoint);
     const data = await response.json();
@@ -707,12 +650,3 @@ export async function testConnection(): Promise<boolean> {
   }
 }
 
-// Helper: Convert File to base64
-async function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
