@@ -291,6 +291,7 @@ export function ScavengerHuntPage() {
       });
 
       const presignedUrlParams = await getPresignedUrl({
+        eventId: currentEvent?.id,
         sessionCode: activeSessionCode,
         fileName: file.name,
         contentType: file.type,
