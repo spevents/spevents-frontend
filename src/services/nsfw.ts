@@ -24,10 +24,11 @@ async function compressImage(file: File): Promise<File> {
           return;
         }
 
-        // Calculate new dimensions (max 1024px on longest side)
+        // The moderation model runs at 224x224, so 384px on the long side is
+        // plenty — sending more is pure wasted upload latency.
         let width = img.width;
         let height = img.height;
-        const maxDimension = 1024;
+        const maxDimension = 384;
 
         if (width > maxDimension || height > maxDimension) {
           if (width > height) {
@@ -97,12 +98,9 @@ export async function checkNSFW(file: File): Promise<NSFWCheckResponse> {
   );
 
   try {
-    // Compress if file is larger than 1MB
-    let fileToCheck = file;
-    if (file.size > 1024 * 1024) {
-      console.log("🗜️ Compressing image...");
-      fileToCheck = await compressImage(file);
-    }
+    // Always downscale to a tiny 384px image before the moderation round trip —
+    // a few KB instead of multiple MB, so the check returns much faster.
+    const fileToCheck = await compressImage(file);
 
     // Convert file to base64
     const fileData = await fileToBase64(fileToCheck);
