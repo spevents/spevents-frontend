@@ -97,6 +97,18 @@ export async function checkNSFW(file: File): Promise<NSFWCheckResponse> {
     (file.size / 1024 / 1024).toFixed(2) + "MB",
   );
 
+  // Try on-device moderation first (no network round trip). Lazy-loaded so the
+  // model only downloads on first use. Falls through to the server check if the
+  // model can't load — never silently allows.
+  try {
+    const { classifyLocal } = await import("@/lib/nsfwLocal");
+    const local = await classifyLocal(file);
+    console.log("✅ On-device NSFW result:", local);
+    return local;
+  } catch (err) {
+    console.warn("On-device NSFW unavailable; using server check:", err);
+  }
+
   try {
     // Always downscale to a tiny 384px image before the moderation round trip —
     // a few KB instead of multiple MB, so the check returns much faster.
