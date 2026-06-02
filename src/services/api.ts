@@ -1,7 +1,7 @@
 // src/services/api.ts
 
 import { auth } from "@/components/config/firebase";
-import { compressForUpload } from "@/lib/imageUtils";
+import { compressForUploadFast } from "@/lib/imageUtils";
 import { upload } from "@vercel/blob/client";
 
 const BACKEND_URL =
@@ -232,8 +232,9 @@ export async function uploadPhoto({
 
   if (onProgress) onProgress(5);
 
-  // Compress first — fewer bytes = faster upload and faster gallery load.
-  const compressedFile = await compressForUpload(file);
+  // Compress first (off the main thread, WebP when supported) — fewer bytes =
+  // faster upload and faster gallery load, with no UI jank.
+  const compressedFile = await compressForUploadFast(file);
   console.log(
     `📦 Compressed: ${file.size} -> ${compressedFile.size} bytes (${Math.round(
       (compressedFile.size / file.size) * 100,

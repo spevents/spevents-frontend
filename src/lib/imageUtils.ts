@@ -231,6 +231,125 @@ export async function compressForUpload(file: File): Promise<File> {
   return file;
 }
 
+// ===============================
+// FAST OFF-MAIN-THREAD COMPRESSION
+// ===============================
+// A single shared Worker decodes/resizes/encodes on a background thread so the
+// UI never blocks during upload. Falls back to the main-thread path on
+// browsers without OffscreenCanvas.convertToBlob (e.g. older Safari).
+
+let _worker: Worker | null = null;
+let _reqId = 0;
+const _pending = new Map<
+  number,
+  { resolve: (b: Blob) => void; reject: (e: Error) => void }
+>();
+
+function getCompressWorker(): Worker | null {
+  if (
+    typeof Worker === "undefined" ||
+    typeof OffscreenCanvas === "undefined" ||
+    typeof (OffscreenCanvas.prototype as { convertToBlob?: unknown })
+      .convertToBlob !== "function"
+  ) {
+    return null;
+  }
+  if (!_worker) {
+    try {
+      _worker = new Worker(new URL("./compressWorker.ts", import.meta.url), {
+        type: "module",
+      });
+      _worker.onmessage = (e: MessageEvent) => {
+        const { id, blob, error } = e.data as {
+          id: number;
+          blob?: Blob;
+          error?: string;
+        };
+        const pending = _pending.get(id);
+        if (!pending) return;
+        _pending.delete(id);
+        if (error || !blob) pending.reject(new Error(error || "compress failed"));
+        else pending.resolve(blob);
+      };
+      _worker.onerror = () => {
+        // Reject everything in flight and disable the worker so callers fall
+        // back to the main-thread path.
+        _pending.forEach((p) => p.reject(new Error("compress worker error")));
+        _pending.clear();
+        _worker = null;
+      };
+    } catch {
+      _worker = null;
+    }
+  }
+  return _worker;
+}
+
+let _webpSupport: boolean | null = null;
+function supportsWebpEncode(): boolean {
+  if (_webpSupport !== null) return _webpSupport;
+  try {
+    const c = document.createElement("canvas");
+    c.width = 1;
+    c.height = 1;
+    _webpSupport = c.toDataURL("image/webp").startsWith("data:image/webp");
+  } catch {
+    _webpSupport = false;
+  }
+  return _webpSupport;
+}
+
+/**
+ * Compress for upload, off the main thread when possible, emitting WebP (~30%
+ * smaller than JPEG at equal quality) so fewer bytes travel to storage.
+ * Drop-in faster replacement for compressForUpload.
+ */
+export async function compressForUploadFast(file: File): Promise<File> {
+  if (file.size < 300 * 1024) return file;
+
+  const quality = getOptimalQuality(file.size);
+  const useWebp = supportsWebpEncode();
+  const type = useWebp ? "image/webp" : "image/jpeg";
+  const ext = useWebp ? ".webp" : ".jpg";
+  const maxDim = 1920;
+
+  const worker = getCompressWorker();
+  if (worker) {
+    try {
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        const id = ++_reqId;
+        _pending.set(id, { resolve, reject });
+        worker.postMessage({ id, blob: file, maxDim, quality, type });
+        setTimeout(() => {
+          if (_pending.has(id)) {
+            _pending.delete(id);
+            reject(new Error("compress timeout"));
+          }
+        }, 15000);
+      });
+      if (blob.size < file.size) {
+        return new File([blob], file.name.replace(/\.[^.]+$/, ext), { type });
+      }
+      return file;
+    } catch (err) {
+      console.warn("Worker compress failed, falling back to main thread:", err);
+      // fall through
+    }
+  }
+
+  // Main-thread fallback (also prefers WebP where supported).
+  const compressed = await compressImage(file, {
+    maxWidth: maxDim,
+    maxHeight: maxDim,
+    quality,
+    format: useWebp ? "webp" : "jpeg",
+  });
+  if (compressed.size < file.size) {
+    return new File([compressed], file.name.replace(/\.[^.]+$/, ext), { type });
+  }
+  return file;
+}
+
 /**
  * Create a tiny placeholder for blur-up effect
  * Returns a base64 data URL of a very small image
