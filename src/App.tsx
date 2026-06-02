@@ -73,8 +73,9 @@ export default function App() {
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/signin" element={<SignInPage />} />
+            <Route path="/join" element={<GuestLanding />} />
             <Route path="/test-nsfw" element={<TestNSFW />} />
-            <Route path="/guest/*" element={<GuestRoutes />} />
+            <Route path="/guest/:sessionCode/*" element={<GuestRoutes />} />
 
             <Route
               path="/onboarding"

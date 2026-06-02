@@ -17,11 +17,6 @@ import { CollageCreator } from "@/components/guest/CollageCreator";
 import { SessionValidator } from "@/components/session/SessionValidator";
 import { ScavengerHuntPage } from "./ScavengerHuntPage";
 
-const isMobileDevice = () => {
-  const userAgent = navigator.userAgent || navigator.vendor;
-  return /android|iphone|ipad|ipod/i.test(userAgent.toLowerCase());
-};
-
 export const GuestRoutes = () => {
   const location = useLocation();
   const params = useParams();
@@ -31,30 +26,12 @@ export const GuestRoutes = () => {
     console.log(`🔄 GuestRoutes Debug:`, {
       path: location.pathname,
       sessionCode,
-      isMobile: isMobileDevice(),
       fullLocation: location,
     });
   }, [location, sessionCode]);
 
-  // Mobile check with better error message
-  if (!isMobileDevice()) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-sp_darkgreen via-sp_green to-sp_darkgreen text-sp_eggshell flex items-center justify-center p-6">
-        <div className="text-center">
-          <h2 className="text-xl mb-4 font-semibold">Desktop Not Supported</h2>
-          <p className="text-sp_lightgreen mb-4">
-            Please use a mobile device to join events
-          </p>
-          <a
-            href="https://app.spevents.live"
-            className="text-sp_eggshell underline hover:text-sp_lightgreen transition-colors"
-          >
-            Host? Sign in here
-          </a>
-        </div>
-      </div>
-    );
-  }
+  // Note: guests can join from any device (Kahoot-style). The camera capture
+  // screen handles devices without a usable camera on its own.
 
   // Session code validation
   if (!sessionCode) {
