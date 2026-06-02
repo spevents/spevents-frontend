@@ -1,7 +1,6 @@
 // src/services/api.ts
 
-import { auth, db } from "@/components/config/firebase";
-import { collection, query, where, limit, getDocs } from "firebase/firestore";
+import { auth } from "@/components/config/firebase";
 import { compressForUpload } from "@/lib/imageUtils";
 
 const BACKEND_URL =
@@ -429,10 +428,9 @@ export function getPhotoUrl(eventId: string, fileName: string): string {
   return `${cloudFrontUrl}/events/${eventId}/photos/${fileName}`;
 }
 
+/** @deprecated Use getPhotoUrl — both functions are identical. */
 export function getSignedPhotoUrl(eventId: string, fileName: string): string {
-  const cloudFrontUrl =
-    import.meta.env.VITE_CLOUDFRONT_URL || "https://your-cloudfront-url";
-  return `${cloudFrontUrl}/events/${eventId}/photos/${fileName}`;
+  return getPhotoUrl(eventId, fileName);
 }
 
 export function getEventPhotoUrl(
@@ -473,31 +471,11 @@ export const eventService = {
   },
 
   async getEventBySessionCode(sessionCode: string): Promise<Event | null> {
+    // Delegate to the backend API — avoids direct Firestore access from the
+    // browser and ensures backend validation (active-only filter) always applies.
     try {
-      console.log(`🔍 Direct Firestore lookup for sessionCode: ${sessionCode}`);
-
-      const q = query(
-        collection(db, "events"),
-        where("sessionCode", "==", sessionCode.toUpperCase()),
-        limit(1),
-      );
-
-      const snapshot = await getDocs(q);
-
-      if (snapshot.empty) {
-        console.log(`❌ No event found for sessionCode: ${sessionCode}`);
-        return null;
-      }
-
-      const doc = snapshot.docs[0];
-      const event = { id: doc.id, ...doc.data() } as Event;
-
-      console.log(
-        `✅ Found event: ${event.id} for sessionCode: ${sessionCode}`,
-      );
-      return event;
-    } catch (error) {
-      console.error("Error getting event by session code:", error);
+      return await guestService.getEventBySessionCode(sessionCode);
+    } catch {
       return null;
     }
   },

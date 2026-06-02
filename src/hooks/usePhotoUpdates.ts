@@ -127,7 +127,7 @@ export function usePhotoUpdates({
     await loadPhotos();
   }, [loadPhotos, initialInterval]);
 
-  // Setup adaptive polling
+  // Setup adaptive polling with tab-visibility awareness
   useEffect(() => {
     if (!enabled || !eventId) return;
 
@@ -140,7 +140,11 @@ export function usePhotoUpdates({
     const scheduleNextPoll = () => {
       if (intervalIdRef.current) {
         clearTimeout(intervalIdRef.current);
+        intervalIdRef.current = null;
       }
+
+      // Don't schedule if the tab is hidden — resume when it becomes visible again
+      if (document.visibilityState === "hidden") return;
 
       intervalIdRef.current = setTimeout(() => {
         if (isMountedRef.current) {
@@ -153,10 +157,28 @@ export function usePhotoUpdates({
       }, currentIntervalRef.current);
     };
 
+    // Pause polling when tab is hidden, resume when it becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        // Tab came back into focus — poll immediately then resume schedule
+        loadPhotos().then(() => {
+          if (isMountedRef.current) scheduleNextPoll();
+        });
+      } else {
+        // Tab hidden — cancel the pending poll
+        if (intervalIdRef.current) {
+          clearTimeout(intervalIdRef.current);
+          intervalIdRef.current = null;
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     scheduleNextPoll();
 
     return () => {
       isMountedRef.current = false;
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       if (intervalIdRef.current) {
         clearTimeout(intervalIdRef.current);
       }
